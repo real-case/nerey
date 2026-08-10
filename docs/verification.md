@@ -78,10 +78,11 @@ consumer who type-checks with `moduleResolution: 'nodenext'` — and then broken
 run `finally`, so `gen-tokens --self-test` left its planted drift on disk and the next gate run
 failed against a corrupted artifact. Every gate's teardown now happens before any exit.
 
-## What the first CI run caught that every local run had missed
+## What CI caught that every local run had missed
 
-The repository was pushed to `real-case/nerey` on 2026-08-10 and CI failed on its first
-execution, on two things a local run had reported green.
+The repository was pushed to [real-case/nerey](https://github.com/real-case/nerey) on
+2026-08-10. CI failed twice before going green, each time on something a local run had
+reported as passing.
 
 **Coverage measured over half the evidence.** The `test` job ran
 `vitest run --project unit --coverage`, which reports 44% and fails the 80% threshold — not
@@ -99,9 +100,22 @@ of `.d.ts` that genuinely are source — and the negations were verified with `g
 rather than assumed, since a broad ignore shadowing them would silently stop future generated
 declarations from ever being committed.
 
-Both are the same class of defect: a check that passes locally for a reason that does not
+**A test suite that depended on a prior build.** The second run got `quality` green and failed
+`test` on `Failed to resolve import "@nerey/core"` from every theme widget. The workspace
+symlink sends resolution through core's `exports` map to `dist/index.js`, and the test job has
+no build step — so the whole suite quietly required someone to have run `npm run build` first.
+It passed locally only because a `dist` directory was lying around. `@nerey/core` now aliases to
+source in both `vitest.config.ts` and `.storybook/main.ts`, mirroring the `paths` mapping
+`tsconfig.json` already uses. Verified by deleting both `dist` directories and running the CI
+command: 1103 tests across 74 files, 94.99% statements.
+
+All three are the same class of defect: a check that passes locally for a reason that does not
 survive a fresh environment. It is the specific thing CI exists to find, and it is why "the
 commands are verified locally" was recorded as a limitation rather than as a pass.
+
+The lesson worth keeping: **a green local run is evidence about one machine.** Every one of
+these was invisible until the code met a clean checkout, and none of them would have been found
+by more careful reading.
 
 ## Known limitations
 
