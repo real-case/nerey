@@ -9,11 +9,21 @@ storybook-static/
 .env.local
 *.log
 
-# tsc must never emit into the source tree; dist/ is the only output location.
-packages/*/src/**/*.d.ts.map
 
 # Editor state. `.idea/workspace.xml` is per-developer window layout and open-file history;
 # it has no business in a published repository.
 .idea/
 .vscode/
 *.swp
+
+# tsc must never emit into the source tree — dist/ is the only output location. A `tsc` run
+# with the wrong -p or a missing outDir drops declarations next to their sources, and a
+# `git add -A` then commits build output as if it were code. That happened on the first import
+# and only surfaced in CI, where eslint's project service rejected 22 files that are in no
+# tsconfig `include`.
+packages/*/src/**/*.d.ts
+packages/*/src/**/*.d.ts.map
+# …except the two kinds that ARE source: generated CSS Module declarations (committed by
+# design, ADR 0023) and the ambient fallback.
+!packages/*/src/**/*.module.css.d.ts
+!packages/theme/src/css-modules.d.ts

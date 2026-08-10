@@ -82,9 +82,6 @@ jobs:
 
       - run: npm ci
 
-      - name: unit tests
-        run: npx vitest run --project unit --coverage
-
       # Only the storybook project needs a browser, and only chromium: the a11y and interaction
       # runs are the same in every engine, and pulling three browsers costs more than the job
       # (ADR 0006, ADR 0032). Add `--with-deps` if a runner image ever stops shipping the
@@ -92,5 +89,10 @@ jobs:
       - name: install chromium
         run: npx playwright install chromium
 
-      - name: storybook tests
-        run: npx vitest run --project storybook
+      # ONE invocation across BOTH projects, because ADR 0007 defines the threshold over the
+      # MERGED number. Running `--project unit --coverage` and the storybook project separately
+      # reports 44% and fails, not because coverage is bad but because most of @nerey/theme is
+      # covered by stories rather than by unit tests — half the evidence, scored as if it were
+      # all of it. The first CI run failed exactly this way.
+      - name: tests and merged coverage
+        run: npx vitest run --coverage
