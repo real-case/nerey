@@ -19,7 +19,7 @@ was produced by running the command named next to it, not by reading a summary.
 | `npm run check:stories`       | PASS — 45 components, 45 with stories, 45 with play functions    |
 | `npm run check:a11y`          | PASS — 2 documented waivers, none expired                        |
 | `npm run check:citations`     | PASS — 1753 citations across 327 files resolve to 37 records     |
-| `npm run check:commits`       | PASS (vacuous — no commits yet)                                  |
+| `npm run check:commits`       | PASS — every commit conforms; no longer vacuous                  |
 | `npm run check:boundaries`    | PASS — 116 modules, 370 dependencies, 0 violations               |
 | `npm run check:exports`       | PASS — manifests, artifacts, `publint`, `attw`                   |
 | `npm run check:gates`         | PASS — **12 gates registered, 12 self-tests passed, 0 warnings** |
