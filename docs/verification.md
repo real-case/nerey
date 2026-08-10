@@ -78,17 +78,39 @@ consumer who type-checks with `moduleResolution: 'nodenext'` — and then broken
 run `finally`, so `gen-tokens --self-test` left its planted drift on disk and the next gate run
 failed against a corrupted artifact. Every gate's teardown now happens before any exit.
 
+## What the first CI run caught that every local run had missed
+
+The repository was pushed to `real-case/nerey` on 2026-08-10 and CI failed on its first
+execution, on two things a local run had reported green.
+
+**Coverage measured over half the evidence.** The `test` job ran
+`vitest run --project unit --coverage`, which reports 44% and fails the 80% threshold — not
+because coverage is bad, but because ADR 0007 defines the threshold over the **merged** number
+and most of `@nerey/theme` is covered by stories rather than unit tests. The workflow was written
+to a brief that named the wrong command. One `vitest run --coverage` across both projects is the
+measurement the ADR actually describes.
+
+**Twenty-two build artifacts committed as source.** A `tsc` run with the wrong project had
+emitted `.d.ts` files next to their sources inside `packages/core/src`, and the initial
+`git add -A` swept them in. They are in no tsconfig `include`, so eslint's project service
+rejects them outright. The local run passed because the files happened to resolve there; on a
+clean checkout they do not. Untracked and gitignored, with explicit negations for the two kinds
+of `.d.ts` that genuinely are source — and the negations were verified with `git check-ignore`
+rather than assumed, since a broad ignore shadowing them would silently stop future generated
+declarations from ever being committed.
+
+Both are the same class of defect: a check that passes locally for a reason that does not
+survive a fresh environment. It is the specific thing CI exists to find, and it is why "the
+commands are verified locally" was recorded as a limitation rather than as a pass.
+
 ## Known limitations
 
-- `check:commits` is vacuous until there is history — the repository has no commits.
 - `check:spelling` is outside `check:all`: `cspell` has no project dictionary and reports
   several hundred unknown words, which makes it noise rather than a gate. Recorded in
   `CHECK_ALL_EXEMPT` inside `check-gates.mjs`.
 - The Storybook test-runner smoke pass over a _built_ Storybook is not wired. The Vitest browser
   project covers the same stories against the dev build; the static-build-only failure mode is
   uncovered.
-- CI has never run. `.github/workflows/ci.yml` is written and its commands are the ones verified
-  here, but no GitHub Actions runner has executed it.
 - Coverage excludes barrels and `tokens.generated.ts`. Covering a generated union proves nothing.
 - The two a11y waivers are element-scoped exclusions for Base UI's own focus-manager sentinels,
   not rule disables, and both expire 2027-08-01.

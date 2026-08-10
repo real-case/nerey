@@ -18,6 +18,20 @@ const dirname = path.dirname(fileURLToPath(import.meta.url));
 // locking or computed contrast, which is most of what a headless UI library must get right.
 
 export default defineConfig({
+  // Shared by both projects via `extends: true`. The same reasoning as the alias in
+  // .storybook/main.ts: `@nerey/core` must resolve to source, not to whatever was last built.
+  // A test suite that silently depends on a prior `npm run build` passes on a developer's
+  // machine and fails on a clean checkout, which is the worst possible place to learn it.
+  resolve: {
+    alias: [
+      { find: /^@nerey\/core\/mock$/, replacement: path.join(dirname, 'packages/core/src/mock/index.ts') },
+      {
+        find: /^@nerey\/core\/testing$/,
+        replacement: path.join(dirname, 'packages/core/src/testing/index.ts'),
+      },
+      { find: /^@nerey\/core$/, replacement: path.join(dirname, 'packages/core/src/index.ts') },
+    ],
+  },
   test: {
     projects: [
       {

@@ -57,9 +57,28 @@ const config: StorybookConfig = {
   viteFinal: async (viteConfig) => {
     const { mergeConfig } = await import('vite');
     return mergeConfig(viteConfig, {
-      // npm workspaces symlink packages into node_modules; resolving through to the real
-      // path is what keeps HMR and docgen pointed at source rather than at dist.
-      resolve: { preserveSymlinks: false },
+      resolve: {
+        // `@nerey/core` resolves to SOURCE, mirroring the `paths` mapping in tsconfig.json.
+        //
+        // Without this, the workspace symlink sends resolution through core's `exports` map to
+        // `dist/index.js` — so the workbench renders whatever was last built, and a change to
+        // core is invisible until someone rebuilds. Worse, it makes the story suite depend on a
+        // build having happened: it passed locally only because `dist` was lying around, and
+        // failed in CI, where the test job has no build step (ADR 0006).
+        //
+        // The alias is ordered before `preserveSymlinks` on purpose — it must win.
+        alias: [
+          { find: /^@nerey\/core\/mock$/, replacement: join(repoRoot, 'packages/core/src/mock/index.ts') },
+          {
+            find: /^@nerey\/core\/testing$/,
+            replacement: join(repoRoot, 'packages/core/src/testing/index.ts'),
+          },
+          { find: /^@nerey\/core$/, replacement: join(repoRoot, 'packages/core/src/index.ts') },
+        ],
+        // npm workspaces symlink packages into node_modules; resolving through to the real
+        // path is what keeps HMR and docgen pointed at source rather than at dist.
+        preserveSymlinks: false,
+      },
       server: { fs: { allow: [repoRoot] } },
     });
   },
