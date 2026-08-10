@@ -1,0 +1,363 @@
+/*
+ * ADR 0024 / 0025. Every value is a token read WITH an inline fallback, and nothing is
+ * inherited — the popup is portalled to `<body>`, where the host's reset (if it has one) is
+ * least likely to reach.
+ *
+ * `--anchor-width`, `--available-width`, `--available-height` and `--transform-origin` are Base
+ * UI's own custom properties, declared on Positioner each time it measures. They carry no
+ * fallback: the token gate governs `--nerey-*`, and every one of these degrades to the
+ * property's initial value, which is the right answer before a measurement exists.
+ */
+
+/* ── Trigger ───────────────────────────────────────────────────────────────────────────── */
+
+.trigger {
+  /* Per-instance overrides land on these three, so a caller can nudge one field through CSS
+   * custom properties without a className (ADR 0026). */
+  --_bg: var(--nerey-surface-raised, #ffffff);
+  --_fg: var(--nerey-text-primary, #151d24);
+  --_border: var(--nerey-border-default, #bcc7d0);
+
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--nerey-space-2, 0.5rem);
+
+  margin: 0;
+  padding-block: 0;
+  padding-inline: var(--nerey-space-3, 0.75rem);
+
+  font-family: inherit;
+  font-size: var(--nerey-font-size-md, 0.875rem);
+  font-weight: var(--nerey-font-weight-normal, 400);
+  line-height: var(--nerey-line-height-tight, 1.25);
+  text-align: start;
+
+  /* A select in a form column should fill it; a select in a toolbar should not stretch. The
+   * minimum is the control height so the field never collapses to its chevron. */
+  inline-size: 100%;
+  min-inline-size: var(--nerey-control-height-lg, 2.5rem);
+  block-size: var(--nerey-control-height-md, 2.125rem);
+
+  border: var(--nerey-border-width, 1px) solid var(--_border);
+  border-radius: var(--nerey-radius-md, 0.375rem);
+  background: var(--_bg);
+  color: var(--_fg);
+
+  appearance: none;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background-color var(--nerey-duration-fast, 140ms) var(--nerey-ease-standard, ease),
+    border-color var(--nerey-duration-fast, 140ms) var(--nerey-ease-standard, ease),
+    color var(--nerey-duration-fast, 140ms) var(--nerey-ease-standard, ease);
+}
+
+/* `:focus-visible` rather than `:focus` so a pointer click does not paint a ring, but the ring
+ * is never suppressed outright — a keyboard user has no other way to know where they are. */
+.trigger:focus-visible {
+  outline: var(--nerey-focus-ring-width, 2px) solid var(--nerey-border-focus, #138171);
+  outline-offset: var(--nerey-focus-ring-offset, 2px);
+}
+
+.trigger:hover:not([data-disabled]):not([data-readonly]) {
+  --_border: var(--nerey-border-strong, #92a3b1);
+}
+
+.trigger[data-popup-open] {
+  --_border: var(--nerey-border-accent, #1fa18c);
+}
+
+.trigger[data-disabled] {
+  --_bg: var(--nerey-surface-muted, #eceff2);
+  cursor: not-allowed;
+  opacity: var(--nerey-opacity-disabled, 0.45);
+}
+
+.trigger[data-readonly] {
+  --_bg: var(--nerey-surface-sunken, #f6f8f9);
+  cursor: default;
+}
+
+.triggerSizeSm {
+  block-size: var(--nerey-control-height-sm, 1.75rem);
+  padding-inline: var(--nerey-space-2, 0.5rem);
+  font-size: var(--nerey-font-size-sm, 0.8125rem);
+}
+
+.value {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * `--nerey-text-secondary`, not `--nerey-text-muted`. Muted measures 4.08:1 on the canvas in
+ * light, and placeholder text is the trigger's accessible content until something is chosen —
+ * the axe gate holds it to 4.5:1 like any other normal-size text (ADR 0032).
+ */
+.value[data-placeholder] {
+  color: var(--nerey-text-secondary, #445461);
+}
+
+.icon {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  color: var(--nerey-text-secondary, #445461);
+  transition: transform var(--nerey-duration-fast, 140ms) var(--nerey-ease-standard, ease);
+}
+
+.icon > svg {
+  display: block;
+}
+
+.icon[data-popup-open] {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .icon {
+    transition: none;
+  }
+}
+
+/* ── Positioner ────────────────────────────────────────────────────────────────────────── */
+
+/*
+ * Constraint only — no fill, no border, no shadow (ADR 0025). The flex column is what lets the
+ * Popup shrink to `--available-height` rather than overflow it: a percentage `max-block-size`
+ * against an auto-height parent resolves to `none`.
+ */
+.positioner {
+  z-index: var(--nerey-z-popover, 1100);
+  display: flex;
+  flex-direction: column;
+  min-inline-size: var(--anchor-width);
+  max-inline-size: var(--available-width);
+  max-block-size: var(--available-height);
+  outline: none;
+}
+
+/*
+ * Base UI does NOT unmount a closed select — it force-mounts the positioner and hides it with
+ * the `hidden` attribute, because the closed trigger's typeahead needs the item labels to still
+ * exist. The UA rule that makes `hidden` mean anything is `[hidden] { display: none }`, and the
+ * `display: flex` above is an author declaration, so it wins on origin no matter the
+ * specificity. Without this line the attribute does nothing: a closed select leaves its entire
+ * option list laid out at `opacity: 0`, exposed to assistive technology and to axe as a
+ * stranded `role="listbox"` that no combobox points at any more, and scrollable with no way to
+ * reach it. It is invisible on screen, which is exactly why it survives review.
+ */
+.positioner[hidden] {
+  display: none;
+}
+
+/* ── Popup ─────────────────────────────────────────────────────────────────────────────── */
+
+.popup {
+  box-sizing: border-box;
+  position: relative;
+  min-block-size: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+
+  margin: 0;
+  padding-block: var(--nerey-space-1, 0.25rem);
+  padding-inline: var(--nerey-space-1, 0.25rem);
+
+  font-family: var(--nerey-font-sans, ui-sans-serif, system-ui, sans-serif);
+  font-size: var(--nerey-font-size-md, 0.875rem);
+  line-height: var(--nerey-line-height-tight, 1.25);
+  color: var(--nerey-text-primary, #151d24);
+
+  border: var(--nerey-border-width, 1px) solid var(--nerey-border-subtle, #dbe1e6);
+  border-radius: var(--nerey-radius-lg, 0.5rem);
+  background: var(--nerey-surface-raised, #ffffff);
+  box-shadow: var(--nerey-shadow-lg, 0 12px 32px -8px rgb(21 29 36 / 0.18));
+
+  outline: none;
+  transform-origin: var(--transform-origin);
+  transition:
+    opacity var(--nerey-duration-fast, 140ms) var(--nerey-ease-emphasized, ease),
+    transform var(--nerey-duration-fast, 140ms) var(--nerey-ease-emphasized, ease);
+}
+
+.popup[data-starting-style],
+.popup[data-ending-style] {
+  opacity: 0;
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .popup {
+    transition: none;
+  }
+
+  .popup[data-starting-style],
+  .popup[data-ending-style] {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/*
+ * The `sm` popup is set from the Root's size context rather than inherited from the trigger:
+ * the popup is portalled to `<body>`, so it is not a descendant of the trigger in any sense the
+ * cascade can see.
+ */
+.popupSizeSm {
+  font-size: var(--nerey-font-size-sm, 0.8125rem);
+}
+
+.popupSizeSm .item {
+  padding-block: var(--nerey-space-1, 0.25rem);
+}
+
+.popupSizeSm .groupLabel {
+  padding-block: var(--nerey-space-1, 0.25rem) 0;
+}
+
+/* ── Items ─────────────────────────────────────────────────────────────────────────────── */
+
+/*
+ * The check sits in a trailing track that is always present, so a row does not shift when its
+ * indicator mounts and unmounts. An explicit second column exists whether or not anything is
+ * placed in it, which is the property this relies on.
+ */
+.item {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 1fr var(--nerey-space-4, 1rem);
+  align-items: center;
+  gap: var(--nerey-space-2, 0.5rem);
+
+  margin: 0;
+  padding-block: var(--nerey-space-2, 0.5rem);
+  padding-inline: var(--nerey-space-2, 0.5rem);
+
+  font: inherit;
+  color: var(--nerey-text-primary, #151d24);
+  border-radius: var(--nerey-radius-sm, 0.25rem);
+  cursor: default;
+  user-select: none;
+  outline: none;
+  scroll-margin-block: var(--nerey-space-6, 1.5rem);
+}
+
+/*
+ * `data-highlighted` covers pointer hover AND arrow-key navigation, so it has to read as a
+ * focus indicator rather than a hover tint — a one-step background change measures about 1.1:1
+ * against the popup, below the 3:1 WCAG 1.4.11 asks of a non-text indicator. The accent fill is
+ * Button's `solid` pairing, measured at 4.76:1 light and 5.30:1 dark (ADR 0032).
+ */
+.item[data-highlighted]:not([data-disabled]) {
+  background: var(--nerey-surface-accent, #138171);
+  color: var(--nerey-text-on-accent, #ffffff);
+}
+
+/*
+ * Selection and highlight are different things and are shown differently on purpose: the check
+ * says which option is committed, the fill says which one the keyboard is on. A user arrowing
+ * past the current selection must still be able to see where the selection was.
+ */
+.item[data-selected]:not([data-highlighted]) {
+  background: var(--nerey-surface-selected, #eefbf7);
+  color: var(--nerey-text-accent, #12675c);
+}
+
+.item[data-disabled] {
+  color: var(--nerey-text-disabled, #92a3b1);
+  cursor: not-allowed;
+}
+
+.itemText {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.itemIndicator {
+  display: flex;
+  grid-column: 2;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--nerey-space-4, 1rem);
+  block-size: var(--nerey-space-4, 1rem);
+}
+
+.itemIndicator > svg {
+  display: block;
+}
+
+/* ── Structure ─────────────────────────────────────────────────────────────────────────── */
+
+.group {
+  display: block;
+}
+
+.groupLabel {
+  padding-block: var(--nerey-space-2, 0.5rem) var(--nerey-space-1, 0.25rem);
+  padding-inline: var(--nerey-space-2, 0.5rem);
+
+  font-size: var(--nerey-font-size-xs, 0.75rem);
+  font-weight: var(--nerey-font-weight-semibold, 600);
+  line-height: var(--nerey-line-height-tight, 1.25);
+  letter-spacing: var(--nerey-letter-spacing-wide, 0.02em);
+  color: var(--nerey-text-secondary, #445461);
+  text-transform: uppercase;
+  user-select: none;
+}
+
+/* ── Scroll affordances ────────────────────────────────────────────────────────────────── */
+
+/*
+ * Sticky rather than absolutely positioned: the arrows have to stay pinned to the popup's own
+ * padding box while the option list scrolls beneath them, and the popup is the scroll container.
+ * They are `aria-hidden` inside Base UI, so they never enter the listbox's owned children.
+ */
+.scrollArrow {
+  position: sticky;
+  z-index: var(--nerey-z-raised, 10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  block-size: var(--nerey-space-5, 1.25rem);
+  color: var(--nerey-text-secondary, #445461);
+  background: var(--nerey-surface-raised, #ffffff);
+}
+
+.scrollArrow > svg {
+  display: block;
+}
+
+.scrollArrowUp {
+  inset-block-start: 0;
+}
+
+.scrollArrowDown {
+  inset-block-end: 0;
+}
+
+/* Base UI mounts both arrows and toggles `data-visible`; without this they would sit in the
+ * popup as two permanent blank strips. */
+.scrollArrow:not([data-visible]) {
+  display: none;
+}
+
+/* Forced-colors mode drops backgrounds, and with them the highlight — the whole keyboard
+ * affordance. `Highlight` is the system pair the mode provides for exactly this. */
+@media (forced-colors: active) {
+  .item[data-highlighted]:not([data-disabled]) {
+    background: Highlight;
+    color: HighlightText;
+  }
+
+  .popup {
+    border-color: CanvasText;
+  }
+}

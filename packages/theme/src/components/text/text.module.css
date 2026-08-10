@@ -1,0 +1,100 @@
+/*
+ * ADR 0024 / 0025. Every value is a token read WITH an inline fallback, and the base rule
+ * normalises the element rather than trusting one: `as` can produce an `<h1>` or a `<p>`, both
+ * of which arrive with a user-agent margin and — for headings — a user-agent font-size that
+ * would make `size` a suggestion instead of a setting.
+ */
+
+.root {
+  box-sizing: border-box;
+
+  margin: 0;
+  padding: 0;
+
+  font-family: var(--nerey-font-sans, ui-sans-serif, system-ui, sans-serif);
+  font-size: var(--nerey-font-size-md, 0.875rem);
+  font-weight: var(--nerey-font-weight-normal, 400);
+  line-height: var(--nerey-line-height-normal, 1.5);
+  color: var(--nerey-text-primary, #151d24);
+
+  /* `font-style` is deliberately NOT reset: `as="em"` should still be italic. The element was
+   * chosen for its meaning, and italics are that meaning's conventional rendering. */
+}
+
+/* ── Size ──────────────────────────────────────────────────────────────────────────────
+ * `md` is the base rule's value and therefore has no class of its own. */
+
+.sizeXs {
+  font-size: var(--nerey-font-size-xs, 0.75rem);
+}
+
+.sizeSm {
+  font-size: var(--nerey-font-size-sm, 0.8125rem);
+}
+
+.sizeLg {
+  font-size: var(--nerey-font-size-lg, 1rem);
+}
+
+/* The largest step is the only one that gets a tighter leading. At 1.125rem the normal 1.5
+ * ratio opens gaps a reader's eye has to jump, which is the opposite of what a title needs. */
+.sizeXl {
+  font-size: var(--nerey-font-size-xl, 1.125rem);
+  line-height: var(--nerey-line-height-tight, 1.25);
+}
+
+/* ── Tone ──────────────────────────────────────────────────────────────────────────────
+ * Semantic roles, never shades. `primary` is the base rule's value. */
+
+.toneSecondary {
+  color: var(--nerey-text-secondary, #445461);
+}
+
+.toneMuted {
+  color: var(--nerey-text-muted, #556777);
+}
+
+.toneAccent {
+  color: var(--nerey-text-accent, #12675c);
+}
+
+.toneDanger {
+  color: var(--nerey-text-danger, #a52822);
+}
+
+.toneSuccess {
+  color: var(--nerey-text-success, #17693e);
+}
+
+/* ── Weight ────────────────────────────────────────────────────────────────────────────
+ * `normal` is the base rule's value — including for `as="strong"`, whose user-agent bold is
+ * overridden on purpose so that importance and appearance stay independently choosable. */
+
+.weightMedium {
+  font-weight: var(--nerey-font-weight-medium, 500);
+}
+
+.weightSemibold {
+  font-weight: var(--nerey-font-weight-semibold, 600);
+}
+
+/* ── Modifiers ─────────────────────────────────────────────────────────────────────────
+ * `display: block` is part of the truncation, not decoration: `text-overflow` needs a block
+ * container to have an overflow to clip, and `as="span"` would otherwise silently do nothing.
+ * `min-inline-size: 0` covers the flex-child case, where `min-width: auto` would let the text
+ * push its container wide enough that there is never any overflow to ellipsise. */
+
+.truncate {
+  display: block;
+  min-inline-size: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* `font-variant-numeric` rides along because the reason to ask for mono is almost always a
+ * column of numbers that has to line up. */
+.mono {
+  font-family: var(--nerey-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-variant-numeric: tabular-nums;
+}

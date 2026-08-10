@@ -1,0 +1,162 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Widgets/Overview" />
+
+# The theme's widget catalog
+
+A widget is a `WidgetRegistryEntry` — a `type@version`, a component, a placement and a lifecycle
+(ADR 0009). `@nerey/core` ships exactly two of them, `text` and `confirmation`, because they are
+the minimum pair that makes core's own contracts executable and neither embodies a visual
+decision (ADR 0035). Everything else is a design decision, and design decisions live here.
+
+The catalog is `themeWidgets`, exported from `@nerey/theme`. Compose it after core's:
+
+```tsx
+import { builtInWidgets, composeRegistries } from '@nerey/core';
+import { themeWidgets } from '@nerey/theme';
+
+const registry = composeRegistries({ override: true }, builtInWidgets, themeWidgets);
+```
+
+`{ override: true }` is not boilerplate. Two entries in this catalog — `text` and `confirmation` —
+register at the same `type@version` as core's built-ins, because they are **styled replacements**
+rather than new widgets: a producer emits `confirmation@1.0.0` and gets whichever entry the
+registry resolved, against the same payload contract either way. Later wins, so the theme's
+versions take those two keys and the rest of the catalog is added alongside. Without the flag the
+duplicate throws — which is the right default everywhere else, since two people registering the
+same key is almost never deliberate.
+
+Dropping `@nerey/theme` therefore degrades to headless widgets rather than to missing ones, and a
+consumer who wants the theme's look for everything except one widget composes their own entry last.
+
+## What every widget in here guarantees
+
+- **No I/O.** The only outbound channel is `onInteraction(action, { text, meta })` and the only
+  persistence is `useWidgetState` (ADR 0014 / 0015 / 0016). A lint rule enforces it, so a widget
+  that grows a `fetch` fails the build rather than the review.
+- **The message reads like a person wrote it.** The agent receives `text` as user input, so it is
+  `Archive` or `3 — Xi'an Huawei Technologies`, never a serialised selection. `meta` carries the
+  structured form for the host to log or forward.
+- **Acted upon means disabled, not removed** (ADR 0018 / FR-24). Every interactive entry here uses
+  `afterExpiry: 'snapshot'`: the widget stays in the transcript, read-only, showing what was
+  chosen. Hiding it would erase the exchange; replacing it with its fallback text would erase
+  which button was pressed.
+- **`readonly` is terminal.** A replayed or disabled conversation renders the final appearance and
+  fires nothing.
+- **Styling is the theme's, structure is core's.** Every region carries `data-nerey-part`, every
+  root carries `data-nerey-widget` / `-version` / `-slot` / `-status` and a `data-state` from the
+  fixed vocabulary (ADR 0020), so a consumer can restyle any of this without a class name.
+
+---
+
+## Input & clarification
+
+The agent needs something from the user before it can continue. These are the widgets that replace
+"please reply with one of the following" — the model asks in structured form and the user answers
+in one gesture, and what reaches the agent is still a sentence.
+
+| Widget       | `type@version`       | Payload                                                               | Sends back                                                       | Lifecycle                                                                           |
+| ------------ | -------------------- | --------------------------------------------------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Choice chips | `choice-chips@1.0.0` | A prompt and a short list of choices; optionally multi-select         | The chosen label(s) as a reply, `meta.selected` with the values  | `persist: 'forever'`, expires on interaction **or** on the next message, `snapshot` |
+| Poll         | `poll@1.0.0`         | A question and its options                                            | The chosen option's label, `meta.selected` with the value        | `persist: 'forever'`, expires on `submit`, `snapshot`                               |
+| Form         | `form@1.0.0`         | A field list — text, choice and the rest — with labels and validation | A readable summary of the answers, `meta.values` with the record | `persist: 'forever'`, expires on `submit`, `snapshot`                               |
+| Filter panel | `filter-panel@1.0.0` | Facets and their options, plus a free-text query                      | The query as a search, `meta.filters` with the selection         | `persist: 'ephemeral'`, expires on `search` or on the next message, `hide`          |
+
+The difference between chips and a poll is the expiry, not the layout. Chips also expire
+`{ on: 'message' }`, because a quick reply that scrolled three turns up is no longer a reply to
+anything; a poll the user has not answered stays answerable indefinitely, because the question was
+asked deliberately and the answer is still wanted.
+
+The filter panel is the one entry in the catalog that is not placed in the transcript. It sits in
+`{ slot: 'input', position: 'above' }` — attached to the composer, because it refines what the
+user is about to send rather than answering what the agent already said (ADR 0017). Its lifecycle
+follows from that placement rather than from taste: a half-built filter is not a fact about the
+conversation, so it persists only `ephemeral`ly, and once the search is sent it is `hide`-d rather
+than snapshotted, because a spent composer control left above the input is clutter, not a record.
+
+## Data display
+
+The agent has something to show. Nothing here asks a question, and the interactions that do exist —
+quoting a source, sorting a column — are about reading, not deciding.
+
+| Widget     | `type@version`     | Payload                                                   | Sends back                                                       | Lifecycle                                           |
+| ---------- | ------------------ | --------------------------------------------------------- | ---------------------------------------------------------------- | --------------------------------------------------- |
+| Text       | `text@1.0.0`       | `{ content: string }`                                     | Nothing                                                          | `NEVER_EXPIRES`                                     |
+| Citations  | `citations@1.0.0`  | A list of sources with titles, URLs and optional snippets | A request to quote the chosen source, `meta` with its id and URL | `persist: 'forever'`, no expiry rules, `snapshot`   |
+| Data table | `data-table@1.0.0` | Columns and rows, with an optional initial sort           | Nothing — sorting is local reading state                         | `persist: 'ephemeral'`, no expiry rules, `snapshot` |
+
+The data table is the catalog's only `persist: 'ephemeral'` entry in the transcript, and the
+distinction is worth reading twice: which column a reader sorted by is not a fact about the
+conversation the way an answer is, so it is allowed not to survive the session. The rows, which
+are, live in the payload and always survive.
+
+`text` is the one every conversation uses whether or not anyone registers it: a message with no
+widget envelope is rendered through a `text@1.0.0` envelope that `resolveEnvelope` synthesises for
+it (ADR 0008), so this entry is what paints ordinary assistant prose. It renders **through the
+host's injected fallback renderer** and bundles no markdown of its own (ADR 0012 / 0037) — the
+consumer's pipeline already encodes their sanitisation and link policy, and shipping a second one
+would make that decision for an application the theme knows nothing about. What the theme
+contributes is the box: prose typography, list markers, code and table styling, and
+`overflow-wrap: anywhere` so a pasted URL cannot widen the transcript.
+
+Citations never expire. A source is worth checking precisely when the reader has stopped trusting
+the answer, which is usually several turns after it was given.
+
+## Actions & confirmations
+
+The agent is about to do something irreversible and wants a decision first.
+
+| Widget       | `type@version`       | Payload                                                                  | Sends back                                                                | Lifecycle                                                |
+| ------------ | -------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------- | -------------------------------------------------------- |
+| Confirmation | `confirmation@1.0.0` | `title`, optional `description`, optional button labels, optional `tone` | The pressed button's label, `meta.decision` of `confirmed` or `cancelled` | `persist: 'forever'`, expires on interaction, `snapshot` |
+
+`tone: 'danger'` is the field core validates and refuses to render, because it is a presentation
+hint and core ships no presentation. Here it becomes a red confirm button, a warning glyph and a
+red panel edge — three cues, so colour is never the only carrier of the meaning.
+
+The ARIA is written by hand and is not optional: the panel is a `role="group"` named by its own
+title through `aria-labelledby` and described by its body. Nothing outside the component could
+establish that relationship, so if it is not done here the widget ships an unnamed group.
+
+## Progress & status
+
+What a long-running agent turn is actually doing, while it is doing it.
+
+| Widget    | `type@version`    | Payload                                                 | Sends back                               | Lifecycle                                         |
+| --------- | ----------------- | ------------------------------------------------------- | ---------------------------------------- | ------------------------------------------------- |
+| Task tree | `task-tree@1.0.0` | Nested tasks, each with a status and an optional detail | Nothing — collapsing a branch is reading | `persist: 'forever'`, no expiry rules, `snapshot` |
+
+Progress is the hardest thing for a widget to own honestly, and the shape of the entry says how it
+is resolved. A widget performs no I/O (ADR 0015), so it cannot poll for its own status: the host
+pushes updates in by re-rendering the message with a fuller payload as the run advances, which is
+what `status: 'streaming'` exists for (ADR 0019). Nothing expires the tree — `{ on: 'message' }`
+would freeze it exactly when a long run is still streaming rows into it — and `persist: 'forever'`
+because "what did it actually do" is a question asked days later.
+
+For status inside a widget of your own, the component layer has the parts: `Progress` for a
+determinate bar, `Meter` for a measured value, `Spinner` and `Skeleton` for indeterminate waits,
+and `Badge` for a status pill.
+
+## Navigation
+
+**Not covered, on purpose.** Navigation is routing, and routing belongs to the host. A widget
+cannot call a router — that would be I/O by another name, and it is the specific coupling that
+makes a widget unportable between hosts (ADR 0015). What a widget can do is send a message the
+agent acts on, which is what the citation list does when it asks for a source to be quoted.
+
+If an application wants a link that navigates, it renders one in its own shell around the
+transcript, or it registers a widget of its own whose `onInteraction` the host translates into a
+route change. Nerey does not need to be in that path.
+
+## Multimodal
+
+**Not covered.** Images, audio and file attachments reach the transcript through the host's
+message pipeline, not through a widget: the fallback renderer already places whatever media the
+consumer's markdown emits, and this theme styles it (`img`, `svg` and `video` are laid out by the
+`text` widget's stylesheet). A dedicated media widget would need an upload path, a URL policy and
+a transport, all three of which Nerey deliberately does not have (ADR 0037).
+
+The honest summary: of the six categories, four are covered and two are empty because they belong
+to the host rather than to a widget. Adding a widget is one entry and one line in
+`widgets/catalog.ts` — and the catalog is a snapshot, so read the file rather than this page if
+the two disagree.

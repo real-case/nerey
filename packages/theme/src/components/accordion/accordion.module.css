@@ -1,0 +1,167 @@
+/*
+ * ADR 0024 / 0025. Every value is a token read WITH an inline fallback, and the box model is
+ * stated rather than inherited — including the heading, which arrives from the UA with a margin
+ * and a font size that have nothing to do with this row.
+ *
+ * Reduced motion follows the rule written out in progress.module.css: all timing lives in
+ * `--_motion`, every transition reads it, and the `prefers-reduced-motion` block does nothing but
+ * set it to `0s` — zero rather than `none`, because Base UI keeps a panel mounted until the
+ * transition it started finishes.
+ */
+
+.root {
+  --_motion: var(--nerey-duration-fast, 140ms);
+
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+
+  font-family: inherit;
+  inline-size: 100%;
+  border: var(--nerey-border-width, 1px) solid var(--nerey-border-subtle, #dbe1e6);
+  border-radius: var(--nerey-radius-lg, 0.5rem);
+  background: var(--nerey-surface-raised, #ffffff);
+}
+
+/*
+ * The rule between items is drawn by the item BELOW, so the first one has no stray line above it
+ * and the last one none below — the alternative, a border on every item plus an override for the
+ * last, breaks the moment items are reordered or one is conditionally rendered.
+ */
+.item + .item {
+  border-block-start: var(--nerey-border-width, 1px) solid var(--nerey-border-subtle, #dbe1e6);
+}
+
+.header {
+  box-sizing: border-box;
+  display: block;
+  margin: 0;
+  padding: 0;
+  /* The heading level is document structure; the size is not. Both trigger and header inherit the
+   * body scale so an `<h2>` section and an `<h4>` one are the same row (ADR 0026). */
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+}
+
+/* ── Trigger ───────────────────────────────────────────────────────────────────────────
+ * Full-width, unlike Collapsible's inline one: here the trigger IS the row, and a click anywhere
+ * along it should open the section rather than only a click on the words.
+ */
+
+.trigger {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--nerey-space-4, 1rem);
+
+  inline-size: 100%;
+  margin: 0;
+  padding-block: var(--nerey-space-3, 0.75rem);
+  padding-inline: var(--nerey-space-4, 1rem);
+
+  font-family: inherit;
+  font-size: var(--nerey-font-size-md, 0.875rem);
+  font-weight: var(--nerey-font-weight-medium, 500);
+  line-height: var(--nerey-line-height-normal, 1.5);
+  text-align: start;
+
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--nerey-text-primary, #151d24);
+
+  appearance: none;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color var(--_motion) var(--nerey-ease-standard, ease);
+}
+
+.trigger:hover:not([data-disabled]):not(:disabled) {
+  background: var(--nerey-surface-hover, #eceff2);
+}
+
+/* The ring is drawn inside the row and raised above its neighbours: an outset ring on a
+ * full-bleed row is clipped by the accordion's own border on both sides. */
+.trigger:focus-visible {
+  position: relative;
+  z-index: var(--nerey-z-raised, 10);
+  outline: var(--nerey-focus-ring-width, 2px) solid var(--nerey-border-focus, #138171);
+  outline-offset: calc(var(--nerey-focus-ring-offset, 2px) * -1);
+}
+
+.trigger[data-disabled],
+.trigger:disabled {
+  cursor: not-allowed;
+  opacity: var(--nerey-opacity-disabled, 0.45);
+}
+
+.triggerLabel {
+  display: block;
+  min-inline-size: 0;
+}
+
+/* `data-panel-open`, NOT `data-open` — Base UI names the trigger's attribute after the thing it
+ * controls. The wrong one produces a chevron that never turns and nothing in the console. */
+.indicator {
+  display: inline-flex;
+  flex: none;
+  color: var(--nerey-text-muted, #6d8091);
+  transition: rotate var(--_motion) var(--nerey-ease-standard, ease);
+}
+
+.trigger[data-panel-open] .indicator {
+  rotate: 180deg;
+}
+
+/* ── Panel ─────────────────────────────────────────────────────────────────────────────
+ * Base UI measures the content and publishes `--accordion-panel-height` here — note the name:
+ * it is NOT `--collapsible-panel-height`, even though an accordion item is a collapsible
+ * underneath. The two transition endpoints are that height and zero.
+ */
+
+.panel {
+  box-sizing: border-box;
+  display: block;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+
+  font-size: var(--nerey-font-size-md, 0.875rem);
+  line-height: var(--nerey-line-height-normal, 1.5);
+  color: var(--nerey-text-secondary, #445461);
+
+  block-size: var(--accordion-panel-height, auto);
+  transition: block-size var(--_motion) var(--nerey-ease-standard, ease);
+}
+
+/* An author `display` outranks the UA rule behind the `hidden` attribute, so a panel that states
+ * its own display — as ADR 0025 requires — has to restate the hiding too. `until-found` is
+ * excluded: that value is meant to stay laid out so find-in-page can reach it. */
+.panel[hidden]:not([hidden='until-found']) {
+  display: none;
+}
+
+.panel[data-starting-style],
+.panel[data-ending-style] {
+  block-size: 0;
+}
+
+/* Padding lives here rather than on `.panel`: a padded box cannot animate to zero height, it
+ * stops at the padding and leaves a strip of empty panel behind. The block-start padding is
+ * absent because the trigger's own block-end padding already separates the two. */
+.panelContent {
+  box-sizing: border-box;
+  padding-block-start: 0;
+  padding-block-end: var(--nerey-space-4, 1rem);
+  padding-inline: var(--nerey-space-4, 1rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root {
+    --_motion: 0s;
+  }
+}

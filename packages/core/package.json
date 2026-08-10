@@ -1,0 +1,56 @@
+{
+  "name": "@nerey/core",
+  "version": "0.1.0",
+  "description": "Headless generative UI for React \u2014 widget registry, lifecycle runtime, and a data-attribute styling contract. Ships zero CSS.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./mock": {
+      "types": "./dist/mock/index.d.ts",
+      "default": "./dist/mock/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing/index.d.ts",
+      "default": "./dist/testing/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "vite build && tsc -p tsconfig.build.json && node ../../scripts/fix-dts-specifiers.mjs .",
+    "dev": "vite build --watch"
+  },
+  "dependencies": {
+    "@standard-schema/spec": "^1.1.0"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "keywords": [
+    "generative-ui",
+    "headless",
+    "react",
+    "ai",
+    "chat",
+    "widgets"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependenciesMeta": {
+    "react-dom": {
+      "optional": true
+    }
+  }
+}

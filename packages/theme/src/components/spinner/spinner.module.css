@@ -1,0 +1,83 @@
+/*
+ * ADR 0024 / 0025. Every value is a token read WITH an inline fallback, and the box model is
+ * stated rather than inherited.
+ */
+
+.root {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  /* The arc paints in `currentColor`, so a spinner inside a solid button, a danger banner or a
+   * paragraph of body copy is already the right colour with no tone axis to set. */
+  color: inherit;
+}
+
+.glyph {
+  display: block;
+  flex: none;
+  inline-size: var(--nerey-space-5, 1.25rem);
+  block-size: var(--nerey-space-5, 1.25rem);
+
+  /* Four times the "normal" transition step. The motion tokens are scaled for state changes;
+   * a spinner turning once every 220ms reads as a flicker rather than as progress, and the
+   * multiplication keeps the value tied to the scale instead of being a number someone typed. */
+  animation: nereySpin calc(var(--nerey-duration-normal, 220ms) * 4) linear infinite;
+}
+
+.track {
+  fill: none;
+  stroke: var(--nerey-border-subtle, #dbe1e6);
+  stroke-width: 1.5;
+}
+
+.arc {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+/* ── Sizes ─────────────────────────────────────────────────────────────────────────────
+ * `md` is the base rule's value. There is no icon-size scale in tokens.css, so these read the
+ * space scale — the closest existing tokens (ADR 0024) rather than three invented lengths. */
+
+.sizeSm .glyph {
+  inline-size: var(--nerey-space-4, 1rem);
+  block-size: var(--nerey-space-4, 1rem);
+}
+
+.sizeLg .glyph {
+  inline-size: var(--nerey-space-8, 2rem);
+  block-size: var(--nerey-space-8, 2rem);
+}
+
+@keyframes nereySpin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+/*
+ * `prefers-reduced-motion` is honoured, but NOT by removing the animation.
+ *
+ * A spinner's motion is its information: a static arc says "there is an arc here", not "this is
+ * still working", and the reader who set the preference is the one least able to guess. So the
+ * rotation — which is the part that provokes vestibular symptoms, because it is movement across
+ * the screen — is replaced with an opacity pulse, which carries the same "still working" signal
+ * with no motion at all. Slower, too: nothing here needs to be noticed twice a second.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .glyph {
+    animation: nereyPulse calc(var(--nerey-duration-normal, 220ms) * 6) var(--nerey-ease-standard, ease)
+      infinite alternate;
+  }
+}
+
+@keyframes nereyPulse {
+  to {
+    opacity: var(--nerey-opacity-dimmed, 0.55);
+  }
+}

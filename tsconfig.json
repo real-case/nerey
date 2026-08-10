@@ -1,0 +1,32 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "types": ["node", "vitest/globals", "@testing-library/jest-dom"],
+    "baseUrl": ".",
+    // Workspace packages resolve to SOURCE during development. Without this, typechecking
+    // @nerey/theme would require @nerey/core to have been built first, which turns every
+    // clean checkout into a two-step and makes editor feedback depend on a build artifact.
+    "paths": {
+      "@nerey/core": ["./packages/core/src/index.ts"],
+      "@nerey/core/mock": ["./packages/core/src/mock/index.ts"],
+      "@nerey/core/testing": ["./packages/core/src/testing/index.ts"],
+      "@nerey/theme": ["./packages/theme/src/index.ts"]
+    }
+  },
+  "include": [
+    "packages/*/src/**/*.ts",
+    "packages/*/src/**/*.tsx",
+    "packages/*/src/**/*.d.ts",
+    "packages/*/vite.config.ts",
+    ".storybook/**/*.ts",
+    ".storybook/**/*.tsx",
+    "vitest.config.ts",
+    "vitest.setup.ts",
+    "vitest.shims.d.ts"
+  ],
+  "exclude": ["**/dist/**", "node_modules"]
+}

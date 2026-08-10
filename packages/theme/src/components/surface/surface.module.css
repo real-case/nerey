@@ -1,0 +1,86 @@
+/*
+ * ADR 0024 / 0025. Two rules govern every line here:
+ *   1. Every value is a token read WITH an inline fallback, so a consumer who imports
+ *      theme.css without tokens.css still gets a legible panel.
+ *   2. Nothing is inherited. `box-sizing`, `margin` and `border` are set explicitly, because
+ *      Nerey has no idea whether its host ships a reset.
+ */
+
+.root {
+  /* Per-instance overrides land on these three, so a caller can nudge one panel through CSS
+   * custom properties without a className (ADR 0026). */
+  --_bg: transparent;
+  --_border: transparent;
+  --_shadow: none;
+
+  box-sizing: border-box;
+  display: block;
+
+  margin: 0;
+  padding: var(--nerey-space-4, 1rem);
+
+  /* A panel is almost always a flex or grid child, and a flex item's `min-width: auto` lets
+   * long unbroken content push the whole row wider than its container. Overflow inside a
+   * widget is a scrollbar; overflow of the widget is a broken conversation layout. */
+  min-inline-size: 0;
+
+  border: var(--nerey-border-width, 1px) solid var(--_border);
+  border-radius: var(--nerey-radius-lg, 0.5rem);
+  background: var(--_bg);
+  color: var(--nerey-text-primary, #151d24);
+  box-shadow: var(--_shadow);
+}
+
+/* ── Variants ──────────────────────────────────────────────────────────────────────────
+ * Elevation is expressed twice on purpose — a border AND a shadow. Shadows disappear against
+ * a dark canvas and are dropped entirely in forced-colors mode, so a panel that separates
+ * itself from the page only by shadow separates itself from nothing for some readers.
+ */
+
+.raised {
+  --_bg: var(--nerey-surface-raised, #ffffff);
+  --_border: var(--nerey-border-subtle, #dbe1e6);
+  --_shadow: var(--nerey-shadow-sm, 0 1px 2px rgb(21 29 36 / 0.06));
+}
+
+.sunken {
+  --_bg: var(--nerey-surface-sunken, #f6f8f9);
+  --_border: var(--nerey-border-subtle, #dbe1e6);
+}
+
+.outline {
+  --_bg: transparent;
+  --_border: var(--nerey-border-default, #bcc7d0);
+}
+
+/* No fill, no stroke, no shadow — the padding and radius survive so a ghost panel can be
+ * swapped in for a raised one without the content shifting by a pixel. */
+.ghost {
+  --_bg: transparent;
+  --_border: transparent;
+}
+
+/* ── Padding ───────────────────────────────────────────────────────────────────────────
+ * `md` is the base rule's value and therefore has no class of its own. */
+
+.padNone {
+  padding: 0;
+}
+
+.padSm {
+  padding: var(--nerey-space-3, 0.75rem);
+}
+
+.padLg {
+  padding: var(--nerey-space-6, 1.5rem);
+}
+
+/* ── Radius ────────────────────────────────────────────────────────────────────────── */
+
+.radiusMd {
+  border-radius: var(--nerey-radius-md, 0.375rem);
+}
+
+.radiusXl {
+  border-radius: var(--nerey-radius-xl, 0.75rem);
+}

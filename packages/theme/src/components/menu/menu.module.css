@@ -1,0 +1,321 @@
+/*
+ * ADR 0024 / 0025. Every value is a token read WITH an inline fallback, and nothing is
+ * inherited. That matters more here than anywhere else in the theme: the popup is portalled to
+ * `<body>`, which is the one place in the host's document least likely to have its typography,
+ * box model or list styling applied to it.
+ *
+ * `--available-width`, `--available-height` and `--transform-origin` carry no fallback because
+ * they are Base UI's, not Nerey's — the token gate governs `--nerey-*` only, and an unresolved
+ * `max-block-size` computes to `none`, which is exactly the right answer when the popup has not
+ * been measured yet.
+ */
+
+/* ── Trigger ───────────────────────────────────────────────────────────────────────────── */
+
+.trigger {
+  /* Per-instance overrides land on these three, so a caller can nudge one trigger through CSS
+   * custom properties without a className (ADR 0026). */
+  --_bg: var(--nerey-surface-raised, #ffffff);
+  --_fg: var(--nerey-text-primary, #151d24);
+  --_border: var(--nerey-border-default, #bcc7d0);
+
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--nerey-space-2, 0.5rem);
+
+  margin: 0;
+  padding-block: 0;
+  padding-inline: var(--nerey-space-3, 0.75rem);
+
+  font-family: inherit;
+  font-size: var(--nerey-font-size-md, 0.875rem);
+  font-weight: var(--nerey-font-weight-medium, 500);
+  line-height: var(--nerey-line-height-tight, 1.25);
+  text-align: center;
+  white-space: nowrap;
+
+  block-size: var(--nerey-control-height-md, 2.125rem);
+  border: var(--nerey-border-width, 1px) solid var(--_border);
+  border-radius: var(--nerey-radius-md, 0.375rem);
+  background: var(--_bg);
+  color: var(--_fg);
+
+  appearance: none;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background-color var(--nerey-duration-fast, 140ms) var(--nerey-ease-standard, ease),
+    border-color var(--nerey-duration-fast, 140ms) var(--nerey-ease-standard, ease),
+    color var(--nerey-duration-fast, 140ms) var(--nerey-ease-standard, ease);
+}
+
+/* `:focus-visible` rather than `:focus` so a pointer click does not paint a ring, but the ring
+ * is never suppressed outright — a keyboard user has no other way to know where they are. */
+.trigger:focus-visible {
+  outline: var(--nerey-focus-ring-width, 2px) solid var(--nerey-border-focus, #138171);
+  outline-offset: var(--nerey-focus-ring-offset, 2px);
+}
+
+.trigger:hover:not(:disabled):not([data-disabled]) {
+  --_bg: var(--nerey-surface-hover, #eceff2);
+  --_border: var(--nerey-border-strong, #92a3b1);
+}
+
+/* `data-popup-open` is Base UI's, and it is the reason the trigger can stay lit while the
+ * pointer is over the menu rather than over the button (ADR 0020 — state comes from the
+ * attributes the component already emits, never from a parallel class). */
+.trigger[data-popup-open] {
+  --_bg: var(--nerey-surface-hover, #eceff2);
+  --_border: var(--nerey-border-strong, #92a3b1);
+}
+
+.trigger:disabled,
+.trigger[data-disabled] {
+  cursor: not-allowed;
+  opacity: var(--nerey-opacity-disabled, 0.45);
+}
+
+.triggerGhost {
+  --_bg: transparent;
+  --_fg: var(--nerey-text-secondary, #445461);
+  --_border: transparent;
+}
+
+.triggerGhost:hover:not(:disabled):not([data-disabled]),
+.triggerGhost[data-popup-open] {
+  --_bg: var(--nerey-surface-hover, #eceff2);
+  --_fg: var(--nerey-text-primary, #151d24);
+  --_border: transparent;
+}
+
+.triggerSizeSm {
+  block-size: var(--nerey-control-height-sm, 1.75rem);
+  padding-inline: var(--nerey-space-2, 0.5rem);
+  font-size: var(--nerey-font-size-sm, 0.8125rem);
+}
+
+/* ── Positioner ────────────────────────────────────────────────────────────────────────── */
+
+/*
+ * Constraint only — no fill, no border, no shadow. Base UI absolutely-positions this element
+ * and measures the viewport gap onto it; the flex column is what lets the Popup inside actually
+ * shrink to the constraint instead of overflowing it, because a percentage `max-block-size`
+ * against an auto-height parent resolves to `none`.
+ */
+.positioner {
+  z-index: var(--nerey-z-popover, 1100);
+  display: flex;
+  flex-direction: column;
+  max-inline-size: var(--available-width);
+  max-block-size: var(--available-height);
+  outline: none;
+}
+
+/* ── Popup ─────────────────────────────────────────────────────────────────────────────── */
+
+.popup {
+  box-sizing: border-box;
+  min-block-size: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+
+  margin: 0;
+  padding: var(--nerey-space-1, 0.25rem);
+
+  font-family: var(--nerey-font-sans, ui-sans-serif, system-ui, sans-serif);
+  font-size: var(--nerey-font-size-md, 0.875rem);
+  line-height: var(--nerey-line-height-tight, 1.25);
+  color: var(--nerey-text-primary, #151d24);
+
+  border: var(--nerey-border-width, 1px) solid var(--nerey-border-subtle, #dbe1e6);
+  border-radius: var(--nerey-radius-lg, 0.5rem);
+  background: var(--nerey-surface-raised, #ffffff);
+  box-shadow: var(--nerey-shadow-lg, 0 12px 32px -8px rgb(21 29 36 / 0.18));
+
+  outline: none;
+  /* The popup grows out of the point it is anchored to rather than out of its own centre —
+   * `--transform-origin` is the coordinate pair Base UI computed while positioning. */
+  transform-origin: var(--transform-origin);
+  transition:
+    opacity var(--nerey-duration-fast, 140ms) var(--nerey-ease-emphasized, ease),
+    transform var(--nerey-duration-fast, 140ms) var(--nerey-ease-emphasized, ease);
+}
+
+.popup[data-starting-style],
+.popup[data-ending-style] {
+  opacity: 0;
+  transform: scale(0.97);
+}
+
+/*
+ * The entrance carries no information — it says nothing the open menu does not already say —
+ * so under a reduced-motion preference it is removed rather than softened. Base UI unmounts on
+ * `transitionend` and copes with there being no transition at all.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .popup {
+    transition: none;
+  }
+
+  .popup[data-starting-style],
+  .popup[data-ending-style] {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── Items ─────────────────────────────────────────────────────────────────────────────── */
+
+.item {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--nerey-space-2, 0.5rem);
+
+  margin: 0;
+  padding-block: var(--nerey-space-2, 0.5rem);
+  padding-inline: var(--nerey-space-3, 0.75rem);
+
+  font: inherit;
+  color: var(--nerey-text-primary, #151d24);
+  text-decoration: none;
+  white-space: nowrap;
+
+  border-radius: var(--nerey-radius-sm, 0.25rem);
+  /* An item is not a text field, so the pointer stays an arrow — and the ring is suppressed on
+   * the item itself because Base UI moves DOM focus here on every arrow key, which would paint
+   * a ring on top of the highlight below. The highlight IS the focus indicator. */
+  cursor: default;
+  user-select: none;
+  outline: none;
+  scroll-margin-block: var(--nerey-space-1, 0.25rem);
+}
+
+/*
+ * `data-highlighted` is set for both pointer hover and arrow-key navigation, so it has to read
+ * as a focus indicator, not as a hover tint. A one-step background change measures about 1.1:1
+ * against the popup — below the 3:1 WCAG 1.4.11 asks of a non-text indicator, and invisible in
+ * practice. The solid accent row is the same pairing Button's `solid` variant uses, measured at
+ * 4.76:1 in light and 5.30:1 in dark (ADR 0032).
+ */
+.item[data-highlighted]:not([data-disabled]) {
+  background: var(--nerey-surface-accent, #138171);
+  color: var(--nerey-text-on-accent, #ffffff);
+}
+
+.item[data-disabled] {
+  color: var(--nerey-text-disabled, #92a3b1);
+  cursor: not-allowed;
+}
+
+/*
+ * Two columns, always. The indicator slot keeps its track whether or not a mark is inside it,
+ * which is what stops the label sliding sideways as the box is checked and cleared — Base UI
+ * unmounts the indicator itself when unchecked.
+ */
+.selectableItem {
+  display: grid;
+  grid-template-columns: var(--nerey-space-4, 1rem) 1fr;
+  align-items: center;
+}
+
+.itemIndicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--nerey-space-4, 1rem);
+  block-size: var(--nerey-space-4, 1rem);
+}
+
+.itemIndicator > svg {
+  display: block;
+}
+
+/* The radio's mark is a dot rather than a tick, so the two selection kinds stay tellable apart
+ * at a glance without reading the group they are in. */
+.radioDot {
+  inline-size: var(--nerey-space-2, 0.5rem);
+  block-size: var(--nerey-space-2, 0.5rem);
+  border-radius: var(--nerey-radius-full, 9999px);
+  background: currentColor;
+}
+
+.itemLabel {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Submenus ──────────────────────────────────────────────────────────────────────────── */
+
+.submenuTrigger {
+  display: grid;
+  grid-template-columns: 1fr var(--nerey-space-4, 1rem);
+  align-items: center;
+}
+
+.submenuChevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--nerey-text-secondary, #445461);
+}
+
+.submenuChevron > svg {
+  display: block;
+}
+
+/* Inside a highlighted row the chevron has to leave the secondary colour behind, or it sits at
+ * roughly 1.5:1 against the accent fill. */
+.submenuTrigger[data-highlighted] .submenuChevron,
+.submenuTrigger[data-popup-open] .submenuChevron {
+  color: inherit;
+}
+
+.submenuTrigger[data-popup-open]:not([data-highlighted]) {
+  background: var(--nerey-surface-hover, #eceff2);
+}
+
+/* ── Structure ─────────────────────────────────────────────────────────────────────────── */
+
+.separator {
+  margin-block: var(--nerey-space-1, 0.25rem);
+  margin-inline: 0;
+  block-size: var(--nerey-border-width, 1px);
+  border: 0;
+  background: var(--nerey-border-subtle, #dbe1e6);
+}
+
+.group {
+  display: block;
+}
+
+.groupLabel {
+  padding-block: var(--nerey-space-2, 0.5rem) var(--nerey-space-1, 0.25rem);
+  padding-inline: var(--nerey-space-3, 0.75rem);
+
+  font-size: var(--nerey-font-size-xs, 0.75rem);
+  font-weight: var(--nerey-font-weight-semibold, 600);
+  line-height: var(--nerey-line-height-tight, 1.25);
+  letter-spacing: var(--nerey-letter-spacing-wide, 0.02em);
+  /* `--nerey-text-secondary`, not `--nerey-text-muted`: muted measures 4.08:1 on the canvas in
+   * light, and a group label is normal-size text that the axe gate holds to 4.5:1. */
+  color: var(--nerey-text-secondary, #445461);
+  text-transform: uppercase;
+  user-select: none;
+}
+
+/* Forced-colors mode drops backgrounds, which would take the highlight with it — the whole
+ * keyboard affordance. `Highlight` is the system pair the mode provides for exactly this. */
+@media (forced-colors: active) {
+  .item[data-highlighted]:not([data-disabled]) {
+    background: Highlight;
+    color: HighlightText;
+  }
+
+  .popup {
+    border-color: CanvasText;
+  }
+}

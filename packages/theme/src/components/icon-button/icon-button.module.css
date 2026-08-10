@@ -1,0 +1,173 @@
+/*
+ * ADR 0024 / 0025. Every value is a token read WITH an inline fallback, and nothing is
+ * inherited — `box-sizing`, `margin`, `font` and `appearance` are all set explicitly, because
+ * Nerey has no idea whether its host ships a reset.
+ */
+
+.root {
+  /* Per-instance overrides land on these three, so a caller can nudge one control through CSS
+   * custom properties without a className (ADR 0026). */
+  --_bg: transparent;
+  --_fg: var(--nerey-text-secondary, #445461);
+  --_border: transparent;
+
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  margin: 0;
+  padding: 0;
+
+  /* Square by construction: one token drives both axes, so no size can ever be a rectangle. */
+  inline-size: var(--nerey-control-height-md, 2.125rem);
+  block-size: var(--nerey-control-height-md, 2.125rem);
+  flex: none;
+
+  font-family: inherit;
+  font-size: var(--nerey-font-size-md, 0.875rem);
+  line-height: var(--nerey-line-height-tight, 1.25);
+
+  border: var(--nerey-border-width, 1px) solid var(--_border);
+  border-radius: var(--nerey-radius-md, 0.375rem);
+  background: var(--_bg);
+  color: var(--_fg);
+
+  appearance: none;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background-color var(--nerey-duration-fast, 140ms) var(--nerey-ease-standard, ease),
+    border-color var(--nerey-duration-fast, 140ms) var(--nerey-ease-standard, ease),
+    color var(--nerey-duration-fast, 140ms) var(--nerey-ease-standard, ease);
+}
+
+/* The glyph is the entire content, so it must not be allowed to shrink or to sit on a text
+ * baseline that no longer has any text on it. */
+.root > svg {
+  display: block;
+  flex: none;
+}
+
+/* `:focus-visible` rather than `:focus` so a pointer click does not paint a ring, but the ring
+ * is never suppressed outright — a keyboard user has no other way to know where they are. */
+.root:focus-visible {
+  outline: var(--nerey-focus-ring-width, 2px) solid var(--nerey-border-focus, #138171);
+  outline-offset: var(--nerey-focus-ring-offset, 2px);
+}
+
+.root:disabled,
+.root[data-disabled] {
+  cursor: not-allowed;
+  opacity: var(--nerey-opacity-disabled, 0.45);
+}
+
+/* ── Sizes ─────────────────────────────────────────────────────────────────────────────
+ * `md` is the base rule's value. */
+
+.sizeSm {
+  inline-size: var(--nerey-control-height-sm, 1.75rem);
+  block-size: var(--nerey-control-height-sm, 1.75rem);
+  font-size: var(--nerey-font-size-sm, 0.8125rem);
+}
+
+.sizeLg {
+  inline-size: var(--nerey-control-height-lg, 2.5rem);
+  block-size: var(--nerey-control-height-lg, 2.5rem);
+  font-size: var(--nerey-font-size-lg, 1rem);
+}
+
+/* ── Variant × tone ────────────────────────────────────────────────────────────────────
+ * The two axes are orthogonal: `variant` sets visual weight, `tone` sets which semantic colour
+ * family the weight is drawn from. The default pairing is `ghost` + `neutral` rather than
+ * Button's `solid` + `accent`, because an icon button is nearly always a secondary affordance
+ * sitting in the corner of something else — a toolbar of solid teal squares is a toolbar
+ * nobody can find the primary action in.
+ */
+
+.solid {
+  --_bg: var(--nerey-surface-inverse, #151d24);
+  --_fg: var(--nerey-text-inverse, #f6f8f9);
+  --_border: var(--nerey-surface-inverse, #151d24);
+}
+
+.solid:hover:not(:disabled):not([data-disabled]) {
+  --_bg: var(--nerey-text-secondary, #445461);
+  --_border: var(--nerey-text-secondary, #445461);
+}
+
+.outline {
+  --_bg: var(--nerey-surface-raised, #ffffff);
+  --_fg: var(--nerey-text-primary, #151d24);
+  --_border: var(--nerey-border-default, #bcc7d0);
+}
+
+.outline:hover:not(:disabled):not([data-disabled]) {
+  --_bg: var(--nerey-surface-hover, #eceff2);
+  --_border: var(--nerey-border-strong, #92a3b1);
+}
+
+.ghost {
+  --_bg: transparent;
+  --_fg: var(--nerey-text-secondary, #445461);
+  --_border: transparent;
+}
+
+.ghost:hover:not(:disabled):not([data-disabled]) {
+  --_bg: var(--nerey-surface-hover, #eceff2);
+  --_fg: var(--nerey-text-primary, #151d24);
+}
+
+.toneAccent.solid {
+  --_bg: var(--nerey-surface-accent, #138171);
+  --_fg: var(--nerey-text-on-accent, #ffffff);
+  --_border: var(--nerey-surface-accent, #138171);
+}
+
+.toneAccent.solid:hover:not(:disabled):not([data-disabled]) {
+  --_bg: var(--nerey-surface-accent-hover, #12675c);
+  --_border: var(--nerey-surface-accent-hover, #12675c);
+}
+
+.toneAccent.outline {
+  --_fg: var(--nerey-text-accent, #12675c);
+  --_border: var(--nerey-border-accent, #1fa18c);
+}
+
+.toneAccent.ghost {
+  --_fg: var(--nerey-text-accent, #12675c);
+}
+
+.toneAccent.outline:hover:not(:disabled):not([data-disabled]),
+.toneAccent.ghost:hover:not(:disabled):not([data-disabled]) {
+  --_bg: var(--nerey-surface-accent-subtle, #eefbf7);
+  --_fg: var(--nerey-text-accent, #12675c);
+}
+
+.toneDanger.solid {
+  --_bg: var(--nerey-surface-danger, #c9302a);
+  --_fg: var(--nerey-text-on-accent, #ffffff);
+  --_border: var(--nerey-surface-danger, #c9302a);
+}
+
+.toneDanger.solid:hover:not(:disabled):not([data-disabled]) {
+  --_bg: var(--nerey-surface-danger-hover, #a52822);
+  --_border: var(--nerey-surface-danger-hover, #a52822);
+}
+
+.toneDanger.outline {
+  --_fg: var(--nerey-text-danger, #a52822);
+  --_border: var(--nerey-border-danger, #e2453b);
+}
+
+.toneDanger.outline:hover:not(:disabled):not([data-disabled]) {
+  --_bg: var(--nerey-surface-danger-subtle, #fee2e2);
+}
+
+.toneDanger.ghost {
+  --_fg: var(--nerey-text-danger, #a52822);
+}
+
+.toneDanger.ghost:hover:not(:disabled):not([data-disabled]) {
+  --_bg: var(--nerey-surface-danger-subtle, #fee2e2);
+}

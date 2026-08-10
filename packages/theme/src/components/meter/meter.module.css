@@ -1,0 +1,102 @@
+/*
+ * ADR 0024 / 0025. Every value is a token read WITH an inline fallback, and the box model is
+ * stated rather than inherited.
+ *
+ * The geometry deliberately matches progress.module.css: the two components sit next to each
+ * other in real interfaces, and a meter that is two pixels taller than the progress bar above it
+ * reads as a mistake. The rules are restated rather than shared for the reason IconButton
+ * restates Button's — one edit surface out of two components that must stay free to diverge.
+ *
+ * There is no `--_motion` here and no reduced-motion block, because there is nothing to animate:
+ * a meter's value is a fact about the present, not a task that advances. A gauge that slid to its
+ * position on mount would be inventing a change that never happened.
+ */
+
+.root {
+  --_track: var(--nerey-surface-muted, #eceff2);
+  --_fill: var(--nerey-text-accent, #12675c);
+  --_thickness: var(--nerey-space-2, 0.5rem);
+
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: var(--nerey-space-2, 0.5rem);
+
+  margin: 0;
+  padding: 0;
+  inline-size: 100%;
+
+  font-family: inherit;
+  font-size: var(--nerey-font-size-sm, 0.8125rem);
+  line-height: var(--nerey-line-height-tight, 1.25);
+  color: var(--nerey-text-secondary, #445461);
+}
+
+.label {
+  grid-row: 1;
+  grid-column: 1;
+  margin: 0;
+  font-weight: var(--nerey-font-weight-medium, 500);
+  color: var(--nerey-text-primary, #151d24);
+}
+
+.value {
+  grid-row: 1;
+  grid-column: 2;
+  justify-self: end;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.track {
+  position: relative;
+  grid-row: 2;
+  grid-column: 1 / -1;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+
+  block-size: var(--_thickness);
+  border-radius: var(--nerey-radius-full, 9999px);
+  background: var(--_track);
+}
+
+/* Base UI writes `width: <percent>` and `height: inherit` as INLINE style here, which outranks
+ * anything in this file — so this rule owns colour and corners and never geometry. */
+.indicator {
+  position: absolute;
+  inset-block-start: 0;
+  box-sizing: border-box;
+  border-radius: inherit;
+  background: var(--_fill);
+}
+
+/* ── Tone ──────────────────────────────────────────────────────────────────────────────
+ * `accent` is the base rule's value, and the fill is the tone's `--nerey-text-*` step for the
+ * reason Badge gives: a strong `--nerey-surface-*` exists for accent and danger only, and
+ * inventing one for success and warning is what ADR 0024 forbids.
+ *
+ * Tone is a prop rather than a threshold this component computes. "Above 90% is danger" is a
+ * claim about the domain — 90% of a disk is alarming, 90% of a fundraising target is not — and a
+ * gauge that guesses is a gauge that is confidently wrong half the time.
+ */
+
+.toneSuccess {
+  --_fill: var(--nerey-text-success, #17693e);
+}
+
+.toneWarning {
+  --_fill: var(--nerey-text-warning, #a16207);
+}
+
+.toneDanger {
+  --_fill: var(--nerey-text-danger, #a52822);
+}
+
+/* ── Size ──────────────────────────────────────────────────────────────────────────── */
+
+.sizeSm {
+  --_thickness: var(--nerey-space-1, 0.25rem);
+}

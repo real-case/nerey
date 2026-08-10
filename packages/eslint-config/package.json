@@ -1,0 +1,27 @@
+{
+  "name": "@nerey/eslint-config",
+  "version": "0.1.0",
+  "description": "The widget boundary as a lint rule — widgets perform no I/O, core imports no CSS, features never reach past a package's public entry point.",
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "index.js",
+    "README.md"
+  ],
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "main": "./index.js",
+  "peerDependencies": {
+    "eslint": "^9.0.0"
+  },
+  "keywords": [
+    "eslint-config",
+    "generative-ui",
+    "nerey"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

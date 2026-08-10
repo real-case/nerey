@@ -1,0 +1,16 @@
+node_modules/
+dist/
+coverage/
+storybook-static/
+package-lock.json
+*.module.css.d.ts
+packages/theme/src/tokens.generated.ts
+packages/theme/src/tokens.allowlist.json
+docs/design-system/tokens.agent-rules.md
+docs/design-system/public-api.json
+docs/design-system/data-contract.json
+
+# Accepted ADRs are immutable (ADR 0001). Reformatting one is still an edit to a record
+# that is only supposed to change through a superseding entry, and a whitespace-only diff on a
+# decision record is worse than no diff: it looks like the content moved.
+docs/decisions/

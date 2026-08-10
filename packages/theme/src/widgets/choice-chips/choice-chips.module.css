@@ -1,0 +1,87 @@
+/*
+ * ADR 0024 / 0025. Every value is a token read WITH an inline fallback, so a consumer who imports
+ * theme.css without tokens.css still gets a legible row; and nothing is inherited, because Nerey
+ * has no idea whether its host ships a reset.
+ *
+ * The chips themselves are `ToggleGroup variant="chips"` and paint themselves — pressed fill,
+ * hover, focus ring, disabled — from `toggle-group.module.css`. This file styles the frame around
+ * them and stops there. Restating any of that here would be a second source of truth for "which
+ * one is chosen" (ADR 0026).
+ */
+
+.root {
+  /* Per-instance overrides land on these two, so a consumer can nudge one row through CSS custom
+   * properties without a className (ADR 0026). */
+  --_ink: var(--nerey-text-primary, #151d24);
+  --_prompt-ink: var(--nerey-text-secondary, #445461);
+
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--nerey-space-2, 0.5rem);
+
+  margin: 0;
+  padding: 0;
+  /* The transcript column is the constraint, not the viewport. */
+  max-inline-size: var(--nerey-widget-max-width, 44rem);
+  min-inline-size: 0;
+
+  font-family: var(--nerey-font-sans, ui-sans-serif, system-ui, sans-serif);
+  font-size: var(--nerey-font-size-md, 0.875rem);
+  line-height: var(--nerey-line-height-normal, 1.5);
+  color: var(--_ink);
+}
+
+/*
+ * The prompt is secondary text, not a heading. A quick-reply row follows a message that has
+ * already asked the question in full; a bold restatement of it reads as a second, louder ask.
+ */
+.prompt {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-size: var(--nerey-font-size-sm, 0.8125rem);
+  line-height: var(--nerey-line-height-normal, 1.5);
+  color: var(--_prompt-ink);
+  overflow-wrap: anywhere;
+}
+
+/*
+ * A block, so the wrapping chip set inside it gets the full column to wrap within. The group is an
+ * `inline-flex` of its own; without a block parent it would shrink-to-fit and wrap earlier than it
+ * has to.
+ */
+.choices {
+  box-sizing: border-box;
+  display: block;
+  margin: 0;
+  padding: 0;
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+
+.footer {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--nerey-space-2, 0.5rem);
+  margin: 0;
+  padding: 0;
+}
+
+/*
+ * The persistence failure note. Not dimmed and not reduced to an icon: the reply did go through,
+ * and the one thing a user might do about this — not trusting the row to remember — depends on
+ * them reading the sentence.
+ */
+.notice {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-size: var(--nerey-font-size-sm, 0.8125rem);
+  line-height: var(--nerey-line-height-normal, 1.5);
+  color: var(--nerey-text-danger, #a52822);
+}

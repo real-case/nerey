@@ -1,0 +1,41 @@
+/*
+ * ADR 0024 / 0025 — tokens with inline fallbacks, and nothing inherited.
+ *
+ * This stylesheet is deliberately almost empty, and that is the point of building the notice on the
+ * theme's own toast: the card, the tone stripe, the glyph, the entrance and the swipe already have
+ * rules in toast.module.css, and restating any of them here would create a second place for the
+ * notification's appearance to be edited — which is how two notification styles end up shipping.
+ */
+
+/*
+ * The widget root generates no box. Its visible surface is the toast viewport, which is
+ * `position: fixed` and therefore out of flow entirely; an ordinary `<div>` here would leave a
+ * zero-content block in the overlay container that still occupies a line and still collapses
+ * margins with whatever the consumer put around it.
+ *
+ * `display: contents` keeps the ADR 0020 attributes on a real node — `[data-nerey-widget]` and
+ * `[data-state]` are still there to select on — while removing the node from the box tree.
+ */
+.root {
+  display: contents;
+}
+
+/*
+ * A spent notice dims its action rather than hiding it, which is the treatment ADR 0018 asks for
+ * everywhere: the button that was pressed stays visible and stays labelled, so the notice reads as
+ * answered rather than as half-rendered.
+ *
+ * The selectors are the `data-*` contract rather than classes of ours. The action is Base UI's
+ * button inside the theme's toast, and reaching it through the attributes the widget already
+ * publishes is exactly what a consumer would have to do — so the theme uses the same seam it asks
+ * everyone else to use (ADR 0020).
+ */
+.root [data-nerey-part='action']:disabled {
+  opacity: var(--nerey-opacity-disabled, 0.45);
+  cursor: not-allowed;
+}
+
+.root [data-nerey-part='action'][data-state='selected'] {
+  opacity: var(--nerey-opacity-dimmed, 0.55);
+  text-decoration: none;
+}

@@ -1,0 +1,211 @@
+/*
+ * ADR 0024 / 0025 / 0032. Every value is a token read WITH an inline fallback, the box model is
+ * stated rather than inherited, and `appearance` is reset because a form control is the one
+ * place a browser still ships opinions of its own.
+ *
+ * This file is the whole theme's text-control chrome: `Input`, `Textarea` and `Field.Control`
+ * all wear it. It is not duplicated per component, because a border that disagrees with itself
+ * across three components is the defect nobody files and everybody sees.
+ */
+
+/*
+ * The SHELL carries the chrome and the control inside it is transparent.
+ *
+ * The alternative — chrome on the `<input>` itself — cannot work once there is a prefix or a
+ * suffix: those sit inside the box, so a border and a focus ring drawn around the input alone
+ * would cut the slots off the control they belong to. One shell, one ring, one border, whether
+ * or not the slots are used.
+ */
+.root {
+  /* Per-instance overrides land on these three, so a caller can nudge one control through CSS
+   * custom properties without a className (ADR 0026). */
+  --_bg: var(--nerey-surface-raised, #ffffff);
+  --_border: var(--nerey-border-default, #bcc7d0);
+  --_ring: var(--nerey-border-focus, #138171);
+
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--nerey-space-2, 0.5rem);
+
+  inline-size: 100%;
+  min-inline-size: 0;
+  margin: 0;
+  padding-block: 0;
+  padding-inline: var(--nerey-space-3, 0.75rem);
+  block-size: var(--nerey-control-height-md, 2.125rem);
+
+  font-family: inherit;
+  font-size: var(--nerey-font-size-md, 0.875rem);
+  line-height: var(--nerey-line-height-tight, 1.25);
+
+  border: var(--nerey-border-width, 1px) solid var(--_border);
+  border-radius: var(--nerey-radius-md, 0.375rem);
+  background: var(--_bg);
+  color: var(--nerey-text-primary, #151d24);
+
+  transition:
+    border-color var(--nerey-duration-fast, 140ms) var(--nerey-ease-standard, ease),
+    background-color var(--nerey-duration-fast, 140ms) var(--nerey-ease-standard, ease);
+}
+
+.root:hover {
+  --_border: var(--nerey-border-strong, #92a3b1);
+}
+
+/*
+ * `:focus-within`, not `:focus-visible`.
+ *
+ * Two reasons, and both are specific to text controls. The node that takes focus is the `<input>`
+ * while the ring belongs to the shell around it, so the state has to be read from a descendant.
+ * And unlike a button — where the click that focused it was also the click that acted — a text
+ * box focused by pointer is a text box the user is about to type into, so the ring is wanted in
+ * both interaction modes. Browsers already agree: `:focus-visible` matches a clicked text input.
+ */
+.root:focus-within {
+  --_border: var(--_ring);
+
+  outline: var(--nerey-focus-ring-width, 2px) solid var(--_ring);
+  outline-offset: var(--nerey-focus-ring-offset, 2px);
+}
+
+/*
+ * Invalidity is read from the control, never from a class this component sets.
+ *
+ * `data-invalid` is what Base UI's Field writes once validation has run; `aria-invalid` is what a
+ * standalone control carries and what a screen reader actually announces. Keying off a class
+ * would make a second, private source of truth that can disagree with the one the user hears.
+ *
+ * Placed after `:focus-within` deliberately: at equal specificity the later rule wins, so an
+ * invalid control that is focused keeps its danger border and gets a danger ring rather than
+ * quietly looking valid while being typed into.
+ */
+.root:has([data-invalid]),
+.root:has([aria-invalid='true']) {
+  --_border: var(--nerey-border-danger, #e2453b);
+  --_ring: var(--nerey-border-danger, #e2453b);
+}
+
+/*
+ * `:has()` raises specificity to its argument, so this outranks `:hover` and needs no `:not()`
+ * guard. Dimming through `opacity` is deliberately avoided: a prefix or suffix is real text that
+ * axe evaluates, and it is not itself disabled, so a translucent shell would fail the contrast
+ * gate on the one element the user still has to read (ADR 0032).
+ */
+.root:has(.control:disabled) {
+  --_bg: var(--nerey-surface-muted, #eceff2);
+  --_border: var(--nerey-border-subtle, #dbe1e6);
+
+  cursor: not-allowed;
+}
+
+/* ── The control ───────────────────────────────────────────────────────────────────────
+ * A form control inherits neither font nor colour by default — that is the reset gap ADR 0025
+ * assumes exists — so both are stated here and pulled from the shell.
+ */
+
+.control {
+  box-sizing: border-box;
+  flex: 1 1 auto;
+  min-inline-size: 0;
+
+  margin: 0;
+  padding: 0;
+  border: 0;
+
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+  background: transparent;
+
+  /* The shell owns the ring; a second outline inside it reads as a box in a box. */
+  outline: none;
+}
+
+/*
+ * `appearance: none` is scoped to the two elements it helps rather than applied to `.control`.
+ *
+ * On an input it removes the spinners and the search-field decorations, which the shell already
+ * has better answers for. On the `<select>` a caller can swap in through `Field.Control` it
+ * removes the disclosure arrow — the only thing on the element saying it opens a list — and
+ * nothing here replaces it, so a blanket reset would turn a working control into one that looks
+ * like a text box and is not.
+ */
+.control:is(input, textarea) {
+  appearance: none;
+}
+
+/*
+ * `--nerey-text-muted` is below AA on the canvas and is nonetheless right here: a placeholder is
+ * not content, it is a hint that must be distinguishable from a real value at a glance. It is
+ * also invisible to the contrast gate, which reads computed `color` on the element and cannot
+ * see a pseudo-element. `opacity: 1` undoes Firefox's own dimming on top of the token.
+ */
+.control::placeholder {
+  color: var(--nerey-text-muted, #6d8091);
+  opacity: 1;
+}
+
+.control:disabled {
+  color: var(--nerey-text-muted, #6d8091);
+  cursor: not-allowed;
+}
+
+/*
+ * Slot content. `--nerey-text-secondary` rather than `--nerey-text-muted` because a suffix like
+ * "kg" or "%" is text a sighted user reads, and it stays at full opacity in every state for the
+ * same reason (ADR 0032).
+ */
+.affix {
+  box-sizing: border-box;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--nerey-space-1, 0.25rem);
+
+  margin: 0;
+  padding: 0;
+
+  font-family: inherit;
+  font-size: inherit;
+  line-height: var(--nerey-line-height-tight, 1.25);
+  color: var(--nerey-text-secondary, #445461);
+  white-space: nowrap;
+}
+
+/* ── Sizes ─────────────────────────────────────────────────────────────────────────────
+ * `md` is the base rule's value, and the three steps match Button's exactly so a control and
+ * the button that submits it line up without either one being nudged.
+ */
+
+.sizeSm {
+  block-size: var(--nerey-control-height-sm, 1.75rem);
+  padding-inline: var(--nerey-space-2, 0.5rem);
+  font-size: var(--nerey-font-size-sm, 0.8125rem);
+}
+
+.sizeLg {
+  block-size: var(--nerey-control-height-lg, 2.5rem);
+  padding-inline: var(--nerey-space-4, 1rem);
+  font-size: var(--nerey-font-size-lg, 1rem);
+}
+
+/* ── Multi-line ────────────────────────────────────────────────────────────────────────
+ * A textarea grows, so the shell gives up its fixed height for symmetric padding and stops
+ * centring its children — otherwise the first line of a three-line entry floats in the middle
+ * of the box.
+ */
+
+.multiline {
+  align-items: stretch;
+  block-size: auto;
+  padding-block: var(--nerey-space-2, 0.5rem);
+}
+
+.textarea {
+  /* Vertical only: a textarea that can be dragged wider escapes the field it sits in and takes
+   * the form's layout with it. */
+  resize: vertical;
+  line-height: var(--nerey-line-height-normal, 1.5);
+}

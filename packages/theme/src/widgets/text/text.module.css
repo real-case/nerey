@@ -1,0 +1,203 @@
+/*
+ * ADR 0024 / 0025. Two rules govern every line here:
+ *   1. Every value is a token read WITH an inline fallback, so a consumer who imports
+ *      theme.css without tokens.css still gets legible prose.
+ *   2. Nothing is inherited. Margins, list markers and image display are all set explicitly,
+ *      because Nerey has no idea whether its host ships a reset — and this is the one widget
+ *      whose children are markup the theme never wrote.
+ *
+ * The descendant rules are wrapped in `:where()` on purpose. It contributes zero specificity, so
+ * every declaration below weighs exactly `.root` (0,1,0) and a consumer's own `.markdown p` rule
+ * beats it without an `!important` or a specificity war. The theme supplies the default reading
+ * experience; it does not take the element tree hostage.
+ */
+
+.root {
+  box-sizing: border-box;
+  display: block;
+
+  margin: 0;
+
+  /* A message is almost always a flex or grid child, where `min-width: auto` lets one long
+   * token push the whole transcript wider than its container. */
+  min-inline-size: 0;
+
+  font-family: var(--nerey-font-sans, ui-sans-serif, system-ui, sans-serif);
+  font-size: var(--nerey-font-size-md, 0.875rem);
+  font-weight: var(--nerey-font-weight-normal, 400);
+  /* Looser than the `Text` component's `normal`, and only here: this is the one place in the
+   * theme that carries multi-line running prose rather than a label or a single sentence. */
+  line-height: var(--nerey-line-height-relaxed, 1.7);
+  color: var(--nerey-text-primary, #151d24);
+
+  /* The whole reason this rule exists. A pasted URL, a hash or a base64 blob is one unbreakable
+   * word, and `break-word` only relents once the line has already overflowed. `anywhere` lets
+   * the token break at the edge, so an assistant quoting a link cannot widen the transcript. */
+  overflow-wrap: anywhere;
+}
+
+/* ── Block rhythm ──────────────────────────────────────────────────────────────────────
+ * Spacing is expressed as a bottom margin at ANY depth rather than as `.root > * + *`. A
+ * markdown renderer is free to wrap its output in a container, and a child-combinator rule
+ * would then apply to that single wrapper and nothing inside it — silently collapsing an
+ * entire message into one unspaced block.
+ */
+
+.root :where(p, ul, ol, pre, blockquote, table, figure, hr) {
+  margin-block: 0 var(--nerey-space-3, 0.75rem);
+}
+
+/* Trailing space belongs to the transcript's own stacking, not to the last paragraph. */
+.root :where(p, ul, ol, pre, blockquote, table, figure, hr):last-child {
+  margin-block-end: 0;
+}
+
+.root :where(h1, h2, h3, h4, h5, h6) {
+  margin-block: var(--nerey-space-4, 1rem) var(--nerey-space-2, 0.5rem);
+  font-size: var(--nerey-font-size-lg, 1rem);
+  font-weight: var(--nerey-font-weight-semibold, 600);
+  line-height: var(--nerey-line-height-tight, 1.25);
+}
+
+/* A message that opens on a heading must not begin with a gap the sender did not write. */
+.root :where(h1, h2, h3, h4, h5, h6):first-child {
+  margin-block-start: 0;
+}
+
+/* ── Lists ─────────────────────────────────────────────────────────────────────────────
+ * The marker is set rather than assumed. A host reset that ships `list-style: none` — every
+ * normalise-plus-utility-framework stack does — would otherwise turn an ordered list into an
+ * unnumbered one, which loses information rather than styling.
+ */
+
+.root :where(ul) {
+  padding-inline-start: var(--nerey-space-5, 1.25rem);
+  list-style: disc;
+}
+
+.root :where(ol) {
+  padding-inline-start: var(--nerey-space-5, 1.25rem);
+  list-style: decimal;
+}
+
+.root :where(li) + :where(li) {
+  margin-block-start: var(--nerey-space-1, 0.25rem);
+}
+
+/* A nested list belongs to its parent item, so it takes the tight spacing rather than the
+ * paragraph rhythm the rule above would otherwise give it. */
+.root :where(li) :where(ul, ol) {
+  margin-block: var(--nerey-space-1, 0.25rem) 0;
+}
+
+/* ── Code ──────────────────────────────────────────────────────────────────────────────
+ * The one place where `overflow-wrap: anywhere` is wrong: breaking an identifier mid-token
+ * changes what the reader sees the code to say.
+ */
+
+.root :where(code, kbd, samp) {
+  font-family: var(--nerey-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: var(--nerey-font-size-sm, 0.8125rem);
+  overflow-wrap: normal;
+}
+
+.root :where(:not(pre) > code) {
+  padding-inline: var(--nerey-space-1, 0.25rem);
+  border-radius: var(--nerey-radius-sm, 0.25rem);
+  background: var(--nerey-surface-muted, #eceff2);
+}
+
+/*
+ * A code block WRAPS rather than scrolls, and the reason is accessibility rather than taste.
+ *
+ * This rule used to read `overflow-x: auto`, which makes the block a scroll container — and a
+ * scroll container has to be reachable from the keyboard, or the code past the right edge belongs
+ * to pointer users only. axe reports that omission as `scrollable-region-focusable` and ADR 0032
+ * fails the build over it; the data-table widget discharges the same obligation by putting
+ * `tabIndex={0}` and a named `role="group"` on the scroller it owns.
+ *
+ * This widget owns no such element. The `<pre>` is emitted by the HOST's renderer (ADR 0012 /
+ * 0037), so the theme was creating an obligation it had no way to discharge and no place to
+ * document at the point of use: every consumer wiring up react-markdown would have shipped the
+ * violation, and nothing in the theme could have told them. Removing the scroll removes the
+ * obligation.
+ *
+ * `pre-wrap` breaks at whitespace only, so identifiers stay intact — that is the property the
+ * scrolling was protecting, and it survives. `break-word` is the last resort underneath it: it
+ * relents only for a token too long to fit a line on its own, which would otherwise paint outside
+ * the card and widen the transcript. It is stated on the `<pre>` as well as on the code inside it,
+ * because a renderer is free to emit a `<pre>` with no `<code>` in it, and `.root`'s inherited
+ * `anywhere` would then break every token in the block.
+ */
+.root :where(pre) {
+  box-sizing: border-box;
+  padding: var(--nerey-space-3, 0.75rem);
+  border-radius: var(--nerey-radius-md, 0.375rem);
+  background: var(--nerey-surface-sunken, #f6f8f9);
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+/* After the `code, kbd, samp` rule above rather than merged into it: inside a wrapping block the
+ * `normal` there would leave an over-long token nothing to break on. Equal specificity, so source
+ * order is what decides — which is why this sits at the end of the section. */
+.root :where(pre) :where(code, kbd, samp) {
+  overflow-wrap: break-word;
+}
+
+/* ── Links, quotes, rules, media ───────────────────────────────────────────────────── */
+
+.root :where(a) {
+  color: var(--nerey-text-link, #12675c);
+  /* Underlined, not merely coloured. Colour alone is not a distinguishing cue (WCAG 1.4.1),
+   * and a link inside running prose has nothing else to mark it. */
+  text-decoration: underline;
+}
+
+.root :where(a):focus-visible {
+  outline: var(--nerey-focus-ring-width, 2px) solid var(--nerey-border-focus, #138171);
+  outline-offset: var(--nerey-focus-ring-offset, 2px);
+}
+
+.root :where(blockquote) {
+  padding-inline-start: var(--nerey-space-3, 0.75rem);
+  border-inline-start: var(--nerey-border-width, 1px) solid var(--nerey-border-default, #bcc7d0);
+  color: var(--nerey-text-secondary, #445461);
+}
+
+.root :where(hr) {
+  block-size: 0;
+  border: 0;
+  border-block-start: var(--nerey-border-width, 1px) solid var(--nerey-border-subtle, #dbe1e6);
+}
+
+/* `display: block` because an inline image sits on the text baseline and reserves descender
+ * space under it, which reads as a stray gap nobody can find in the markup. */
+.root :where(img, svg, video) {
+  display: block;
+  max-inline-size: 100%;
+  block-size: auto;
+}
+
+/* ── Tables ────────────────────────────────────────────────────────────────────────────
+ * A model emits a markdown table often enough that leaving it unstyled is a visible hole: with
+ * no borders and no cell padding the columns run together and the data stops being readable.
+ */
+
+.root :where(table) {
+  display: block;
+  border-collapse: collapse;
+  max-inline-size: 100%;
+  overflow-x: auto;
+}
+
+.root :where(th, td) {
+  padding: var(--nerey-space-1, 0.25rem) var(--nerey-space-3, 0.75rem);
+  border: var(--nerey-border-width, 1px) solid var(--nerey-border-subtle, #dbe1e6);
+  text-align: start;
+}
+
+.root :where(th) {
+  background: var(--nerey-surface-sunken, #f6f8f9);
+  font-weight: var(--nerey-font-weight-semibold, 600);
+}

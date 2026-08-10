@@ -1,0 +1,336 @@
+/*
+ * @nerey/theme — design tokens.
+ *
+ * ADR 0024: this file is the SINGLE SOURCE OF TRUTH for the `--nerey-*` custom-property
+ * surface. `npm run gen:tokens` reads it and generates the token union
+ * (packages/theme/src/tokens.generated.ts), the lint allowlist
+ * (packages/theme/src/tokens.allowlist.json) and the agent-facing rules
+ * (docs/design-system/tokens.agent-rules.md). CI drift-checks all three. Never
+ * hand-edit a generated file; add the token here first.
+ *
+ * ADR 0027: light and dark are a VALUE-LAYER override — no component ever changes.
+ * Resolution order, weakest to strongest:
+ *   1. `:root`                                    → light defaults
+ *   2. `prefers-color-scheme: dark`               → dark, unless an ancestor opted out
+ *   3. `[data-nerey-theme="light"|"dark"]`        → explicit, wins in both directions,
+ *                                                    and works on any container, not just :root
+ * The semantic blocks are deliberately written out three times rather than expressed
+ * through a space-toggle trick: the duplication is mechanically checked by
+ * `npm run check:tokens`, and a token file that a parser (and a human) can read
+ * top-to-bottom is worth more than the saved lines.
+ *
+ * ADR 0025: nothing here is a reset. This file declares custom properties and nothing
+ * else — no element selectors, no `*`, no normalisation. Consumers own their reset.
+ */
+
+:root {
+  /* ── Primitives — theme-invariant raw scales ─────────────────────────────────────
+   * Never referenced by a component stylesheet directly (ADR 0024): components read
+   * the semantic layer below, so a re-theme is a value swap and not a find-and-replace.
+   */
+
+  /* Neutral ramp — cool, marine-tinted slate rather than pure grey. */
+  --nerey-color-slate-50: #f6f8f9;
+  --nerey-color-slate-100: #eceff2;
+  --nerey-color-slate-200: #dbe1e6;
+  --nerey-color-slate-300: #bcc7d0;
+  --nerey-color-slate-400: #92a3b1;
+  --nerey-color-slate-500: #6d8091;
+  --nerey-color-slate-600: #556777;
+  --nerey-color-slate-700: #445461;
+  --nerey-color-slate-800: #34414c;
+  --nerey-color-slate-900: #26313a;
+  --nerey-color-slate-950: #151d24;
+
+  /* Accent ramp — deep-water teal. */
+  --nerey-color-teal-50: #eefbf7;
+  --nerey-color-teal-100: #d3f5eb;
+  --nerey-color-teal-200: #aaeada;
+  --nerey-color-teal-300: #74d8c3;
+  --nerey-color-teal-400: #3dbda7;
+  --nerey-color-teal-500: #1fa18c;
+  --nerey-color-teal-600: #138171;
+  --nerey-color-teal-700: #12675c;
+  --nerey-color-teal-800: #14524a;
+  --nerey-color-teal-900: #14443e;
+  --nerey-color-teal-950: #062926;
+
+  /* Status ramps — only the steps that are actually used. */
+  --nerey-color-red-100: #fee2e2;
+  --nerey-color-red-300: #fca5a5;
+  --nerey-color-red-500: #e2453b;
+  --nerey-color-red-600: #c9302a;
+  --nerey-color-red-700: #a52822;
+  --nerey-color-red-950: #3f1310;
+
+  --nerey-color-amber-100: #fef3c7;
+  --nerey-color-amber-300: #fcd34d;
+  --nerey-color-amber-500: #d99e0b;
+  --nerey-color-amber-700: #a16207;
+  --nerey-color-amber-950: #40230a;
+
+  --nerey-color-green-100: #d6f5e3;
+  --nerey-color-green-300: #86dfae;
+  --nerey-color-green-500: #21a35c;
+  --nerey-color-green-700: #17693e;
+  --nerey-color-green-950: #0a2e1c;
+
+  --nerey-color-white: #ffffff;
+  --nerey-color-black: #000000;
+
+  /* ── Space — a 4px base with a doubling tail ─────────────────────────────────── */
+  --nerey-space-0: 0;
+  --nerey-space-1: 0.25rem;
+  --nerey-space-2: 0.5rem;
+  --nerey-space-3: 0.75rem;
+  --nerey-space-4: 1rem;
+  --nerey-space-5: 1.25rem;
+  --nerey-space-6: 1.5rem;
+  --nerey-space-8: 2rem;
+  --nerey-space-10: 2.5rem;
+  --nerey-space-12: 3rem;
+  --nerey-space-16: 4rem;
+
+  /* ── Radius ──────────────────────────────────────────────────────────────────── */
+  --nerey-radius-none: 0;
+  --nerey-radius-sm: 0.25rem;
+  --nerey-radius-md: 0.375rem;
+  --nerey-radius-lg: 0.5rem;
+  --nerey-radius-xl: 0.75rem;
+  --nerey-radius-2xl: 1rem;
+  --nerey-radius-full: 9999px;
+
+  /* ── Typography ──────────────────────────────────────────────────────────────── */
+  --nerey-font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --nerey-font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+
+  --nerey-font-size-xs: 0.75rem;
+  --nerey-font-size-sm: 0.8125rem;
+  --nerey-font-size-md: 0.875rem;
+  --nerey-font-size-lg: 1rem;
+  --nerey-font-size-xl: 1.125rem;
+
+  --nerey-line-height-tight: 1.25;
+  --nerey-line-height-normal: 1.5;
+  --nerey-line-height-relaxed: 1.7;
+
+  --nerey-font-weight-normal: 400;
+  --nerey-font-weight-medium: 500;
+  --nerey-font-weight-semibold: 600;
+
+  --nerey-letter-spacing-wide: 0.02em;
+
+  /* ── Motion ──────────────────────────────────────────────────────────────────── */
+  --nerey-duration-instant: 80ms;
+  --nerey-duration-fast: 140ms;
+  --nerey-duration-normal: 220ms;
+  --nerey-ease-standard: cubic-bezier(0.2, 0, 0.13, 1);
+  --nerey-ease-emphasized: cubic-bezier(0.3, 0, 0, 1);
+
+  /* ── Layering ────────────────────────────────────────────────────────────────── */
+  --nerey-z-raised: 10;
+  --nerey-z-sticky: 100;
+  --nerey-z-overlay: 1000;
+  --nerey-z-popover: 1100;
+  --nerey-z-toast: 1200;
+
+  /* ── Sizing ──────────────────────────────────────────────────────────────────── */
+  --nerey-control-height-sm: 1.75rem;
+  --nerey-control-height-md: 2.125rem;
+  --nerey-control-height-lg: 2.5rem;
+  --nerey-border-width: 1px;
+  --nerey-focus-ring-width: 2px;
+  --nerey-focus-ring-offset: 2px;
+  --nerey-widget-max-width: 44rem;
+
+  /* ── Semantic layer — LIGHT ──────────────────────────────────────────────────── */
+  --nerey-surface-canvas: var(--nerey-color-white);
+  --nerey-surface-raised: var(--nerey-color-white);
+  --nerey-surface-sunken: var(--nerey-color-slate-50);
+  --nerey-surface-muted: var(--nerey-color-slate-100);
+  --nerey-surface-inverse: var(--nerey-color-slate-950);
+  --nerey-surface-accent-subtle: var(--nerey-color-teal-50);
+  --nerey-surface-accent: var(--nerey-color-teal-600);
+  --nerey-surface-accent-hover: var(--nerey-color-teal-700);
+  --nerey-surface-danger-subtle: var(--nerey-color-red-100);
+  --nerey-surface-danger: var(--nerey-color-red-600);
+  --nerey-surface-danger-hover: var(--nerey-color-red-700);
+  --nerey-surface-success-subtle: var(--nerey-color-green-100);
+  --nerey-surface-warning-subtle: var(--nerey-color-amber-100);
+  --nerey-surface-hover: var(--nerey-color-slate-100);
+  --nerey-surface-selected: var(--nerey-color-teal-50);
+  --nerey-surface-scrim: rgb(21 29 36 / 0.44);
+
+  --nerey-text-primary: var(--nerey-color-slate-950);
+  --nerey-text-secondary: var(--nerey-color-slate-700);
+  /* slate-600, not slate-500: on the canvas surface, slate-500 measures 4.08:1 — below the
+   * 4.5:1 WCAG AA threshold for normal text. Caught by the axe gate over a Text story, which
+   * is the whole reason that gate fails rather than warns (ADR 0032). */
+  --nerey-text-muted: var(--nerey-color-slate-600);
+  --nerey-text-disabled: var(--nerey-color-slate-400);
+  --nerey-text-inverse: var(--nerey-color-slate-50);
+  --nerey-text-on-accent: var(--nerey-color-white);
+  --nerey-text-accent: var(--nerey-color-teal-700);
+  --nerey-text-danger: var(--nerey-color-red-700);
+  --nerey-text-success: var(--nerey-color-green-700);
+  --nerey-text-warning: var(--nerey-color-amber-700);
+  --nerey-text-link: var(--nerey-color-teal-700);
+
+  --nerey-border-subtle: var(--nerey-color-slate-200);
+  --nerey-border-default: var(--nerey-color-slate-300);
+  --nerey-border-strong: var(--nerey-color-slate-400);
+  --nerey-border-accent: var(--nerey-color-teal-500);
+  --nerey-border-danger: var(--nerey-color-red-500);
+  --nerey-border-focus: var(--nerey-color-teal-600);
+
+  --nerey-shadow-sm: 0 1px 2px rgb(21 29 36 / 0.06);
+  --nerey-shadow-md: 0 4px 12px -2px rgb(21 29 36 / 0.1), 0 2px 4px -2px rgb(21 29 36 / 0.06);
+  --nerey-shadow-lg: 0 12px 32px -8px rgb(21 29 36 / 0.18), 0 4px 8px -4px rgb(21 29 36 / 0.08);
+
+  /* Opacity applied to a widget that has expired or been superseded (ADR 0018). */
+  --nerey-opacity-dimmed: 0.55;
+  --nerey-opacity-disabled: 0.45;
+
+  color-scheme: light;
+}
+
+/* Dark when the platform asks for it and no ancestor has pinned light. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-nerey-theme='light']) {
+    --nerey-surface-canvas: var(--nerey-color-slate-950);
+    --nerey-surface-raised: var(--nerey-color-slate-900);
+    --nerey-surface-sunken: #10171d;
+    --nerey-surface-muted: var(--nerey-color-slate-800);
+    --nerey-surface-inverse: var(--nerey-color-slate-50);
+    --nerey-surface-accent-subtle: var(--nerey-color-teal-950);
+    --nerey-surface-accent: var(--nerey-color-teal-500);
+    --nerey-surface-accent-hover: var(--nerey-color-teal-400);
+    --nerey-surface-danger-subtle: var(--nerey-color-red-950);
+    --nerey-surface-danger: var(--nerey-color-red-500);
+    --nerey-surface-danger-hover: var(--nerey-color-red-600);
+    --nerey-surface-success-subtle: var(--nerey-color-green-950);
+    --nerey-surface-warning-subtle: var(--nerey-color-amber-950);
+    --nerey-surface-hover: var(--nerey-color-slate-800);
+    --nerey-surface-selected: var(--nerey-color-teal-950);
+    --nerey-surface-scrim: rgb(4 8 11 / 0.66);
+
+    --nerey-text-primary: var(--nerey-color-slate-50);
+    --nerey-text-secondary: var(--nerey-color-slate-300);
+    --nerey-text-muted: var(--nerey-color-slate-400);
+    --nerey-text-disabled: var(--nerey-color-slate-600);
+    --nerey-text-inverse: var(--nerey-color-slate-950);
+    --nerey-text-on-accent: var(--nerey-color-slate-950);
+    --nerey-text-accent: var(--nerey-color-teal-300);
+    --nerey-text-danger: var(--nerey-color-red-300);
+    --nerey-text-success: var(--nerey-color-green-300);
+    --nerey-text-warning: var(--nerey-color-amber-300);
+    --nerey-text-link: var(--nerey-color-teal-300);
+
+    --nerey-border-subtle: var(--nerey-color-slate-800);
+    --nerey-border-default: var(--nerey-color-slate-700);
+    --nerey-border-strong: var(--nerey-color-slate-600);
+    --nerey-border-accent: var(--nerey-color-teal-500);
+    --nerey-border-danger: var(--nerey-color-red-500);
+    --nerey-border-focus: var(--nerey-color-teal-400);
+
+    --nerey-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+    --nerey-shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+    --nerey-shadow-lg: 0 12px 32px -8px rgb(0 0 0 / 0.6), 0 4px 8px -4px rgb(0 0 0 / 0.45);
+
+    color-scheme: dark;
+  }
+}
+
+/* Explicit dark — wins over the media query, and works on any container. */
+[data-nerey-theme='dark'] {
+  --nerey-surface-canvas: var(--nerey-color-slate-950);
+  --nerey-surface-raised: var(--nerey-color-slate-900);
+  --nerey-surface-sunken: #10171d;
+  --nerey-surface-muted: var(--nerey-color-slate-800);
+  --nerey-surface-inverse: var(--nerey-color-slate-50);
+  --nerey-surface-accent-subtle: var(--nerey-color-teal-950);
+  --nerey-surface-accent: var(--nerey-color-teal-500);
+  --nerey-surface-accent-hover: var(--nerey-color-teal-400);
+  --nerey-surface-danger-subtle: var(--nerey-color-red-950);
+  --nerey-surface-danger: var(--nerey-color-red-500);
+  --nerey-surface-danger-hover: var(--nerey-color-red-600);
+  --nerey-surface-success-subtle: var(--nerey-color-green-950);
+  --nerey-surface-warning-subtle: var(--nerey-color-amber-950);
+  --nerey-surface-hover: var(--nerey-color-slate-800);
+  --nerey-surface-selected: var(--nerey-color-teal-950);
+  --nerey-surface-scrim: rgb(4 8 11 / 0.66);
+
+  --nerey-text-primary: var(--nerey-color-slate-50);
+  --nerey-text-secondary: var(--nerey-color-slate-300);
+  --nerey-text-muted: var(--nerey-color-slate-400);
+  --nerey-text-disabled: var(--nerey-color-slate-600);
+  --nerey-text-inverse: var(--nerey-color-slate-950);
+  --nerey-text-on-accent: var(--nerey-color-slate-950);
+  --nerey-text-accent: var(--nerey-color-teal-300);
+  --nerey-text-danger: var(--nerey-color-red-300);
+  --nerey-text-success: var(--nerey-color-green-300);
+  --nerey-text-warning: var(--nerey-color-amber-300);
+  --nerey-text-link: var(--nerey-color-teal-300);
+
+  --nerey-border-subtle: var(--nerey-color-slate-800);
+  --nerey-border-default: var(--nerey-color-slate-700);
+  --nerey-border-strong: var(--nerey-color-slate-600);
+  --nerey-border-accent: var(--nerey-color-teal-500);
+  --nerey-border-danger: var(--nerey-color-red-500);
+  --nerey-border-focus: var(--nerey-color-teal-400);
+
+  --nerey-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --nerey-shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+  --nerey-shadow-lg: 0 12px 32px -8px rgb(0 0 0 / 0.6), 0 4px 8px -4px rgb(0 0 0 / 0.45);
+
+  color-scheme: dark;
+}
+
+/* Explicit light — needed so a light container can sit inside a dark root. */
+[data-nerey-theme='light'] {
+  --nerey-surface-canvas: var(--nerey-color-white);
+  --nerey-surface-raised: var(--nerey-color-white);
+  --nerey-surface-sunken: var(--nerey-color-slate-50);
+  --nerey-surface-muted: var(--nerey-color-slate-100);
+  --nerey-surface-inverse: var(--nerey-color-slate-950);
+  --nerey-surface-accent-subtle: var(--nerey-color-teal-50);
+  --nerey-surface-accent: var(--nerey-color-teal-600);
+  --nerey-surface-accent-hover: var(--nerey-color-teal-700);
+  --nerey-surface-danger-subtle: var(--nerey-color-red-100);
+  --nerey-surface-danger: var(--nerey-color-red-600);
+  --nerey-surface-danger-hover: var(--nerey-color-red-700);
+  --nerey-surface-success-subtle: var(--nerey-color-green-100);
+  --nerey-surface-warning-subtle: var(--nerey-color-amber-100);
+  --nerey-surface-hover: var(--nerey-color-slate-100);
+  --nerey-surface-selected: var(--nerey-color-teal-50);
+  --nerey-surface-scrim: rgb(21 29 36 / 0.44);
+
+  --nerey-text-primary: var(--nerey-color-slate-950);
+  --nerey-text-secondary: var(--nerey-color-slate-700);
+  /* slate-600, not slate-500: on the canvas surface, slate-500 measures 4.08:1 — below the
+   * 4.5:1 WCAG AA threshold for normal text. Caught by the axe gate over a Text story, which
+   * is the whole reason that gate fails rather than warns (ADR 0032). */
+  --nerey-text-muted: var(--nerey-color-slate-600);
+  --nerey-text-disabled: var(--nerey-color-slate-400);
+  --nerey-text-inverse: var(--nerey-color-slate-50);
+  --nerey-text-on-accent: var(--nerey-color-white);
+  --nerey-text-accent: var(--nerey-color-teal-700);
+  --nerey-text-danger: var(--nerey-color-red-700);
+  --nerey-text-success: var(--nerey-color-green-700);
+  --nerey-text-warning: var(--nerey-color-amber-700);
+  --nerey-text-link: var(--nerey-color-teal-700);
+
+  --nerey-border-subtle: var(--nerey-color-slate-200);
+  --nerey-border-default: var(--nerey-color-slate-300);
+  --nerey-border-strong: var(--nerey-color-slate-400);
+  --nerey-border-accent: var(--nerey-color-teal-500);
+  --nerey-border-danger: var(--nerey-color-red-500);
+  --nerey-border-focus: var(--nerey-color-teal-600);
+
+  --nerey-shadow-sm: 0 1px 2px rgb(21 29 36 / 0.06);
+  --nerey-shadow-md: 0 4px 12px -2px rgb(21 29 36 / 0.1), 0 2px 4px -2px rgb(21 29 36 / 0.06);
+  --nerey-shadow-lg: 0 12px 32px -8px rgb(21 29 36 / 0.18), 0 4px 8px -4px rgb(21 29 36 / 0.08);
+
+  color-scheme: light;
+}

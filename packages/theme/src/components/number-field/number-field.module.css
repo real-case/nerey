@@ -1,0 +1,235 @@
+/*
+ * ADR 0024 / 0025 / 0032. Every value is a token read WITH an inline fallback, the box model is
+ * stated rather than inherited, and `appearance` is reset on both the input and the steppers.
+ *
+ * The chrome deliberately matches `input.module.css` value for value rather than importing it: a
+ * number field's box is divided into three cells with their own borders and hover targets, and
+ * composing that out of a rule set built for a single undivided box would make one file that
+ * neither component could be changed in safely.
+ */
+
+.root {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--nerey-space-2, 0.5rem);
+
+  margin: 0;
+  inline-size: 100%;
+  min-inline-size: 0;
+
+  font-family: inherit;
+}
+
+/* ── Group ─────────────────────────────────────────────────────────────────────────────
+ * The bordered box. Base UI puts its own state attributes on every part, so the invalid and
+ * disabled rules read `data-invalid` / `data-disabled` straight off this element — no `:has()`
+ * and no parallel class of ours (ADR 0022).
+ */
+
+.group {
+  --_bg: var(--nerey-surface-raised, #ffffff);
+  --_border: var(--nerey-border-default, #bcc7d0);
+  --_ring: var(--nerey-border-focus, #138171);
+
+  box-sizing: border-box;
+  display: flex;
+  align-items: stretch;
+
+  inline-size: 100%;
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  block-size: var(--nerey-control-height-md, 2.125rem);
+
+  font-family: inherit;
+  font-size: var(--nerey-font-size-md, 0.875rem);
+  line-height: var(--nerey-line-height-tight, 1.25);
+
+  border: var(--nerey-border-width, 1px) solid var(--_border);
+  border-radius: var(--nerey-radius-md, 0.375rem);
+  background: var(--_bg);
+  color: var(--nerey-text-primary, #151d24);
+  /* The steppers reach the edges of the box, so their corners have to be cut to its radius. */
+  overflow: hidden;
+
+  transition:
+    border-color var(--nerey-duration-fast, 140ms) var(--nerey-ease-standard, ease),
+    background-color var(--nerey-duration-fast, 140ms) var(--nerey-ease-standard, ease);
+}
+
+.group:hover {
+  --_border: var(--nerey-border-strong, #92a3b1);
+}
+
+/*
+ * `:has(.input:focus)` rather than `:focus-within`, because the group contains three focusable
+ * cells and only one of them is the control. Focusing a stepper ringing the whole box would
+ * claim the user is in the text field when they are on a button; the stepper draws its own ring
+ * below instead.
+ */
+.group:has(.input:focus) {
+  --_border: var(--_ring);
+
+  outline: var(--nerey-focus-ring-width, 2px) solid var(--_ring);
+  outline-offset: var(--nerey-focus-ring-offset, 2px);
+}
+
+/* After the focus rule on purpose: at equal specificity the later rule wins, so an invalid
+ * field being typed into keeps its danger border and gets a danger ring. */
+.group[data-invalid] {
+  --_border: var(--nerey-border-danger, #e2453b);
+  --_ring: var(--nerey-border-danger, #e2453b);
+}
+
+.group[data-disabled] {
+  --_bg: var(--nerey-surface-muted, #eceff2);
+  --_border: var(--nerey-border-subtle, #dbe1e6);
+
+  cursor: not-allowed;
+}
+
+/* ── Input ─────────────────────────────────────────────────────────────────────────────
+ * Centred between the two steppers: a number is read against the arrows either side of it, and
+ * left-aligning it leaves a gap that reads as an empty field at small values.
+ */
+
+.input {
+  box-sizing: border-box;
+  flex: 1 1 auto;
+  min-inline-size: 0;
+
+  margin: 0;
+  padding-block: 0;
+  padding-inline: var(--nerey-space-2, 0.5rem);
+  border: 0;
+
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  text-align: center;
+  color: inherit;
+  background: transparent;
+  /* Digits in a field that changes under a drag must not shift the ones beside them. */
+  font-variant-numeric: tabular-nums;
+
+  appearance: none;
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--nerey-text-muted, #6d8091);
+  opacity: 1;
+}
+
+.input:disabled {
+  color: var(--nerey-text-muted, #6d8091);
+  cursor: not-allowed;
+}
+
+/* ── Steppers ──────────────────────────────────────────────────────────────────────────
+ * Square, so the pair reads as one control rather than as two buttons that happen to be nearby.
+ * Base UI names them ("Increase" / "Decrease") and marks the glyph decorative, so the icon
+ * inside carries no accessible name of its own (ADR 0032).
+ */
+
+.stepper {
+  box-sizing: border-box;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+
+  inline-size: var(--nerey-control-height-md, 2.125rem);
+  margin: 0;
+  padding: 0;
+  border: 0;
+
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--nerey-text-secondary, #445461);
+  background: transparent;
+
+  appearance: none;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background-color var(--nerey-duration-fast, 140ms) var(--nerey-ease-standard, ease),
+    color var(--nerey-duration-fast, 140ms) var(--nerey-ease-standard, ease);
+}
+
+.decrement {
+  border-inline-end: var(--nerey-border-width, 1px) solid var(--nerey-border-subtle, #dbe1e6);
+}
+
+.increment {
+  border-inline-start: var(--nerey-border-width, 1px) solid var(--nerey-border-subtle, #dbe1e6);
+}
+
+.stepper:hover:not([data-disabled]) {
+  background: var(--nerey-surface-hover, #eceff2);
+  color: var(--nerey-text-primary, #151d24);
+}
+
+/*
+ * Base UI keeps the steppers out of the tab order — the input is the keyboard control and the
+ * arrow keys do this job — so this rule is dormant until a caller puts one back with `tabIndex`.
+ * It is here for that case: a control that can take focus and does not show it is a WCAG 2.4.7
+ * failure, and the failure only appears in the composition that added the tab stop.
+ *
+ * The ring is inset because the group clips its children to its own radius, so a ring drawn
+ * outside the stepper would be cut off exactly where it matters — at the rounded corner.
+ */
+.stepper:focus-visible {
+  outline: var(--nerey-focus-ring-width, 2px) solid var(--nerey-border-focus, #138171);
+  outline-offset: calc(var(--nerey-focus-ring-offset, 2px) * -1);
+}
+
+.stepper[data-disabled] {
+  cursor: not-allowed;
+  opacity: var(--nerey-opacity-disabled, 0.45);
+}
+
+/* ── Scrub area ────────────────────────────────────────────────────────────────────────
+ * Wraps whatever the caller wants to drag on — usually the field's own label. Base UI takes a
+ * pointer lock for the duration, which hides the system cursor; no virtual cursor is drawn to
+ * replace it because the value in the input is updating under the drag and is the feedback that
+ * actually answers "how far have I gone".
+ */
+
+.scrubArea {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+
+  cursor: ew-resize;
+  user-select: none;
+  /* Without this a drag on a touch screen scrolls the page instead of changing the value. */
+  touch-action: none;
+}
+
+/* ── Sizes ─────────────────────────────────────────────────────────────────────────────
+ * `md` is the base rule's value, and the steps match Input and Button so a number field sits in
+ * a row with either of them without being nudged.
+ */
+
+.sizeSm .group {
+  block-size: var(--nerey-control-height-sm, 1.75rem);
+  font-size: var(--nerey-font-size-sm, 0.8125rem);
+}
+
+.sizeSm .stepper {
+  inline-size: var(--nerey-control-height-sm, 1.75rem);
+}
+
+.sizeLg .group {
+  block-size: var(--nerey-control-height-lg, 2.5rem);
+  font-size: var(--nerey-font-size-lg, 1rem);
+}
+
+.sizeLg .stepper {
+  inline-size: var(--nerey-control-height-lg, 2.5rem);
+}

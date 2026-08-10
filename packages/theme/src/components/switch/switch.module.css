@@ -1,0 +1,110 @@
+/*
+ * ADR 0024 / 0025 / 0032. Every value is a token read WITH an inline fallback, the box model is
+ * stated rather than inherited, and `appearance` is reset — Base UI renders a `<span>` here, but
+ * a swap to a native button through `render` has to look the same.
+ *
+ * The geometry is chosen so that the numbers add up out of the space scale rather than being
+ * three lengths that happen to look right: a 1.5rem track with 0.25rem of padding leaves exactly
+ * a 1rem thumb, and a 2.5rem track leaves it exactly 1rem of travel. Nothing here is a magic
+ * number waiting to be nudged (ADR 0024).
+ */
+
+.root {
+  /* Per-instance overrides land on these two (ADR 0026). */
+  --_track: var(--nerey-surface-muted, #eceff2);
+  --_thumb: var(--nerey-surface-raised, #ffffff);
+
+  box-sizing: border-box;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: flex-start;
+
+  inline-size: var(--nerey-space-10, 2.5rem);
+  block-size: var(--nerey-space-6, 1.5rem);
+  margin: 0;
+  padding: var(--nerey-space-1, 0.25rem);
+
+  border: 0;
+  border-radius: var(--nerey-radius-full, 9999px);
+  background: var(--_track);
+
+  appearance: none;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color var(--nerey-duration-fast, 140ms) var(--nerey-ease-standard, ease);
+}
+
+.root[data-checked] {
+  --_track: var(--nerey-surface-accent, #138171);
+}
+
+/*
+ * `outline` rather than a border, because a border would eat into the padding and the thumb's
+ * travel would no longer be the 1rem the geometry above was built around — an invalid switch
+ * would sit a couple of pixels short of its own "on" position.
+ */
+.root[data-invalid] {
+  outline: var(--nerey-border-width, 1px) solid var(--nerey-border-danger, #e2453b);
+}
+
+/* After the invalid rule: a focused control has to say where focus is, whatever else is true. */
+.root:focus-visible {
+  outline: var(--nerey-focus-ring-width, 2px) solid var(--nerey-border-focus, #138171);
+  outline-offset: var(--nerey-focus-ring-offset, 2px);
+}
+
+.root[data-disabled] {
+  cursor: not-allowed;
+  opacity: var(--nerey-opacity-disabled, 0.45);
+}
+
+.root[data-readonly] {
+  cursor: default;
+}
+
+/* ── Thumb ─────────────────────────────────────────────────────────────────────────────
+ * The border is not decoration. `--nerey-surface-raised` sits on `--nerey-surface-muted` at
+ * almost no contrast in dark mode — slate-900 on slate-800 — so a borderless thumb would simply
+ * vanish when the switch is off, which is the state it most needs to be legible in.
+ */
+
+.thumb {
+  box-sizing: border-box;
+  display: block;
+  flex: none;
+
+  inline-size: var(--nerey-space-4, 1rem);
+  block-size: var(--nerey-space-4, 1rem);
+  margin: 0;
+  padding: 0;
+
+  border: var(--nerey-border-width, 1px) solid var(--nerey-border-default, #bcc7d0);
+  border-radius: var(--nerey-radius-full, 9999px);
+  background: var(--_thumb);
+  box-shadow: var(--nerey-shadow-sm, 0 1px 2px rgb(21 29 36 / 0.06));
+
+  translate: 0;
+  transition: translate var(--nerey-duration-fast, 140ms) var(--nerey-ease-standard, ease);
+}
+
+.thumb[data-checked] {
+  translate: var(--nerey-space-4, 1rem);
+}
+
+/* `translate` has no logical form, so the one direction-dependent value in this file is flipped
+ * by hand. Without it the thumb of a switch in an Arabic or Hebrew layout slides off the track. */
+.thumb[data-checked]:dir(rtl) {
+  translate: calc(var(--nerey-space-4, 1rem) * -1);
+}
+
+/*
+ * The thumb's movement IS the state change — it is not decorative motion, and removing it would
+ * leave only a colour change to distinguish on from off. So under a reduced-motion preference it
+ * becomes instant rather than absent, which is the part that provokes symptoms.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .thumb {
+    transition: none;
+  }
+}

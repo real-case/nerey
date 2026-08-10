@@ -1,0 +1,106 @@
+/*
+ * ADR 0024 / 0025. Every length is a step on the space scale read with an inline fallback, and
+ * the box model is stated rather than inherited — Nerey has no idea whether its host ships a
+ * reset, and a layout primitive that silently depends on one lays out wrongly rather than
+ * visibly wrongly.
+ */
+
+.root {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  flex-wrap: nowrap;
+
+  /* ADR 0026 — the one rule that makes this component worth having: a Stack contributes no
+   * outer spacing of its own, ever. Its parent owns the space around it. */
+  margin: 0;
+  padding: 0;
+  gap: 0;
+
+  /* Without this a flex item's `min-width: auto` lets one long word widen the whole stack past
+   * its container, and every truncation and overflow rule further down stops working. */
+  min-inline-size: 0;
+}
+
+/* ── Direction ─────────────────────────────────────────────────────────────────────────
+ * `column` is the base rule's value and therefore has no class of its own. */
+
+.row {
+  flex-direction: row;
+}
+
+/* ── Gap ───────────────────────────────────────────────────────────────────────────────
+ * The prop takes a scale index rather than a length, so a stack cannot express a spacing the
+ * design system has no word for. `0` is the base rule's value. */
+
+.gap1 {
+  gap: var(--nerey-space-1, 0.25rem);
+}
+
+.gap2 {
+  gap: var(--nerey-space-2, 0.5rem);
+}
+
+.gap3 {
+  gap: var(--nerey-space-3, 0.75rem);
+}
+
+.gap4 {
+  gap: var(--nerey-space-4, 1rem);
+}
+
+.gap6 {
+  gap: var(--nerey-space-6, 1.5rem);
+}
+
+.gap8 {
+  gap: var(--nerey-space-8, 2rem);
+}
+
+/* ── Cross-axis alignment ──────────────────────────────────────────────────────────────
+ * `stretch` is the base rule's value. */
+
+.alignStart {
+  align-items: flex-start;
+}
+
+.alignCenter {
+  align-items: center;
+}
+
+.alignEnd {
+  align-items: flex-end;
+}
+
+.alignBaseline {
+  align-items: baseline;
+}
+
+/* ── Main-axis distribution ────────────────────────────────────────────────────────────
+ * `start` is the base rule's value. */
+
+.justifyCenter {
+  justify-content: center;
+}
+
+.justifyEnd {
+  justify-content: flex-end;
+}
+
+.justifyBetween {
+  justify-content: space-between;
+}
+
+.justifyAround {
+  justify-content: space-around;
+}
+
+/* ── Wrapping ──────────────────────────────────────────────────────────────────────────
+ * `gap` applies on both axes, so a wrapped row gets the same rhythm between rows as between
+ * items with no second prop and no `margin` hack. */
+
+.wrap {
+  flex-wrap: wrap;
+}

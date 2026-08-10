@@ -1,0 +1,29 @@
+/*
+ * ADR 0025 — this rule assumes no reset whatsoever, because the one place it is guaranteed to be
+ * used is inside somebody else's page.
+ *
+ * Every declaration is doing work:
+ *   `position: absolute`  takes the box out of flow, so it cannot open a gap.
+ *   `1px` box + `overflow` give the clip something to clip; a zero-size box is treated as
+ *                          "not rendered" by some engines and drops out of the a11y tree.
+ *   `clip` + `clip-path`   are the same instruction twice — `clip` is deprecated but is what
+ *                          older engines honour, `clip-path` is what current ones do.
+ *   `white-space: nowrap`  stops a long string wrapping to thousands of lines inside a 1px box,
+ *                          which some screen readers read out one line at a time.
+ *   `margin: -1px`         keeps the remaining pixel from nudging a neighbouring inline box.
+ *   `border: 0` / `padding: 0`  because a host stylesheet's `* { padding: 4px }` would otherwise
+ *                          inflate the box back into view.
+ */
+
+.root {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

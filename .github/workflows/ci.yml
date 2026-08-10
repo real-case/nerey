@@ -1,0 +1,96 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A second push to the same branch supersedes the first; nothing is learned from finishing a run
+# against a commit that is already stale.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Turn deprecation and experimental-feature notices from the toolchain into visible output
+  # rather than noise that scrolls past in a passing run.
+  NODE_OPTIONS: --no-warnings=ExperimentalWarning
+
+jobs:
+  # Everything that reasons about the source. Deliberately ordered cheapest and most specific
+  # first: a type error should not wait on a Storybook build to be reported.
+  quality:
+    name: quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # check:commits walks origin/main..HEAD; a shallow clone leaves it nothing to walk
+          # and it degrades to "0 commits conform", which is a pass for the wrong reason
+          # (ADR 0033, ADR 0036).
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: typecheck
+        run: npm run typecheck
+
+      - name: lint
+        run: npm run lint
+
+      - name: format:check
+        run: npm run format:check
+
+      # Codegen drift before the gates that read the generated artifacts: check:tokens lints
+      # against tokens.allowlist.json, so a stale allowlist would make it pass for the wrong
+      # reason (ADR 0024).
+      - name: gen:check
+        run: npm run gen:check
+
+      - name: check:all
+        run: npm run check:all
+
+      - name: build
+        run: npm run build
+
+      # Packaging is only observable after a build — publint and attw run against a real
+      # `npm pack` tarball, which is the only view of the package a consumer ever gets
+      # (ADR 0028).
+      - name: check:exports
+        run: npm run check:exports
+
+  # Split from quality so a failing test and a failing lint are reported in the same run rather
+  # than one hiding behind the other.
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: unit tests
+        run: npx vitest run --project unit --coverage
+
+      # Only the storybook project needs a browser, and only chromium: the a11y and interaction
+      # runs are the same in every engine, and pulling three browsers costs more than the job
+      # (ADR 0006, ADR 0032). Add `--with-deps` if a runner image ever stops shipping the
+      # system libraries chromium links against.
+      - name: install chromium
+        run: npx playwright install chromium
+
+      - name: storybook tests
+        run: npx vitest run --project storybook

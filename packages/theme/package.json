@@ -1,0 +1,47 @@
+{
+  "name": "@nerey/theme",
+  "version": "0.1.0",
+  "description": "The reference theme for @nerey/core \u2014 CSS Modules compiled to a static stylesheet, driven entirely by --nerey-* custom properties.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./theme.css": "./dist/theme.css",
+    "./tokens.css": "./dist/tokens.css",
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "vite build && tsc -p tsconfig.build.json && node ../../scripts/fix-dts-specifiers.mjs .",
+    "dev": "vite build --watch"
+  },
+  "dependencies": {
+    "@base-ui/react": "^1.7.0",
+    "zod": "^4.4.3"
+  },
+  "peerDependencies": {
+    "@nerey/core": "^0.1.0",
+    "react": "^19.0.0"
+  },
+  "keywords": [
+    "generative-ui",
+    "css-modules",
+    "design-tokens",
+    "react",
+    "base-ui"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

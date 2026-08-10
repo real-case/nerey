@@ -1,0 +1,136 @@
+/*
+ * ADR 0024 / 0025 / 0032. Every value is a token read WITH an inline fallback, and the box model
+ * is stated rather than inherited.
+ *
+ * Base UI positions the track, the indicator and every thumb with inline styles it computes from
+ * the value, so this file deliberately declares no `position`, no `inset` and no `translate` on
+ * those three parts. Anything it did declare would be overridden on the next drag frame, and the
+ * rule would sit here looking like it worked.
+ */
+
+.root {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--nerey-space-1, 0.25rem);
+
+  margin: 0;
+  inline-size: 100%;
+  min-inline-size: 0;
+
+  font-family: inherit;
+}
+
+/* ── Control ───────────────────────────────────────────────────────────────────────────
+ * The hit area, which is taller than the track it contains. A 4px-high pointer target is a
+ * target most people miss; the padding is what turns the line into something clickable without
+ * making the line itself heavier.
+ */
+
+.control {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+
+  inline-size: 100%;
+  min-inline-size: 0;
+  margin: 0;
+  padding-block: var(--nerey-space-2, 0.5rem);
+  padding-inline: 0;
+
+  /* Without this a drag on a touch screen scrolls the page instead of moving the thumb. */
+  touch-action: none;
+  user-select: none;
+  cursor: pointer;
+}
+
+.control[data-disabled] {
+  cursor: not-allowed;
+  opacity: var(--nerey-opacity-disabled, 0.45);
+}
+
+.track {
+  box-sizing: border-box;
+  inline-size: 100%;
+  block-size: var(--nerey-space-1, 0.25rem);
+  margin: 0;
+  padding: 0;
+
+  border-radius: var(--nerey-radius-full, 9999px);
+  background: var(--nerey-surface-muted, #eceff2);
+  user-select: none;
+}
+
+/*
+ * Base UI sets this element's height to `inherit` and its width to the filled percentage, so the
+ * only thing left to say is what "filled" looks like.
+ */
+.indicator {
+  box-sizing: border-box;
+  border-radius: var(--nerey-radius-full, 9999px);
+  background: var(--nerey-surface-accent, #138171);
+  user-select: none;
+}
+
+.track[data-invalid] {
+  background: var(--nerey-surface-danger-subtle, #fee2e2);
+}
+
+.indicator[data-invalid] {
+  background: var(--nerey-surface-danger, #c9302a);
+}
+
+/* ── Thumb ─────────────────────────────────────────────────────────────────────────────
+ * The focusable node is the `<input type="range">` Base UI nests inside this element, so the
+ * ring is drawn from `:has(:focus-visible)` rather than from `:focus-visible` — the thumb itself
+ * never takes focus and a rule on it would never match.
+ */
+
+.thumb {
+  box-sizing: border-box;
+  inline-size: var(--nerey-space-4, 1rem);
+  block-size: var(--nerey-space-4, 1rem);
+  margin: 0;
+  padding: 0;
+
+  border: var(--nerey-border-width, 1px) solid var(--nerey-border-default, #bcc7d0);
+  border-radius: var(--nerey-radius-full, 9999px);
+  background: var(--nerey-surface-raised, #ffffff);
+  box-shadow: var(--nerey-shadow-sm, 0 1px 2px rgb(21 29 36 / 0.06));
+
+  user-select: none;
+  cursor: grab;
+}
+
+.thumb:has(:focus-visible) {
+  outline: var(--nerey-focus-ring-width, 2px) solid var(--nerey-border-focus, #138171);
+  outline-offset: var(--nerey-focus-ring-offset, 2px);
+}
+
+.thumb[data-dragging] {
+  cursor: grabbing;
+  border-color: var(--nerey-border-accent, #1fa18c);
+}
+
+.thumb[data-disabled] {
+  cursor: not-allowed;
+}
+
+/* ── Value ─────────────────────────────────────────────────────────────────────────────
+ * Tabular figures, because the number changes under a drag and proportional digits make the
+ * label jitter sideways while the thumb moves.
+ */
+
+.value {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+
+  font-family: inherit;
+  font-size: var(--nerey-font-size-sm, 0.8125rem);
+  font-weight: var(--nerey-font-weight-medium, 500);
+  line-height: var(--nerey-line-height-tight, 1.25);
+  font-variant-numeric: tabular-nums;
+  color: var(--nerey-text-secondary, #445461);
+}

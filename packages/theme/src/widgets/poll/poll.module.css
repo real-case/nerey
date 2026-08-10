@@ -1,0 +1,219 @@
+/*
+ * ADR 0024 / 0025. Every value is a token read WITH an inline fallback, so a consumer who imports
+ * theme.css without tokens.css still gets a legible poll; and nothing is inherited, because Nerey
+ * has no idea whether its host ships a reset.
+ *
+ * State comes from the ADR 0020 attributes the widget already emits — `[data-state='selected']`
+ * on an option, `[data-state='locked']` on the root — never from a parallel set of classes. The
+ * radio, the checkbox and the disclosure inside each row are theme components and paint
+ * themselves; this file styles the rows around them and nothing else (ADR 0026).
+ */
+
+.root {
+  /* Per-instance overrides land on these three, so a consumer can nudge one poll through CSS
+   * custom properties without a className (ADR 0026). */
+  --_row-bg: var(--nerey-surface-raised, #ffffff);
+  --_row-border: var(--nerey-border-subtle, #dbe1e6);
+  --_row-ink: var(--nerey-text-primary, #151d24);
+
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--nerey-space-3, 0.75rem);
+
+  margin: 0;
+  padding: 0;
+  /* The transcript column is the constraint, not the viewport: a poll that stretches to a wide
+   * screen puts its submit button a head-turn away from the options it commits. */
+  max-inline-size: var(--nerey-widget-max-width, 44rem);
+  min-inline-size: 0;
+
+  font-family: var(--nerey-font-sans, ui-sans-serif, system-ui, sans-serif);
+  font-size: var(--nerey-font-size-md, 0.875rem);
+  line-height: var(--nerey-line-height-normal, 1.5);
+  color: var(--_row-ink);
+}
+
+.question {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-size: var(--nerey-font-size-lg, 1rem);
+  font-weight: var(--nerey-font-weight-semibold, 600);
+  line-height: var(--nerey-line-height-tight, 1.25);
+  color: var(--nerey-text-primary, #151d24);
+  /* A generated question is arbitrary text and may well contain a URL or an unbroken identifier;
+   * without this it widens the whole widget past the column it lives in. */
+  overflow-wrap: anywhere;
+}
+
+/* ── Option rows ───────────────────────────────────────────────────────────────────────── */
+
+.optionRow {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--nerey-space-2, 0.5rem);
+
+  margin: 0;
+  padding-block: var(--nerey-space-2, 0.5rem);
+  padding-inline: var(--nerey-space-3, 0.75rem);
+
+  border: var(--nerey-border-width, 1px) solid var(--_row-border);
+  border-radius: var(--nerey-radius-md, 0.375rem);
+  background: var(--_row-bg);
+  min-inline-size: 0;
+  transition:
+    background-color var(--nerey-duration-fast, 140ms) var(--nerey-ease-standard, ease),
+    border-color var(--nerey-duration-fast, 140ms) var(--nerey-ease-standard, ease);
+}
+
+/*
+ * The tentative highlight. It is the entire feedback for step one of a two-step interaction, so
+ * it has to be readable at a glance across a whole list — a border alone is not, once the list is
+ * long enough to scroll. The fill is the subtle accent surface rather than the solid one, because
+ * the row still carries body text that has to stay legible on it (ADR 0032).
+ */
+.optionRow[data-state='selected'],
+.noneRow[data-state='selected'] {
+  --_row-bg: var(--nerey-surface-selected, #eefbf7);
+  --_row-border: var(--nerey-border-accent, #1fa18c);
+}
+
+.optionRow:hover,
+.noneRow:hover {
+  --_row-border: var(--nerey-border-default, #bcc7d0);
+}
+
+/*
+ * Hover is suppressed once the poll is closed. An answered row that still lights up under the
+ * pointer reads as clickable, and the click it invites does nothing — which is worse than looking
+ * inert, because the user tries it twice before believing it.
+ */
+.root[data-state='locked'] .optionRow:hover,
+.root[data-state='locked'] .noneRow:hover {
+  --_row-border: var(--nerey-border-subtle, #dbe1e6);
+}
+
+.root[data-state='locked'] .optionRow[data-state='selected']:hover,
+.root[data-state='locked'] .noneRow[data-state='selected']:hover {
+  --_row-border: var(--nerey-border-accent, #1fa18c);
+}
+
+/*
+ * The whole label is the hit target, which is why it is a `<label>` and not a `<span>` beside the
+ * control. `align-items: start` rather than `center`: a title that wraps to three lines must keep
+ * its control on the first one, next to the text it belongs to.
+ */
+.optionLabel {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: var(--nerey-space-3, 0.75rem);
+
+  margin: 0;
+  padding: 0;
+  min-inline-size: 0;
+  cursor: pointer;
+}
+
+.root[data-state='locked'] .optionLabel {
+  cursor: default;
+}
+
+.optionTitle {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  font-size: var(--nerey-font-size-md, 0.875rem);
+  font-weight: var(--nerey-font-weight-medium, 500);
+  line-height: var(--nerey-line-height-normal, 1.5);
+  color: var(--nerey-text-primary, #151d24);
+  overflow-wrap: anywhere;
+}
+
+/*
+ * `pre-wrap`, and this is the point of the whole element. Real payloads put one `key: value` per
+ * line in a description, separated by single newlines; the default `normal` collapses every one
+ * of them into a single paragraph, and a markdown renderer — the other obvious choice — collapses
+ * them too, because a single newline is not a break in markdown. Preserving them here is the only
+ * way the text arrives looking like what the producer wrote.
+ */
+.optionDescription {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  white-space: pre-wrap;
+  font-size: var(--nerey-font-size-sm, 0.8125rem);
+  line-height: var(--nerey-line-height-relaxed, 1.7);
+  color: var(--nerey-text-secondary, #445461);
+  overflow-wrap: anywhere;
+}
+
+/* ── The way out ───────────────────────────────────────────────────────────────────────── */
+
+/*
+ * "None of the above" is not one more entry in the list and must not read as one. It keeps the
+ * row geometry so the control still lines up, and takes a dashed stroke and extra separation
+ * above it — enough to say "this is the end of the options", cheap enough to survive a forced
+ * colours mode that drops the fill.
+ */
+.noneRow {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+
+  margin-block-start: var(--nerey-space-1, 0.25rem);
+  padding-block: var(--nerey-space-2, 0.5rem);
+  padding-inline: var(--nerey-space-3, 0.75rem);
+
+  border: var(--nerey-border-width, 1px) dashed var(--_row-border);
+  border-radius: var(--nerey-radius-md, 0.375rem);
+  background: var(--_row-bg);
+  min-inline-size: 0;
+  transition:
+    background-color var(--nerey-duration-fast, 140ms) var(--nerey-ease-standard, ease),
+    border-color var(--nerey-duration-fast, 140ms) var(--nerey-ease-standard, ease);
+}
+
+/* ── Footer ────────────────────────────────────────────────────────────────────────────── */
+
+.footer {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--nerey-space-2, 0.5rem);
+  margin: 0;
+  padding: 0;
+}
+
+/*
+ * The persistence failure note. Deliberately not dimmed and not hidden behind an icon: the reply
+ * did go through, and the one thing a user might do about this — not trusting the poll to
+ * remember — depends on them reading the sentence.
+ */
+.notice {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-size: var(--nerey-font-size-sm, 0.8125rem);
+  line-height: var(--nerey-line-height-normal, 1.5);
+  color: var(--nerey-text-danger, #a52822);
+}
+
+/*
+ * Forced-colors mode drops every background, which would erase the tentative highlight — the only
+ * thing telling the user what pressing Submit is about to send.
+ */
+@media (forced-colors: active) {
+  .optionRow[data-state='selected'],
+  .noneRow[data-state='selected'] {
+    border-color: Highlight;
+    border-width: var(--nerey-focus-ring-width, 2px);
+  }
+}

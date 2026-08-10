@@ -1,0 +1,21 @@
+{
+  "attributes": {
+    "widget": "data-nerey-widget",
+    "version": "data-nerey-version",
+    "slot": "data-nerey-slot",
+    "part": "data-nerey-part",
+    "status": "data-nerey-status",
+    "state": "data-state",
+    "readonly": "data-readonly",
+    "fallback": "data-nerey-fallback",
+    "theme": "data-nerey-theme"
+  },
+  "states": [
+    "idle",
+    "selected",
+    "submitting",
+    "locked",
+    "expired",
+    "error"
+  ]
+}

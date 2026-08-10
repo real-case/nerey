@@ -1,0 +1,112 @@
+/*
+ * ADR 0024 / 0025 / 0032. Every value is a token read WITH an inline fallback, the box model is
+ * stated rather than inherited, and every foreground/background pairing was measured against the
+ * 4.5:1 the axe gate enforces before it was written down.
+ *
+ * The control chrome is deliberately absent from this file — it lives in `input.module.css` and
+ * `Field.Control` wears it from there. A field's job is the labelling relationship; what a text
+ * box looks like is one decision and belongs in one place.
+ */
+
+.root {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  /* `stretch`, so a control inside a field fills the field's width without every call site
+   * restating it. A field that sized itself to its label would leave a form ragged. */
+  align-items: stretch;
+  gap: var(--nerey-space-2, 0.5rem);
+
+  margin: 0;
+  inline-size: 100%;
+  min-inline-size: 0;
+
+  font-family: inherit;
+  font-size: var(--nerey-font-size-md, 0.875rem);
+  line-height: var(--nerey-line-height-normal, 1.5);
+}
+
+/* ── Label ─────────────────────────────────────────────────────────────────────────────
+ * A flex row rather than a plain block, because the documented way to label a checkbox, a radio
+ * or a switch is to put the control INSIDE the label (Base UI's own guidance). Text-only labels
+ * are unaffected: a run of words is one anonymous flex item and wraps exactly as it would in a
+ * block.
+ */
+
+.label {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--nerey-space-2, 0.5rem);
+
+  margin: 0;
+  padding: 0;
+
+  font-family: inherit;
+  font-size: var(--nerey-font-size-md, 0.875rem);
+  font-weight: var(--nerey-font-weight-medium, 500);
+  line-height: var(--nerey-line-height-tight, 1.25);
+  color: var(--nerey-text-primary, #151d24);
+}
+
+/*
+ * A disabled label steps down to `--nerey-text-secondary` and no further.
+ *
+ * The obvious choice is `--nerey-text-disabled`, and it is wrong here: that token measures
+ * 2.59:1 and only survives WCAG 1.4.3 on the INACTIVE CONTROL itself, which axe skips. A label
+ * is not the control — it is the text a sighted user reads to learn what they are not allowed to
+ * fill in, and dimming it is how component libraries fail 1.4.3 without noticing (ADR 0032).
+ * The `not-allowed` cursor and the muted control below carry the state instead.
+ */
+.label[data-disabled] {
+  color: var(--nerey-text-secondary, #445461);
+  cursor: not-allowed;
+}
+
+/* ── Description and error ─────────────────────────────────────────────────────────────
+ * `--nerey-text-secondary`, not `--nerey-text-muted`: muted measures 4.08:1 on the canvas in
+ * light, which is below AA for normal-size text (ADR 0032).
+ */
+
+.description {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+
+  font-family: inherit;
+  font-size: var(--nerey-font-size-sm, 0.8125rem);
+  font-weight: var(--nerey-font-weight-normal, 400);
+  line-height: var(--nerey-line-height-normal, 1.5);
+  color: var(--nerey-text-secondary, #445461);
+}
+
+.error {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--nerey-space-1, 0.25rem);
+
+  margin: 0;
+  padding: 0;
+
+  font-family: inherit;
+  font-size: var(--nerey-font-size-sm, 0.8125rem);
+  font-weight: var(--nerey-font-weight-medium, 500);
+  line-height: var(--nerey-line-height-normal, 1.5);
+  color: var(--nerey-text-danger, #a52822);
+}
+
+/* ── Item ──────────────────────────────────────────────────────────────────────────────
+ * One row of a checkbox or radio group, holding its own label and description. Tighter than
+ * `.root`, because the gap here separates a label from its own footnote rather than one field
+ * from the next.
+ */
+
+.item {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--nerey-space-1, 0.25rem);
+  margin: 0;
+  min-inline-size: 0;
+}

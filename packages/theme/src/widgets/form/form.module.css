@@ -1,0 +1,54 @@
+/*
+ * ADR 0024 / 0025. Every value is a token read WITH an inline fallback, and the box model is
+ * stated rather than inherited, because Nerey has no idea whether its host ships a reset.
+ *
+ * This sheet is deliberately short. The form is assembled from theme components that already
+ * carry their own paint — Surface, Stack, Field, Input, Button — so what is left here is the
+ * three things none of them can know: how wide the widget is allowed to be, how a required
+ * field is marked, and how the action row lays out. Restating a field's chrome here would
+ * produce two files that must be edited together and will not be.
+ *
+ * There is no `[data-state='locked']` dimming rule, and its absence is a decision. A submitted
+ * form is a record of what the user answered and has to stay readable; `--nerey-opacity-dimmed`
+ * on the whole panel would fade exactly the values the snapshot exists to preserve (ADR 0018).
+ * The controls already carry `data-disabled` and read as inert on their own.
+ */
+
+.root {
+  box-sizing: border-box;
+  display: block;
+
+  margin: 0;
+  inline-size: 100%;
+  /* A transcript column can be arbitrarily wide; a form line longer than this stops being
+   * scannable. The token is the one the rest of the widget layer measures against. */
+  max-inline-size: var(--nerey-widget-max-width, 44rem);
+}
+
+/*
+ * The required marker.
+ *
+ * `aria-hidden` in the markup, so this is decoration for sighted readers only — the fact itself
+ * travels on the control's `aria-required`. Danger red rather than the label's own colour
+ * because a glyph that matches its surroundings is not a marker.
+ */
+.required {
+  color: var(--nerey-text-danger, #a52822);
+  font-weight: var(--nerey-font-weight-normal, 400);
+}
+
+/*
+ * The action row. It wraps, because a long submit label next to a status badge is exactly the
+ * pair that overflows first in a narrow transcript, and `align-items: center` keeps the badge on
+ * the button's optical line rather than on its box's.
+ */
+.actions {
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--nerey-space-3, 0.75rem);
+
+  margin: 0;
+  padding: 0;
+}

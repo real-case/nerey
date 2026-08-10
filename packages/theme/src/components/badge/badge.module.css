@@ -1,0 +1,105 @@
+/*
+ * ADR 0024 / 0025 / 0032. Every value is a token read WITH an inline fallback, the box model is
+ * stated rather than inherited, and every foreground/background pairing below was measured
+ * against the 4.5:1 the axe gate enforces before it was written down.
+ */
+
+.root {
+  /* The tone axis sets these four; the variant axis decides which of them get used. Nine
+   * combinations minus the repeats, from two small groups of rules rather than fifteen
+   * hand-written pairs that drift apart the first time a token changes. */
+  --_tint: var(--nerey-surface-muted, #eceff2);
+  --_fill: var(--nerey-surface-inverse, #151d24);
+  --_ink: var(--nerey-text-secondary, #445461);
+
+  --_bg: var(--_tint);
+  --_fg: var(--nerey-text-primary, #151d24);
+  --_border: transparent;
+
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--nerey-space-1, 0.25rem);
+
+  margin: 0;
+  padding-block: var(--nerey-space-1, 0.25rem);
+  padding-inline: var(--nerey-space-2, 0.5rem);
+
+  font-family: inherit;
+  font-size: var(--nerey-font-size-sm, 0.8125rem);
+  font-weight: var(--nerey-font-weight-medium, 500);
+  line-height: var(--nerey-line-height-tight, 1.25);
+  letter-spacing: var(--nerey-letter-spacing-wide, 0.02em);
+  white-space: nowrap;
+
+  border: var(--nerey-border-width, 1px) solid var(--_border);
+  border-radius: var(--nerey-radius-full, 9999px);
+  background: var(--_bg);
+  color: var(--_fg);
+}
+
+/* ── Tone ──────────────────────────────────────────────────────────────────────────────
+ * `neutral` is the base rule's value.
+ *
+ * A solid badge's fill is the tone's `--nerey-text-*` step rather than its `--nerey-surface-*`
+ * step, for two reasons. The palette defines a strong surface for accent and danger only, and
+ * inventing one for success and warning is exactly what ADR 0024 forbids. More importantly the
+ * text step is the one that pairs with `--nerey-text-on-accent` in BOTH themes:
+ * `--nerey-surface-danger` under `--nerey-text-on-accent` measures 4.17:1 in dark, below the
+ * 4.5:1 the axe gate fails on (ADR 0032), while `--nerey-text-danger` measures 8.97:1.
+ */
+
+.toneAccent {
+  --_tint: var(--nerey-surface-accent-subtle, #eefbf7);
+  --_fill: var(--nerey-text-accent, #12675c);
+  --_ink: var(--nerey-text-accent, #12675c);
+}
+
+.toneDanger {
+  --_tint: var(--nerey-surface-danger-subtle, #fee2e2);
+  --_fill: var(--nerey-text-danger, #a52822);
+  --_ink: var(--nerey-text-danger, #a52822);
+}
+
+.toneSuccess {
+  --_tint: var(--nerey-surface-success-subtle, #d6f5e3);
+  --_fill: var(--nerey-text-success, #17693e);
+  --_ink: var(--nerey-text-success, #17693e);
+}
+
+.toneWarning {
+  --_tint: var(--nerey-surface-warning-subtle, #fef3c7);
+  --_fill: var(--nerey-text-warning, #a16207);
+  --_ink: var(--nerey-text-warning, #a16207);
+}
+
+/* ── Variant ───────────────────────────────────────────────────────────────────────────
+ * `subtle` is the base rule's value: the tinted fill carries the tone and the label stays
+ * `--nerey-text-primary`. Tinting the label as well is the prettier option and it is not
+ * available here — `--nerey-text-warning` on `--nerey-surface-warning-subtle` measures 4.42:1
+ * in light, and a rule that holds for four tones out of five is a rule nobody remembers.
+ */
+
+.solid {
+  --_bg: var(--_fill);
+  --_fg: var(--nerey-text-on-accent, #ffffff);
+  --_border: transparent;
+}
+
+/* The stroke is `currentColor` rather than a border token, so an outline badge cannot end up
+ * with an edge that disagrees with its label — and success and warning have no border token to
+ * disagree with in the first place. */
+.outline {
+  --_bg: transparent;
+  --_fg: var(--_ink);
+  --_border: currentColor;
+}
+
+/* ── Size ──────────────────────────────────────────────────────────────────────────────
+ * `md` is the base rule's value. Both steps stay above the 12px floor where a label stops
+ * being readable at arm's length, which is why `sm` gives up padding before it gives up type. */
+
+.sizeSm {
+  padding-block: 0;
+  font-size: var(--nerey-font-size-xs, 0.75rem);
+}

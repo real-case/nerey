@@ -1,0 +1,22 @@
+/*
+ * ADR 0024 / 0025. Every value is a token read WITH an inline fallback, and the box model is
+ * stated rather than inherited — a `<form>` carries a default margin in some engines and this
+ * theme assumes no reset exists to have removed it.
+ */
+
+.root {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  /* Wider than the gap inside a field, so "label, control, error" reads as one unit and the next
+   * field reads as the next one. Rhythm is the only styling a form needs. */
+  gap: var(--nerey-space-5, 1.25rem);
+
+  margin: 0;
+  padding: 0;
+  inline-size: 100%;
+  min-inline-size: 0;
+
+  font-family: inherit;
+}

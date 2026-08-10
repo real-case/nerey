@@ -1,0 +1,33 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "emitDeclarationOnly": true,
+    "declaration": true,
+    "declarationMap": true,
+    "composite": false,
+    "sourceMap": false,
+    "types": []
+    // Deliberately NO `paths` mapping for @nerey/core.
+    //
+    // The development config (../../tsconfig.json) points @nerey/core at core's SOURCE so a
+    // clean checkout type-checks without a build. Doing that here breaks the declaration emit:
+    // tsc follows the alias into packages/core/src, which is outside this package's rootDir, and
+    // every re-exported core type becomes TS6059.
+    //
+    // Resolving through node_modules instead is also the more honest build: it makes the
+    // published theme's declarations reference the published core's declarations, which is
+    // exactly what a consumer's compiler will do. It requires core to be built first — which
+    // `npm run build --workspaces` guarantees, since it walks the workspace graph in dependency
+    // order and theme declares @nerey/core as a peer.
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.d.ts"],
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/**/*.stories.tsx",
+    "src/**/__tests__/**",
+    "src/**/__fixtures__/**"
+  ]
+}

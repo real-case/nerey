@@ -1,0 +1,158 @@
+/*
+ * ADR 0024 / 0025. Every value is a token read WITH an inline fallback, and the box model is
+ * stated rather than inherited — including the list markers and padding a UA puts on `<ol>`, which
+ * is exactly the kind of thing that looks fine here and looks wrong in a host with no reset.
+ *
+ * Nothing here animates: the one moving part is Progress's own indicator, which owns its timing and
+ * its `prefers-reduced-motion` substitution in progress.module.css. Adding a second motion
+ * declaration here would be a second place for that preference to be forgotten.
+ */
+
+.root {
+  /* Per-instance deviation lands on these (ADR 0026): how far a step's text clears its marker, and
+   * what an untouched step is drawn in. A consumer scopes them to a container they own. */
+  --_marker-gap: var(--nerey-space-2, 0.5rem);
+  --_pending: var(--nerey-text-muted, #556777);
+
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--nerey-space-3, 0.75rem);
+
+  margin: 0;
+  padding: var(--nerey-space-4, 1rem);
+  max-inline-size: var(--nerey-widget-max-width, 44rem);
+
+  font-family: var(--nerey-font-sans, ui-sans-serif, system-ui, sans-serif);
+  font-size: var(--nerey-font-size-md, 0.875rem);
+  line-height: var(--nerey-line-height-normal, 1.5);
+  color: var(--nerey-text-primary, #151d24);
+
+  border: var(--nerey-border-width, 1px) solid var(--nerey-border-subtle, #dbe1e6);
+  border-radius: var(--nerey-radius-lg, 0.5rem);
+  background: var(--nerey-surface-raised, #ffffff);
+}
+
+/*
+ * A tracker the host has frozen changes its surface rather than rearranging, so the record stays
+ * comparable to the live version it replaced (ADR 0018).
+ *
+ * DEFECT FIXED: this rule used to be `opacity: var(--nerey-opacity-dimmed, 0.55)`. `opacity` on the
+ * root composites every descendant against whatever is behind the widget, so it rewrites the colour
+ * of text nobody re-declared: the bar's label lands at 3.82:1, and the announcement, the step count
+ * and every completed step label land at 2.62:1 — all under the 4.5:1 WCAG 2.2 AA asks of body text
+ * (1.4.3). The 1.4.3 exemption for inactive controls does not reach this: a frozen tracker is not a
+ * disabled control, it is the snapshot `afterExpiry: 'snapshot'` exists to preserve, and fading it
+ * fades exactly the values worth preserving.
+ *
+ * Nothing here dims the step markers either. They are the non-text cue that distinguishes done from
+ * running from failed, so they answer to 1.4.11's 3:1 rather than being decoration that may fade.
+ */
+.root[data-readonly] {
+  border-color: var(--nerey-border-default, #bcc7d0);
+  background: var(--nerey-surface-sunken, #f6f8f9);
+}
+
+/* ── The announcement ──────────────────────────────────────────────────────────────────────
+ * Rendered as visible text, not as a visually-hidden live region. A sighted user reading a bar
+ * that is 60% along still has to work out what is happening at 60%; the sentence answers that for
+ * everyone, and a live region nobody can see is a live region nobody notices has gone stale.
+ */
+
+.announcement {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-size: var(--nerey-font-size-sm, 0.8125rem);
+  color: var(--nerey-text-secondary, #445461);
+  overflow-wrap: anywhere;
+}
+
+.announcementDanger {
+  font-weight: var(--nerey-font-weight-medium, 500);
+  color: var(--nerey-text-danger, #a52822);
+}
+
+/* ── Steps ─────────────────────────────────────────────────────────────────────────────────
+ * `list-style: none` removes the markers a UA would draw beside our own glyphs. The `role="list"`
+ * that keeps the list a list in Safari/VoiceOver is set in the component, not here, because it is
+ * a semantic decision and this file only paints.
+ */
+
+.steps {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--nerey-space-1, 0.25rem);
+
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--_marker-gap);
+
+  margin: 0;
+  padding-block: var(--nerey-space-1, 0.25rem);
+  padding-inline: var(--nerey-space-2, 0.5rem);
+
+  border-radius: var(--nerey-radius-md, 0.375rem);
+  color: var(--_pending);
+}
+
+.marker {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+}
+
+.stepLabel {
+  min-inline-size: 0;
+  /* An agent writes these, and one day it will write a 300-character step with no spaces in it. */
+  overflow-wrap: anywhere;
+}
+
+/* ── Step states ───────────────────────────────────────────────────────────────────────────
+ * Colour is never the only cue: the glyph differs in shape for all four states, the current step
+ * is the one carrying weight, and `aria-current="step"` says which row it is without looking.
+ */
+
+.stepDone {
+  color: var(--nerey-text-secondary, #445461);
+}
+
+.stepDone .marker {
+  color: var(--nerey-text-success, #17693e);
+}
+
+.stepCurrent {
+  font-weight: var(--nerey-font-weight-medium, 500);
+  color: var(--nerey-text-primary, #151d24);
+  background: var(--nerey-surface-accent-subtle, #eefbf7);
+}
+
+.stepCurrent .marker {
+  color: var(--nerey-text-accent, #12675c);
+}
+
+.stepFailed {
+  font-weight: var(--nerey-font-weight-medium, 500);
+  color: var(--nerey-text-danger, #a52822);
+  background: var(--nerey-surface-danger-subtle, #fee2e2);
+}
+
+.stepFailed .marker {
+  color: var(--nerey-text-danger, #a52822);
+}
+
+.empty {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-size: var(--nerey-font-size-sm, 0.8125rem);
+  color: var(--nerey-text-muted, #556777);
+}

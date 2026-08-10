@@ -1,0 +1,88 @@
+/*
+ * ADR 0024 / 0025. Every value is a token read WITH an inline fallback, and the box model is
+ * stated rather than inherited, because Nerey has no idea whether its host ships a reset.
+ *
+ * The panel's chrome comes from `Surface` and its rhythm from `Stack`; what is left here is the
+ * three things neither can know — how a facet behaves when the row wraps, how the action row
+ * splits between the composed sentence and the two buttons, and how a result count is set apart
+ * from the option label it follows.
+ */
+
+.root {
+  box-sizing: border-box;
+  display: block;
+
+  margin: 0;
+  inline-size: 100%;
+}
+
+/*
+ * One facet.
+ *
+ * A minimum width, because this row wraps and a facet allowed to collapse to its longest word
+ * produces a column of one-chip lines. There is no width scale in the token set (ADR 0024 says
+ * to reach for the closest existing ramp rather than invent a value), so the floor is derived
+ * from the space scale: four times `--nerey-space-16` is 16rem, about the width of a Combobox
+ * showing a typical option. `flex: 1 1 auto` lets a facet take the slack when it is alone on a
+ * line, so a single facet does not sit in a 16rem stub beside empty space.
+ */
+.root [data-nerey-part='facet'] {
+  flex: 1 1 auto;
+  min-inline-size: min(100%, calc(var(--nerey-space-16, 4rem) * 4));
+}
+
+/*
+ * The action row: the sentence takes the slack, the buttons pin to the end.
+ *
+ * `min-inline-size: 0` on the query is what actually lets the sentence wrap — a flex item's
+ * automatic minimum size is its content, so without it a long query pushes the buttons off the
+ * panel instead of taking a second line.
+ */
+.actions {
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--nerey-space-2, 0.5rem);
+
+  margin: 0;
+  padding: 0;
+}
+
+.query {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  margin: 0;
+}
+
+/*
+ * The result count beside an option label.
+ *
+ * `tabular-nums` so a column of chips does not shuffle sideways as the digits change, and a
+ * subdued colour so the count reads as an annotation on the label rather than as part of it.
+ * `--nerey-text-secondary` and not `--nerey-text-muted`: muted is under AA on this surface.
+ */
+.count {
+  margin-inline-start: var(--nerey-space-1, 0.25rem);
+  font-size: var(--nerey-font-size-xs, 0.75rem);
+  font-variant-numeric: tabular-nums;
+  color: var(--nerey-text-secondary, #445461);
+}
+
+/*
+ * …but only while the surface under it is the panel's own.
+ *
+ * A pressed chip and a highlighted or selected list row repaint their fill with an accent
+ * surface and pick a foreground to match. `--nerey-text-secondary` was chosen against the sunken
+ * panel and measures 1.64:1 on the accent fill — a real AA failure that is invisible until a
+ * chip is actually pressed, which is why it survived a passing idle story. There is no subdued
+ * variant that clears 4.5:1 on that fill, so the annotation stops being subdued and follows the
+ * colour its container already chose. These are Base UI's own state attributes on the toggle and
+ * the combobox item; the combobox popup is portalled, so none of this can be scoped under
+ * `.root`.
+ */
+[data-pressed] .count,
+[data-highlighted] .count,
+[data-selected] .count {
+  color: inherit;
+}

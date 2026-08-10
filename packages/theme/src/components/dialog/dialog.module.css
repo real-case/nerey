@@ -1,0 +1,205 @@
+/*
+ * ADR 0024 / 0025. Two rules govern every line here:
+ *   1. Every value is a token read WITH an inline fallback, so a consumer who imports
+ *      theme.css without tokens.css still gets a legible dialog.
+ *   2. Nothing is inherited. Base UI ships no CSS at all, and the popup is portalled to
+ *      <body>, so it does not even inherit the font of the widget that opened it. Everything
+ *      a dialog needs to look like a dialog is stated here.
+ *
+ * Enter and exit key off Base UI's own `data-starting-style` / `data-ending-style` rather than
+ * off a class of ours (ADR 0022). The library owns the mount timing; a parallel class-based
+ * state would only be a second source of truth for the same frame.
+ */
+
+/* ── Backdrop ──────────────────────────────────────────────────────────────────────── */
+
+.backdrop {
+  box-sizing: border-box;
+  position: fixed;
+  inset: 0;
+
+  margin: 0;
+  padding: 0;
+
+  background: var(--nerey-surface-scrim, rgb(21 29 36 / 0.44));
+  z-index: var(--nerey-z-overlay, 1000);
+
+  transition: opacity var(--nerey-duration-normal, 220ms) var(--nerey-ease-standard, ease);
+}
+
+.backdrop[data-starting-style],
+.backdrop[data-ending-style] {
+  opacity: 0;
+}
+
+/* ── Viewport — the scroll container Base UI wraps the popup in ────────────────────── */
+
+.viewport {
+  box-sizing: border-box;
+  position: fixed;
+  inset: 0;
+  display: flex;
+
+  /* `safe` is load-bearing. With plain `center`, a popup taller than the window is centred by
+   * overflowing equally in both directions, and the overflow above the start edge is
+   * unreachable — a scroll container cannot scroll backwards past its own origin, so the
+   * title and the close button end up permanently off-screen. `safe` degrades to start
+   * alignment exactly in that case and behaves as `center` in every other one. */
+  align-items: safe center;
+  justify-content: safe center;
+
+  margin: 0;
+  padding: var(--nerey-space-4, 1rem);
+  overflow: auto;
+
+  z-index: var(--nerey-z-overlay, 1000);
+}
+
+/* A fullscreen dialog owns the window, so the inset that keeps every other size clear of the
+ * edges would read as a mistake. */
+.viewportFullscreen {
+  padding: 0;
+}
+
+/* ── Popup ─────────────────────────────────────────────────────────────────────────── */
+
+.popup {
+  box-sizing: border-box;
+  /* The positioning context for the out-of-flow dismiss control further down. */
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--nerey-space-3, 0.75rem);
+
+  margin: 0;
+  padding: var(--nerey-space-5, 1.25rem);
+
+  inline-size: 100%;
+  max-inline-size: calc(var(--nerey-widget-max-width, 44rem) * 0.75);
+
+  /* Stated, not inherited: a portalled element inherits from <body>, which belongs to the
+   * host application and may be anything at all. */
+  font-family: var(--nerey-font-sans, ui-sans-serif, system-ui, sans-serif);
+  font-size: var(--nerey-font-size-md, 0.875rem);
+  line-height: var(--nerey-line-height-normal, 1.5);
+
+  border: var(--nerey-border-width, 1px) solid var(--nerey-border-subtle, #dbe1e6);
+  border-radius: var(--nerey-radius-xl, 0.75rem);
+  background: var(--nerey-surface-raised, #ffffff);
+  color: var(--nerey-text-primary, #151d24);
+  box-shadow: var(--nerey-shadow-lg, 0 12px 32px -8px rgb(21 29 36 / 0.18));
+
+  outline: none;
+  transition:
+    opacity var(--nerey-duration-normal, 220ms) var(--nerey-ease-emphasized, ease),
+    transform var(--nerey-duration-normal, 220ms) var(--nerey-ease-emphasized, ease);
+}
+
+/* Base UI gives the popup `tabindex="-1"` and focuses it when no other target is chosen, so
+ * the ring is not decorative — it is the only thing telling a keyboard user that focus has
+ * moved into the dialog at all. */
+.popup:focus-visible {
+  outline: var(--nerey-focus-ring-width, 2px) solid var(--nerey-border-focus, #138171);
+  outline-offset: var(--nerey-focus-ring-offset, 2px);
+}
+
+.popup[data-starting-style],
+.popup[data-ending-style] {
+  opacity: 0;
+  transform: translateY(var(--nerey-space-2, 0.5rem)) scale(0.98);
+}
+
+/* ── Sizes ─────────────────────────────────────────────────────────────────────────────
+ * The three bounded widths are fractions of `--nerey-widget-max-width` rather than three
+ * lengths of their own. A dialog and the widget that opened it are the same kind of surface
+ * in the same conversation; deriving one from the other means a consumer who re-scales the
+ * widget column gets dialogs that still belong to it, and there is no fourth number to keep
+ * in step. `md` is the base rule's value and therefore has no class.
+ */
+
+.sizeSm {
+  max-inline-size: calc(var(--nerey-widget-max-width, 44rem) * 0.5);
+}
+
+.sizeLg {
+  max-inline-size: var(--nerey-widget-max-width, 44rem);
+}
+
+/* `min-block-size`, not `block-size`: content taller than the window then grows the popup and
+ * the viewport scrolls it, instead of the popup clipping its own overflow and taking the
+ * dismiss control out of reach with it. */
+.sizeFullscreen {
+  min-block-size: 100%;
+  max-inline-size: none;
+  border-radius: 0;
+}
+
+/* ── Parts ─────────────────────────────────────────────────────────────────────────── */
+
+/* Out of flow so a long title wraps under it rather than around it. The control itself is
+ * drawn by IconButton; this box only says where it goes. */
+.dismiss {
+  position: absolute;
+  inset-block-start: var(--nerey-space-3, 0.75rem);
+  inset-inline-end: var(--nerey-space-3, 0.75rem);
+}
+
+.title {
+  box-sizing: border-box;
+  margin: 0;
+  /* Reserves the corner the dismiss control occupies. Without it a long title runs underneath
+   * a button that is still clickable, which reads as a rendering bug. */
+  padding-inline-end: var(--nerey-space-8, 2rem);
+
+  font-family: inherit;
+  font-size: var(--nerey-font-size-xl, 1.125rem);
+  font-weight: var(--nerey-font-weight-semibold, 600);
+  line-height: var(--nerey-line-height-tight, 1.25);
+  color: var(--nerey-text-primary, #151d24);
+}
+
+.description {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+
+  font-family: inherit;
+  font-size: var(--nerey-font-size-md, 0.875rem);
+  line-height: var(--nerey-line-height-normal, 1.5);
+  color: var(--nerey-text-secondary, #445461);
+}
+
+/* The action row is the one part that owns space above itself: the distance between the body
+ * and the decisions is not the distance between two paragraphs. `wrap` because two long
+ * button labels in a narrow dialog must stack rather than overflow. */
+.footer {
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--nerey-space-2, 0.5rem);
+
+  margin: 0;
+  padding-block-start: var(--nerey-space-2, 0.5rem);
+  padding-inline: 0;
+  padding-block-end: 0;
+}
+
+/*
+ * The lift and the scale are decoration: they say "this arrived", which the reader can already
+ * see. The fade is not — it is what separates a layer appearing from the page repainting, and
+ * dropping it makes a full-window surface blink into existence, which is its own problem. So
+ * the movement goes, the opacity stays, and the whole thing gets shorter.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .popup {
+    transition-duration: var(--nerey-duration-fast, 140ms);
+  }
+
+  .popup[data-starting-style],
+  .popup[data-ending-style] {
+    transform: none;
+  }
+}

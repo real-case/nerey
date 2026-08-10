@@ -1,0 +1,187 @@
+/*
+ * ADR 0024 / 0025. Every value is a token read WITH an inline fallback, and nothing is
+ * inherited — Base UI ships no CSS, and a portalled popup does not even inherit the font of
+ * the widget that anchored it.
+ *
+ * The `--available-*`, `--anchor-*` and `--transform-origin` properties below are NOT Nerey
+ * tokens and take no fallback: Base UI writes them onto the positioner at layout time, from
+ * measurements no stylesheet could guess. The ADR 0024 fallback rule exists so a consumer
+ * without tokens.css still gets a legible component; it has nothing to say about a value that
+ * only exists at runtime.
+ */
+
+/* ── Positioner — geometry only ────────────────────────────────────────────────────────
+ * Nothing visual lives here. The positioner is the box Floating UI moves; painting it would
+ * mean painting a rectangle whose size is the popup's placement rather than its content.
+ */
+
+.positioner {
+  box-sizing: border-box;
+  /* The space actually left between the anchor and the edge of the window. Without these two
+   * a popover near the bottom of a short window renders past it and the last line is gone. */
+  max-inline-size: var(--available-width);
+  max-block-size: var(--available-height);
+
+  z-index: var(--nerey-z-popover, 1100);
+  outline: none;
+}
+
+/* ── Popup ─────────────────────────────────────────────────────────────────────────── */
+
+.popup {
+  box-sizing: border-box;
+  /* The positioning context for the arrow, which sits outside this box's border. */
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  /* `flex-start` rather than the default stretch: a lone Close button in a popover should be
+   * the size of its label, not the width of the paragraph above it. Text children still fill
+   * the popup, because fit-content is capped by the line's cross size either way. */
+  align-items: flex-start;
+  gap: var(--nerey-space-2, 0.5rem);
+
+  margin: 0;
+  padding: var(--nerey-space-4, 1rem);
+
+  /* Hug the content, then stop. `--available-width` already keeps the popup inside the window;
+   * the second cap keeps a single long sentence from becoming a 900px-wide line of text on a
+   * desktop, which is unreadable for a reason that has nothing to do with collisions. */
+  inline-size: max-content;
+  max-inline-size: min(100%, calc(var(--nerey-widget-max-width, 44rem) * 0.55));
+
+  /* Deliberately NOT `overflow: auto`. The arrow is a child of this element positioned outside
+   * its border box, so any clipping here cuts the arrow off at the popup's edge. A popover
+   * with more content than the window has fits nests its own scroll container. */
+
+  font-family: var(--nerey-font-sans, ui-sans-serif, system-ui, sans-serif);
+  font-size: var(--nerey-font-size-md, 0.875rem);
+  line-height: var(--nerey-line-height-normal, 1.5);
+
+  border: var(--nerey-border-width, 1px) solid var(--nerey-border-subtle, #dbe1e6);
+  border-radius: var(--nerey-radius-lg, 0.5rem);
+  background: var(--nerey-surface-raised, #ffffff);
+  color: var(--nerey-text-primary, #151d24);
+  box-shadow: var(--nerey-shadow-md, 0 4px 12px -2px rgb(21 29 36 / 0.1));
+
+  outline: none;
+  /* Written by the positioner: the corner nearest the anchor, so the popup grows out of the
+   * control that opened it rather than out of its own middle. */
+  transform-origin: var(--transform-origin);
+  transition:
+    opacity var(--nerey-duration-fast, 140ms) var(--nerey-ease-standard, ease),
+    transform var(--nerey-duration-fast, 140ms) var(--nerey-ease-standard, ease);
+}
+
+.popup:focus-visible {
+  outline: var(--nerey-focus-ring-width, 2px) solid var(--nerey-border-focus, #138171);
+  outline-offset: var(--nerey-focus-ring-offset, 2px);
+}
+
+.popup[data-starting-style],
+.popup[data-ending-style] {
+  opacity: 0;
+  transform: scale(0.96);
+}
+
+/* ── Arrow ─────────────────────────────────────────────────────────────────────────────
+ * A window with a rotated square behind it, not a triangle. The square carries the popup's
+ * own fill AND its border, and the window clips the half that would sit inside the popup, so
+ * the two visible edges are continuous with the popup's outline — which a `border-width`
+ * triangle can never be, because it has no stroke.
+ *
+ * Base UI writes `position: absolute` plus one of `top`/`left` onto this element from the
+ * arrow middleware; the rules below fill in the other axis. The offset is one arrow height on
+ * the vertical sides and one and a half on the horizontal ones, which is `(width + height) / 2`
+ * — the element is rotated about its own centre, so its footprint swaps.
+ *
+ * PHYSICAL properties throughout, against this theme's habit, and the exception is the point:
+ * `data-side` is physical, `rotate` is physical and `translate(-50%)` is physical, so a logical
+ * `inset-inline-end` here would flip in a right-to-left document while the three things it has
+ * to agree with stayed where they were. A left-pointing arrow on the right-hand side is the
+ * kind of bug that only ever appears in someone else's locale.
+ */
+
+.arrow {
+  box-sizing: border-box;
+  display: block;
+  width: var(--nerey-space-4, 1rem);
+  height: var(--nerey-space-2, 0.5rem);
+  overflow: clip;
+}
+
+.arrow::before {
+  content: '';
+  display: block;
+  position: absolute;
+  box-sizing: border-box;
+  bottom: 0;
+  left: 50%;
+
+  /* √2, because what shows is the square's diagonal: a square of side h·√2 has a diagonal of
+   * 2h, giving a triangle exactly as wide as this window and exactly as tall as half of it. */
+  width: calc(var(--nerey-space-2, 0.5rem) * sqrt(2));
+  height: calc(var(--nerey-space-2, 0.5rem) * sqrt(2));
+
+  background: var(--nerey-surface-raised, #ffffff);
+  border: var(--nerey-border-width, 1px) solid var(--nerey-border-subtle, #dbe1e6);
+  transform: translate(-50%, 50%) rotate(45deg);
+}
+
+/* One border-width of overlap into the popup, so the fill covers the popup's own edge where
+ * the arrow meets it. Without it the popup's border draws a line straight across the base of
+ * the arrow and the two read as separate shapes. */
+
+.arrow[data-side='bottom'] {
+  top: calc(var(--nerey-border-width, 1px) - var(--nerey-space-2, 0.5rem));
+}
+
+.arrow[data-side='top'] {
+  bottom: calc(var(--nerey-border-width, 1px) - var(--nerey-space-2, 0.5rem));
+  rotate: 180deg;
+}
+
+.arrow[data-side='left'] {
+  right: calc(var(--nerey-border-width, 1px) - var(--nerey-space-3, 0.75rem));
+  rotate: 90deg;
+}
+
+.arrow[data-side='right'] {
+  left: calc(var(--nerey-border-width, 1px) - var(--nerey-space-3, 0.75rem));
+  rotate: -90deg;
+}
+
+/* ── Content parts ─────────────────────────────────────────────────────────────────── */
+
+.title {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+
+  font-family: inherit;
+  font-size: var(--nerey-font-size-md, 0.875rem);
+  font-weight: var(--nerey-font-weight-semibold, 600);
+  line-height: var(--nerey-line-height-tight, 1.25);
+  color: var(--nerey-text-primary, #151d24);
+}
+
+.description {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+
+  font-family: inherit;
+  font-size: var(--nerey-font-size-md, 0.875rem);
+  line-height: var(--nerey-line-height-normal, 1.5);
+  color: var(--nerey-text-secondary, #445461);
+}
+
+/*
+ * The zoom is decoration — the popup is already anchored to the thing that opened it, so the
+ * reader has no trouble finding it. The fade is what says "a layer arrived", so it stays.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .popup[data-starting-style],
+  .popup[data-ending-style] {
+    transform: none;
+  }
+}

@@ -1,0 +1,15 @@
+/*
+ * ADR 0025 — an inline `<svg>` is a replaced element, and a replaced element with no rule of its
+ * own sits on the text baseline with a descender's worth of empty space under it. That gap is
+ * invisible until it is the difference between a 32px button and a 36px one, and it depends on
+ * whether the host page ships a reset. So the icon states its own layout.
+ */
+
+.glyph {
+  display: inline-block;
+  /* Centres the glyph against the x-height of adjacent text. Inside a flex container — which is
+   * every control in this theme — the value is ignored and the container's alignment wins. */
+  vertical-align: middle;
+  /* An icon is the fixed part of a label, never the part that gives up room. */
+  flex: none;
+}

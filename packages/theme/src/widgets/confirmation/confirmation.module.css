@@ -1,0 +1,54 @@
+/*
+ * ADR 0024 / 0025. Every value is a token read WITH an inline fallback, so a consumer who imports
+ * theme.css without tokens.css still gets a legible confirmation.
+ *
+ * The sheet is short on purpose. Surface, Stack, Text and Button already carry the panel, the
+ * rhythm, the type and the controls; what is left is the handful of decisions that belong to this
+ * widget and to nothing else — how wide it may grow, what `tone: 'danger'` looks like, and which
+ * button still reads as chosen after the whole thing locks.
+ */
+
+.root {
+  /* A widget is not a page. Left to itself the panel takes the transcript's full width, and a
+   * two-word question stretched across 1200px reads as a system banner rather than as a reply. */
+  max-inline-size: var(--nerey-widget-max-width, 44rem);
+}
+
+/*
+ * `--_border` is Surface's own per-instance hook: it declares the property precisely so a caller
+ * can retint one panel without a className (ADR 0026). Writing it from `.root.toneDanger` — two
+ * classes, (0,2,0) — beats Surface's own `.raised` on SPECIFICITY rather than on which module
+ * happens to land later in the compiled theme.css. Ordering is a bundler decision, and a
+ * destructive action's appearance is not a thing to bet on one.
+ */
+.root.toneDanger {
+  --_border: var(--nerey-border-danger, #e2453b);
+}
+
+/*
+ * `display: flex` rather than `inline`: an inline SVG sits on the text baseline and reserves
+ * descender space beneath it, which shows up as a stray gap nobody can find in the markup.
+ * `flex: none` keeps the glyph at its own size when the title wraps to three lines.
+ */
+.icon {
+  display: flex;
+  flex: none;
+  /* Optically aligned with the title's cap height. The glyph's box is square and the title's is
+   * not, so matching the boxes leaves the icon visibly high. */
+  padding-block-start: var(--nerey-space-1, 0.25rem);
+  color: var(--nerey-text-danger, #a52822);
+}
+
+/*
+ * ADR 0018 — an acted-upon widget is disabled, not removed, so the transcript still has to say
+ * WHICH button was pressed. Button dims every disabled control; the one carrying the decision is
+ * exempted, leaving the answer at full strength beside a faded alternative.
+ *
+ * (0,3,0) against Button's own `.root:disabled` at (0,2,0): specificity again, not order. Contrast
+ * is not at stake either way — a disabled control is exempt from the WCAG contrast criterion, and
+ * this rule moves the chosen one back toward legibility rather than away from it.
+ */
+.root [data-nerey-part='confirm'][data-state='selected'],
+.root [data-nerey-part='cancel'][data-state='selected'] {
+  opacity: 1;
+}

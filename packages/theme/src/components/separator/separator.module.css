@@ -1,0 +1,65 @@
+/*
+ * ADR 0024 / 0025. Every value is a token read WITH an inline fallback, and the box model is
+ * stated rather than inherited.
+ */
+
+.root {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  /* A rule is decoration between siblings, never a thing that shrinks to give them room. */
+  flex-shrink: 0;
+}
+
+/* The line is painted as a background on a hairline box rather than as a border, so the labelled
+ * form below can replace it with two pseudo-elements without unwinding a border first. */
+
+.horizontal {
+  inline-size: 100%;
+  block-size: var(--nerey-border-width, 1px);
+  background: var(--nerey-border-subtle, #dbe1e6);
+}
+
+/* `align-self: stretch` is what makes a vertical rule usable inside a centred toolbar, where the
+ * flex default would collapse it to the height of its own (empty) content. The floor keeps it
+ * visible when the row has nothing tall in it. */
+.vertical {
+  inline-size: var(--nerey-border-width, 1px);
+  align-self: stretch;
+  min-block-size: var(--nerey-space-4, 1rem);
+  background: var(--nerey-border-subtle, #dbe1e6);
+}
+
+/* ── Labelled form ─────────────────────────────────────────────────────────────────────
+ * The label sits between two flexible rules. `--nerey-text-secondary` rather than
+ * `--nerey-text-muted`: muted measures 4.08:1 on the canvas in light, and this text is small
+ * enough that the axe gate is right to fail it (ADR 0032).
+ */
+
+.labelled {
+  display: flex;
+  align-items: center;
+  gap: var(--nerey-space-3, 0.75rem);
+
+  inline-size: 100%;
+  block-size: auto;
+  background: transparent;
+
+  font-family: var(--nerey-font-sans, ui-sans-serif, system-ui, sans-serif);
+  font-size: var(--nerey-font-size-xs, 0.75rem);
+  font-weight: var(--nerey-font-weight-medium, 500);
+  line-height: var(--nerey-line-height-tight, 1.25);
+  letter-spacing: var(--nerey-letter-spacing-wide, 0.02em);
+  color: var(--nerey-text-secondary, #445461);
+}
+
+.labelled::before,
+.labelled::after {
+  content: '';
+  /* `1 1 0` rather than `1` so both sides measure from zero and the label lands in the middle
+   * regardless of how long it is. */
+  flex: 1 1 0;
+  block-size: var(--nerey-border-width, 1px);
+  background: var(--nerey-border-subtle, #dbe1e6);
+}

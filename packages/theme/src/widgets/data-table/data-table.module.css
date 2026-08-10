@@ -1,0 +1,247 @@
+/*
+ * ADR 0024 / 0025. Every value is a token read WITH an inline fallback, and every default a
+ * browser stylesheet would supply is restated: `border-collapse`, the caption's alignment, the
+ * header's centring and bolding, and the box model. A table is the element with the most
+ * user-agent styling of anything in this theme, so it is the one that suffers most from assuming
+ * a reset that may not be there.
+ */
+
+.root {
+  box-sizing: border-box;
+  margin: 0;
+  max-inline-size: var(--nerey-widget-max-width, 44rem);
+
+  font-family: var(--nerey-font-sans, ui-sans-serif, system-ui, sans-serif);
+  font-size: var(--nerey-font-size-sm, 0.8125rem);
+  line-height: var(--nerey-line-height-normal, 1.5);
+  color: var(--nerey-text-primary, #151d24);
+}
+
+/* ── Scroll container ──────────────────────────────────────────────────────────────────
+ * The table scrolls; the page never does. A wide table that widens its ancestor is the single
+ * most common way a transcript starts scrolling sideways, and once it does, every message in the
+ * conversation is affected by one message's data.
+ */
+
+.scroller {
+  box-sizing: border-box;
+  overflow-x: auto;
+  /* Keeps a flick past the last column from continuing into the page behind it. */
+  overscroll-behavior-x: contain;
+  max-inline-size: 100%;
+
+  border: var(--nerey-border-width, 1px) solid var(--nerey-border-subtle, #dbe1e6);
+  border-radius: var(--nerey-radius-lg, 0.5rem);
+  background: var(--nerey-surface-raised, #ffffff);
+}
+
+/* The container is focusable so a keyboard user can reach the columns past the right edge, which
+ * means it takes focus without anything visibly changing — so it has to show a ring. */
+.scroller:focus-visible {
+  outline: var(--nerey-focus-ring-width, 2px) solid var(--nerey-border-focus, #138171);
+  outline-offset: calc(var(--nerey-focus-ring-offset, 2px) * -1);
+}
+
+/* ── Table ─────────────────────────────────────────────────────────────────────────────
+ * `max-content` with a `100%` floor: a narrow table fills its container instead of huddling on
+ * the left, and a wide one takes the width its content needs and lets the scroller handle the
+ * overflow. Neither behaviour is available from `width: 100%` alone.
+ */
+
+.table {
+  box-sizing: border-box;
+  border-collapse: collapse;
+  border-spacing: 0;
+  margin: 0;
+  inline-size: max-content;
+  min-inline-size: 100%;
+  font: inherit;
+  color: inherit;
+}
+
+.caption {
+  box-sizing: border-box;
+  /* The caption is outside the table's box in the border-collapse model, so its padding is the
+   * only thing separating it from the header row. */
+  padding-block: var(--nerey-space-3, 0.75rem);
+  padding-inline: var(--nerey-space-3, 0.75rem);
+
+  font-size: var(--nerey-font-size-sm, 0.8125rem);
+  font-weight: var(--nerey-font-weight-semibold, 600);
+  line-height: var(--nerey-line-height-tight, 1.25);
+  /* The user-agent default is `center`, which reads as a title for the page rather than as a
+   * label for the table under it. */
+  text-align: start;
+  color: var(--nerey-text-primary, #151d24);
+}
+
+/* ── Header ────────────────────────────────────────────────────────────────────────────
+ * Deliberately not sticky. The container scrolls on one axis only, so vertical reading happens by
+ * scrolling the page — and a header pinned to the viewport would float over the messages above
+ * this one, which is a transcript-wide effect produced by a single message's data.
+ */
+
+.header {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+
+  /* The user-agent default is `center` and `bold`; the weight is wanted, the centring is not. */
+  text-align: start;
+  font-weight: var(--nerey-font-weight-semibold, 600);
+  white-space: nowrap;
+
+  background: var(--nerey-surface-sunken, #f6f8f9);
+  border-block-end: var(--nerey-border-width, 1px) solid var(--nerey-border-default, #bcc7d0);
+  color: var(--nerey-text-secondary, #445461);
+}
+
+/* ── Sort control ──────────────────────────────────────────────────────────────────────
+ * The whole header cell is the target. A small chevron next to a label is a 12-pixel hit area,
+ * which fails WCAG 2.2's target-size rule and is miserable on a phone regardless.
+ */
+
+.sort {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--nerey-space-2, 0.5rem);
+  inline-size: 100%;
+
+  margin: 0;
+  padding-block: var(--nerey-space-2, 0.5rem);
+  padding-inline: var(--nerey-space-3, 0.75rem);
+
+  font: inherit;
+  font-weight: inherit;
+  text-align: inherit;
+  color: inherit;
+
+  border: 0;
+  background: transparent;
+  appearance: none;
+  cursor: pointer;
+}
+
+.sort:hover:not(:disabled) {
+  background: var(--nerey-surface-hover, #eceff2);
+  color: var(--nerey-text-primary, #151d24);
+}
+
+.sort:focus-visible {
+  outline: var(--nerey-focus-ring-width, 2px) solid var(--nerey-border-focus, #138171);
+  outline-offset: calc(var(--nerey-focus-ring-offset, 2px) * -1);
+}
+
+.sort:disabled {
+  cursor: default;
+}
+
+/* A numeric column's label sits over its digits, so the control's contents move to the end and
+ * the chevron leads. Reversing the flex order rather than reordering the JSX keeps the DOM in
+ * reading order for a screen reader. */
+.alignEnd .sort {
+  flex-direction: row-reverse;
+}
+
+.sortLabel {
+  /* Nothing else in the row may push the label's own ellipsis around. */
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/*
+ * Hidden until it means something. A chevron on every header at rest is eleven arrows pointing
+ * down and none of them true; on hover and on focus it appears as the affordance it is, and on the
+ * sorted column it stays. The state comes from `aria-sort`, which the component sets for assistive
+ * technology anyway — so there is no second source of truth to keep in step.
+ */
+.sortGlyph {
+  display: inline-flex;
+  flex: none;
+  opacity: 0;
+  color: var(--nerey-text-muted, #6d8091);
+  transition: opacity var(--nerey-duration-fast, 140ms) var(--nerey-ease-standard, ease);
+}
+
+.sort:hover .sortGlyph,
+.sort:focus-visible .sortGlyph {
+  opacity: var(--nerey-opacity-dimmed, 0.55);
+}
+
+.header[aria-sort='ascending'] .sortGlyph,
+.header[aria-sort='descending'] .sortGlyph {
+  opacity: 1;
+  color: var(--nerey-text-accent, #12675c);
+}
+
+.header[aria-sort='ascending'],
+.header[aria-sort='descending'] {
+  color: var(--nerey-text-primary, #151d24);
+}
+
+/* ── Body ──────────────────────────────────────────────────────────────────────────── */
+
+.row {
+  border-block-start: var(--nerey-border-width, 1px) solid var(--nerey-border-subtle, #dbe1e6);
+}
+
+/* The first body row sits directly under the header's own heavier rule. */
+.row:first-child {
+  border-block-start: 0;
+}
+
+.row:hover {
+  background: var(--nerey-surface-hover, #eceff2);
+}
+
+.cell {
+  box-sizing: border-box;
+  margin: 0;
+  padding-block: var(--nerey-space-2, 0.5rem);
+  padding-inline: var(--nerey-space-3, 0.75rem);
+
+  text-align: start;
+  vertical-align: top;
+  color: var(--nerey-text-primary, #151d24);
+
+  /* A long free-text cell wraps up to a readable measure instead of widening the table without
+   * limit; anything past that is what the scroller is for. */
+  max-inline-size: calc(var(--nerey-widget-max-width, 44rem) / 2);
+  overflow-wrap: anywhere;
+}
+
+.alignEnd {
+  text-align: end;
+}
+
+/*
+ * Monospace AND tabular figures. The face alone is not enough: a proportional font with tabular
+ * numerals still puts the decimal points in different places, and a column of figures whose
+ * decimal points do not line up cannot be compared by eye, which is the only reason to put figures
+ * in a column.
+ */
+.numeric {
+  font-family: var(--nerey-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.emptyCell {
+  color: var(--nerey-text-disabled, #92a3b1);
+}
+
+.empty {
+  box-sizing: border-box;
+  padding-block: var(--nerey-space-6, 1.5rem);
+  padding-inline: var(--nerey-space-3, 0.75rem);
+  text-align: center;
+  color: var(--nerey-text-muted, #6d8091);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sortGlyph {
+    transition-duration: 0s;
+  }
+}

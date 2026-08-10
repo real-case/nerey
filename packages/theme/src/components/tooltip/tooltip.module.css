@@ -1,0 +1,141 @@
+/*
+ * ADR 0024 / 0025. Every value is a token read WITH an inline fallback, and nothing is
+ * inherited — Base UI ships no CSS, and a portalled popup does not even inherit the font of
+ * the control it describes.
+ *
+ * `--available-*` and `--transform-origin` are NOT Nerey tokens and take no fallback: Base UI
+ * writes them onto the positioner at layout time from measurements no stylesheet could guess.
+ * The ADR 0024 fallback rule protects a consumer who loads theme.css without tokens.css; it has
+ * nothing to say about a value that only exists at runtime.
+ */
+
+/* ── Positioner — geometry only ────────────────────────────────────────────────────── */
+
+.positioner {
+  box-sizing: border-box;
+  max-inline-size: var(--available-width);
+  max-block-size: var(--available-height);
+
+  z-index: var(--nerey-z-popover, 1100);
+  outline: none;
+}
+
+/* ── Popup ─────────────────────────────────────────────────────────────────────────────
+ * Inverted rather than raised. A tooltip has to be legible against whatever it is covering,
+ * including another raised surface, and inverting is the one treatment that never lands the
+ * same colour on the same colour.
+ */
+
+.popup {
+  box-sizing: border-box;
+  /* The positioning context for the arrow, which sits outside this box. */
+  position: relative;
+
+  margin: 0;
+  padding-block: var(--nerey-space-1, 0.25rem);
+  padding-inline: var(--nerey-space-2, 0.5rem);
+
+  /* Hug the text, then wrap at a readable measure. A tooltip that stretches to the window is
+   * a tooltip that is being asked to hold something that belongs in a Popover. */
+  inline-size: max-content;
+  max-inline-size: min(100%, calc(var(--nerey-widget-max-width, 44rem) * 0.4));
+
+  font-family: var(--nerey-font-sans, ui-sans-serif, system-ui, sans-serif);
+  font-size: var(--nerey-font-size-sm, 0.8125rem);
+  line-height: var(--nerey-line-height-normal, 1.5);
+
+  border-radius: var(--nerey-radius-sm, 0.25rem);
+  background: var(--nerey-surface-inverse, #151d24);
+  color: var(--nerey-text-inverse, #f6f8f9);
+  box-shadow: var(--nerey-shadow-md, 0 4px 12px -2px rgb(21 29 36 / 0.1));
+
+  transform-origin: var(--transform-origin);
+  transition:
+    opacity var(--nerey-duration-instant, 80ms) var(--nerey-ease-standard, ease),
+    transform var(--nerey-duration-instant, 80ms) var(--nerey-ease-standard, ease);
+}
+
+.popup[data-starting-style],
+.popup[data-ending-style] {
+  opacity: 0;
+  transform: scale(0.94);
+}
+
+/* Base UI sets `data-instant` when a tooltip replaces one that was already open — moving along
+ * a toolbar, say. Animating that reads as lag, because from the reader's point of view nothing
+ * appeared; the label just changed. */
+.popup[data-instant] {
+  transition-duration: 0s;
+}
+
+/* ── Arrow ─────────────────────────────────────────────────────────────────────────────
+ * A window with a rotated square behind it. The square is unbordered here, unlike the
+ * popover's, because the popup it belongs to has no border either — a stroke on the arrow
+ * alone would outline a shape that is otherwise only a fill.
+ *
+ * Base UI writes `position: absolute` plus one of `top`/`left` onto this element from the arrow
+ * middleware; the rules below fill in the other axis. The horizontal offset is one and a half
+ * arrow heights — `(width + height) / 2` — because the element is rotated about its own centre
+ * and its footprint swaps.
+ *
+ * PHYSICAL properties throughout, against this theme's habit, and the exception is the point:
+ * `data-side` is physical, `rotate` is physical and `translate(-50%)` is physical, so a logical
+ * `inset-inline-end` here would flip in a right-to-left document while the three things it has
+ * to agree with stayed where they were.
+ */
+
+.arrow {
+  box-sizing: border-box;
+  display: block;
+  width: var(--nerey-space-4, 1rem);
+  height: var(--nerey-space-2, 0.5rem);
+  overflow: clip;
+}
+
+.arrow::before {
+  content: '';
+  display: block;
+  position: absolute;
+  box-sizing: border-box;
+  bottom: 0;
+  left: 50%;
+
+  /* √2, because what shows is the square's diagonal: a square of side h·√2 has a diagonal of
+   * 2h, giving a triangle exactly as wide as this window and exactly as tall as half of it. */
+  width: calc(var(--nerey-space-2, 0.5rem) * sqrt(2));
+  height: calc(var(--nerey-space-2, 0.5rem) * sqrt(2));
+
+  background: var(--nerey-surface-inverse, #151d24);
+  border: 0;
+  transform: translate(-50%, 50%) rotate(45deg);
+}
+
+.arrow[data-side='bottom'] {
+  top: calc(var(--nerey-space-2, 0.5rem) * -1);
+}
+
+.arrow[data-side='top'] {
+  bottom: calc(var(--nerey-space-2, 0.5rem) * -1);
+  rotate: 180deg;
+}
+
+.arrow[data-side='left'] {
+  right: calc(var(--nerey-space-3, 0.75rem) * -1);
+  rotate: 90deg;
+}
+
+.arrow[data-side='right'] {
+  left: calc(var(--nerey-space-3, 0.75rem) * -1);
+  rotate: -90deg;
+}
+
+/*
+ * The zoom is decoration — a tooltip is already attached to the thing the pointer is on. The
+ * fade stays, because at 80ms it is what keeps the label from snapping into place.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .popup[data-starting-style],
+  .popup[data-ending-style] {
+    transform: none;
+  }
+}

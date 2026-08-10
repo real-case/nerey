@@ -1,0 +1,144 @@
+/*
+ * ADR 0024 / 0025. Every value is a token read WITH an inline fallback, and nothing is inherited:
+ * a widget renders inside a transcript the theme did not build, so `box-sizing`, `margin` and the
+ * font are stated here rather than borrowed from a reset that may not exist.
+ *
+ * The popup itself is styled by popover.module.css and is not restated here — only the parts this
+ * widget puts *inside* it (the link, the host) need rules of their own.
+ */
+
+.root {
+  box-sizing: border-box;
+  margin: 0;
+  max-inline-size: var(--nerey-widget-max-width, 44rem);
+
+  font-family: var(--nerey-font-sans, ui-sans-serif, system-ui, sans-serif);
+  font-size: var(--nerey-font-size-md, 0.875rem);
+  /* Relaxed rather than normal: the markers are taller than the text they sit in, and a tight
+   * leading makes consecutive lines of a cited paragraph collide with them. */
+  line-height: var(--nerey-line-height-relaxed, 1.7);
+  color: var(--nerey-text-primary, #151d24);
+}
+
+/* ── The claim ─────────────────────────────────────────────────────────────────────────
+ * The markers live INSIDE this paragraph, at the end of the sentence they support. That is the
+ * whole design: a bibliography under the message makes the reader match numbers to lines, and
+ * every step between the claim and its evidence is a step at which the check does not happen.
+ */
+
+.claim {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+  /* A cited URL or an unbroken identifier must wrap rather than push the transcript sideways. */
+  overflow-wrap: anywhere;
+}
+
+.empty {
+  color: var(--nerey-text-muted, #6d8091);
+}
+
+.citation {
+  display: inline;
+  /* Owned by the marker rather than by the text before it: the gap belongs to the relationship
+   * between a claim and its evidence, and consecutive markers need it too. */
+  margin-inline-start: var(--nerey-space-1, 0.25rem);
+}
+
+/* ── The marker ────────────────────────────────────────────────────────────────────────
+ * A button reset and nothing else. The pill is Badge's, so the numeric marker and every other
+ * status pill in the theme stay one shape — and re-theming the badge re-themes the citation.
+ *
+ * `vertical-align: middle` rather than `super`: superscript is the typographic convention for a
+ * footnote a reader is not expected to use, and this marker is the opposite of that. It is meant
+ * to be seen, and a raised half-size digit is exactly the affordance people miss.
+ */
+
+.marker {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+
+  margin: 0;
+  padding: 0;
+
+  font: inherit;
+  line-height: var(--nerey-line-height-tight, 1.25);
+
+  border: 0;
+  border-radius: var(--nerey-radius-full, 9999px);
+  background: transparent;
+  color: inherit;
+
+  appearance: none;
+  cursor: pointer;
+}
+
+.marker:focus-visible {
+  outline: var(--nerey-focus-ring-width, 2px) solid var(--nerey-border-focus, #138171);
+  outline-offset: var(--nerey-focus-ring-offset, 2px);
+}
+
+/* Base UI marks the trigger of an open popover, so the marker whose preview is on screen is
+ * distinguishable from its neighbours without this component tracking open state itself. */
+.marker[data-popup-open] {
+  outline: var(--nerey-border-width, 1px) solid var(--nerey-border-accent, #1fa18c);
+  outline-offset: var(--nerey-focus-ring-offset, 2px);
+}
+
+/*
+ * A source the reader has already asked the agent to substantiate. Dimmed rather than recoloured:
+ * a second colour on a numeric pill would compete with the tone vocabulary Badge already owns, and
+ * "already dealt with" is exactly what the theme's dimming token means everywhere else (ADR 0018).
+ */
+.citation[data-state='selected'] .marker {
+  opacity: var(--nerey-opacity-dimmed, 0.55);
+}
+
+/* ── Inside the preview ────────────────────────────────────────────────────────────────
+ * The link is the point of the popup, so it is the one thing in there that is coloured.
+ */
+
+.link {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--nerey-space-1, 0.25rem);
+
+  margin: 0;
+  padding: 0;
+
+  font-family: inherit;
+  font-size: var(--nerey-font-size-sm, 0.8125rem);
+  font-weight: var(--nerey-font-weight-medium, 500);
+  line-height: var(--nerey-line-height-tight, 1.25);
+
+  color: var(--nerey-text-link, #12675c);
+  text-decoration: underline;
+  text-underline-offset: var(--nerey-space-1, 0.25rem);
+
+  /* The whole link, glyph included, must stay a target big enough to hit — WCAG 2.2 adds a
+   * minimum target size, and a bare line of small text is the usual way to fail it. */
+  min-block-size: var(--nerey-control-height-sm, 1.75rem);
+}
+
+.link:focus-visible {
+  outline: var(--nerey-focus-ring-width, 2px) solid var(--nerey-border-focus, #138171);
+  outline-offset: var(--nerey-focus-ring-offset, 2px);
+  border-radius: var(--nerey-radius-sm, 0.25rem);
+}
+
+/*
+ * The host is the verification signal, so it gets the monospace face: a domain read in a
+ * proportional font is a domain in which `rn` and `m` look alike, which is the whole basis of a
+ * look-alike domain.
+ */
+.linkHost {
+  font-family: var(--nerey-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  overflow-wrap: anywhere;
+}
