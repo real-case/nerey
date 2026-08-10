@@ -11,3 +11,9 @@ storybook-static/
 
 # tsc must never emit into the source tree; dist/ is the only output location.
 packages/*/src/**/*.d.ts.map
+
+# Editor state. `.idea/workspace.xml` is per-developer window layout and open-file history;
+# it has no business in a published repository.
+.idea/
+.vscode/
+*.swp
