@@ -65,7 +65,15 @@ export default defineConfig({
       formats: ['es'],
     },
     rollupOptions: {
-      external: [/^react($|\/)/, /^react-dom($|\/)/, /^@nerey\/core/, /^@base-ui\//],
+      // Every declared runtime dependency stays OUT of the bundle, `zod` included. Bundling it
+      // shipped a second copy beside the one npm installs from `dependencies` — 135 kB raw,
+      // 26 kB gzipped, duplicated on every consumer's critical path — and left the artifact
+      // disagreeing with the dependency graph ADR 0002 fixes. It is also a correctness seam: a
+      // consumer who extends an exported widget schema would be mixing two Zod runtimes, which
+      // is the same two-copies-in-the-graph failure ADR 0011 refuses a hard Zod dependency in
+      // core to avoid. `@standard-schema/spec` needs no entry — it is types-only and emits
+      // nothing to externalise.
+      external: [/^react($|\/)/, /^react-dom($|\/)/, /^@nerey\/core/, /^@base-ui\//, /^zod($|\/)/],
       output: {
         banner: "'use client';",
         entryFileNames: '[name].js',
