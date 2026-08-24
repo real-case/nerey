@@ -68,6 +68,10 @@ When a change needs a decision no ADR covers: record the ADR first, then impleme
   after adding or renaming a class.**
 - `npm run check:all` — every gate. `npm run check:gates` — the meta-harness that proves each
   gate still rejects its own violator.
+- `npm run check:api-signatures` — diffs every exported symbol's rendered signature against
+  `docs/design-system/api-signatures.json` (0038). `check:public-api` covers names, this covers
+  shapes; a changed signature is a break both would otherwise pass. Re-bless with
+  `-- --update-baseline`, never by editing the file.
 - `npm run adr -- lint` / `npm run adr -- index`.
 
 ## Conventions
@@ -164,8 +168,10 @@ list, so it cannot drift. A `Refs: ADR NNNN` footer is checked.
 - Generated files are never hand-edited: `tokens.generated.ts`, `tokens.allowlist.json`,
   `docs/design-system/tokens.agent-rules.md`, `*.module.css.d.ts`, `docs/decisions/README.md`.
   A `PreToolUse` hook blocks it.
-- Contract baselines (`docs/design-system/data-contract.json`, `public-api.json`) are updated
-  **deliberately, in the same commit as the version bump** — never to make a check pass (0029).
+- Contract baselines (`docs/design-system/data-contract.json`, `public-api.json`,
+  `api-signatures.json`) are updated **deliberately, in the same commit as the version bump** —
+  never to make a check pass (0029, 0038). Each has an `--update-baseline` flag that prints what
+  it blessed; a `PreToolUse` hook blocks editing them by hand.
 - CSF 2 (`Template.bind({})`, `storiesOf`) fails lint. MDX never defines stories (0031).
 - a11y opt-outs only as an explicit, reviewed per-story `a11y` parameter with a stated reason
   (0032).
