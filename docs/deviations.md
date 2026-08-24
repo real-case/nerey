@@ -73,6 +73,33 @@ which widget failed.
 has needed to debug so far, which is not a coincidence worth relying on. `errors.test.ts` asserts
 the current behaviour explicitly so the change is a deliberate one.
 
+## D-6 · ADR 0029's release gate describes API Extractor and a surface the gate never checked
+
+**Record says** (0029, Confirmation): the release gate builds three surfaces into committed
+snapshots under `api/` — `api/<package>.api.md` via **API Extractor** ("exports and signatures"),
+`api/<package>.attributes.json`, `api/theme.tokens.json` and `api/eslint-config.rules.json` — and
+fails a removal unless the release range carries a `!` breaking marker for that scope.
+
+**Code does**: there is no `api/` directory and no `@microsoft/api-extractor` anywhere in the
+tree. `scripts/check-public-api.mjs` snapshots **export names and a type-only flag** into
+`docs/design-system/public-api.json`. Attributes are covered by `check:data-contract` and token
+names by `check:tokens` / `gen:tokens`, both under `docs/design-system/`, neither under `api/`.
+Nothing snapshots the eslint-config rule set, and nothing joins a snapshot failure to the `!`
+marker.
+
+The consequence was not cosmetic: **a signature change passed the release gate in silence.**
+Adding a required parameter to an exported function, or dropping a member from an exported union,
+left every name and kind identical and the baseline matching.
+
+**Fix direction**: superseded — in flight. ADR 0038 (`proposed`) restates 0029's versioning rules
+unchanged and replaces the mechanism with what the repository actually wants: a second gate,
+`check:api-signatures`, that renders every exported symbol through the TypeScript checker into
+`docs/design-system/api-signatures.json`. It closed the signature hole on 2026-08-24. Two of
+0029's promises are deliberately **not** carried over and are named as gaps in 0038 rather than
+inherited as aspirations: the `@nerey/eslint-config` rule snapshot, and the two-signal cross-check
+against the `!` commit marker. This entry closes when 0038 is accepted and
+`npm run adr -- supersede --old 0029 --new 0038` has run.
+
 ---
 
 ## Not deviations
