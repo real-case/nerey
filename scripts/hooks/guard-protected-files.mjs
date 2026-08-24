@@ -106,7 +106,28 @@ if (GENERATED.some((re) => re.test(relPosix))) {
   );
 }
 
-// 4. Contract snapshots (ADR 0020 / 0028).
+// 4. Contract baselines (ADR 0020 / 0028 / 0038).
+//
+// The committed JSON baselines are the ones this guard's header has always claimed to cover, and
+// until ADR 0038 the pattern below matched only vitest's `__snapshots__` — so the three files that
+// actually lock a public contract were editable by hand. Hand-editing one is how a MAJOR reaches
+// npm labelled as a patch: the gate goes green because its expectation moved, not because the
+// surface did. Each has an `--update-baseline` path that prints what it blessed; that is the way in.
+const BASELINES = /^docs\/design-system\/(public-api|api-signatures|data-contract)\.json$/;
+if (BASELINES.test(relPosix)) {
+  const gate = relPosix.includes('data-contract')
+    ? 'npm run check:data-contract -- --update-baseline'
+    : relPosix.includes('api-signatures')
+      ? 'npm run check:api-signatures -- --update-baseline'
+      : 'npm run check:public-api -- --update-baseline';
+  block(
+    `${relPosix} is a CONTRACT BASELINE, not a file to edit. It records a public surface whose ` +
+      `change has semver consequences (ADR 0020 / 0028 / 0029 / 0038). Re-bless it with ` +
+      `\`${gate}\`, which prints every change it accepted, and land that in the same commit as ` +
+      `the version bump — never to make a check pass.`,
+  );
+}
+
 if (/(^|\/)__snapshots__\//.test(relPosix) || relPosix.endsWith('.snap')) {
   block(
     `${relPosix} is a contract snapshot. The public API surface and the data-* styling ` +
