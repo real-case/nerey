@@ -112,6 +112,11 @@ const GATES = [
     why: 'packs a tarball and shells out to publint and attw — seconds, not the ~2s the whole hook gets',
   },
   {
+    script: 'scripts/check-ci-pins.mjs',
+    hook: 'ci-only',
+    why: 'reads the workflow directory and package.json rather than the edited file, so a PostToolUse hook has nothing to scope it to (ADR 0043)',
+  },
+  {
     script: 'scripts/check-commits.mjs',
     hook: 'ci-only',
     why: 'reads git history, not the edited file, so a PostToolUse hook has nothing to scope it to',
