@@ -108,6 +108,11 @@ When a change needs a decision no ADR covers: record the ADR first, then impleme
   `@nerey/eslint-config`, which ships in the box precisely so the rule survives extraction.
 - The message a widget sends must read like something a human typed. The agent consumes it as
   user input.
+- Chrome strings resolve through `NereyLabelsProvider` / `useNereyLabels` in `@nerey/theme`, never
+  as literals in a component (0041). A widget cannot take a prop, so context is the only seam.
+  `defaultNereyLabels` is assembled from the exported constants, so the two cannot drift. Reply
+  text — `poll.noneReply`, `filterPanel.queryPrefix`, `form.emptySubmission` — is in the same
+  record and overridable for the same reason: the agent reads it as the user's own words.
 - **A failed persist does not roll back a committed widget.** By then the reply is already in
   the transcript, and re-enabling the widget invites a duplicate.
 
