@@ -72,6 +72,10 @@ When a change needs a decision no ADR covers: record the ADR first, then impleme
   `docs/design-system/api-signatures.json` (0038). `check:public-api` covers names, this covers
   shapes; a changed signature is a break both would otherwise pass. Re-bless with
   `-- --update-baseline`, never by editing the file.
+- `npm run gen:release -- --package @nerey/core [--dry-run]` — prepare one package's release:
+  derives the bump from the commit range, writes the manifest version and `CHANGELOG.md`, prints
+  the tag commands. Writes files only — the tag publishes, and CI does the publishing (0039).
+  Runbook: `docs/releasing.md`.
 - `npm run adr -- lint` / `npm run adr -- index`.
 
 ## Conventions
