@@ -1,0 +1,45 @@
+version: 2
+
+# ADR 0043 — pinning without an updater is a pin that rots. Two ecosystems, weekly, grouped so one
+# week produces a few reviewable pull requests rather than a dozen nobody opens.
+#
+# What is deliberately NOT here: the `docker` ecosystem. Dependabot does not update `container:`
+# image references in workflow files, so it would find nothing — and the Playwright image this
+# repository pins for visual references (ADR 0042) is updated by hand. `check:ci-pins` is what makes
+# that a build failure rather than a surprise, by failing when the image tag and the `playwright`
+# devDependency disagree.
+updates:
+  - package-ecosystem: 'npm'
+    # One entry, not one per workspace: the lockfile is at the root and covers every package
+    # (ADR 0002), so a per-package entry would raise the same update three times.
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    open-pull-requests-limit: 5
+    groups:
+      # Everything that is not a major, in one pull request. A repository this size cannot absorb a
+      # pull request per package, and a patch bump is not a decision anybody needs to make alone.
+      routine:
+        patterns: ['*']
+        update-types: ['minor', 'patch']
+    # Majors arrive one at a time and ungrouped on purpose: a major is a decision, and a group
+    # hides it behind the six patches it travelled with.
+    commit-message:
+      prefix: 'build(deps)'
+      prefix-development: 'build(deps)'
+
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    open-pull-requests-limit: 3
+    groups:
+      actions:
+        patterns: ['*']
+        update-types: ['minor', 'patch']
+    # `ci` rather than `build`: these change how the pipeline runs, not what the packages contain
+    # (ADR 0036's type vocabulary).
+    commit-message:
+      prefix: 'ci(deps)'
