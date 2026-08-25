@@ -72,6 +72,10 @@ When a change needs a decision no ADR covers: record the ADR first, then impleme
   `npm run test:visual:update`, which captures the set inside the pinned Playwright image — the
   same rasteriser CI compares against. Never edit or delete a reference by hand; a `PreToolUse`
   hook blocks it.
+- `npm run check:ci-pins` — every `uses:` in a workflow is a commit SHA with a `# vX.Y.Z` comment,
+  and the Playwright container tag agrees with `devDependencies.playwright` (0042, 0043). Dependabot
+  does not update `container:` images, so that second rule is what stops a routine `playwright`
+  bump silently breaking the visual references.
 - `npm run check:all` — every gate. `npm run check:gates` — the meta-harness that proves each
   gate still rejects its own violator.
 - `npm run check:api-signatures` — diffs every exported symbol's rendered signature against
@@ -184,6 +188,9 @@ list, so it cannot drift. A `Refs: ADR NNNN` footer is checked.
 - The "no ARIA attributes" convention carried over from the origin codebase is **deliberately
   not adopted**. It was correct when a styled library supplied ARIA for free, and is actively
   harmful for a headless library that emits interactive DOM (0022, 0032).
+- An action is never named by tag. `uses:` carries a 40-character commit SHA and the version in a
+  trailing comment — a tag is a pointer its author can repoint between the review and the run, and
+  `release.yml` holds `id-token: write` (0039, 0043).
 - Generated files are never hand-edited: `tokens.generated.ts`, `tokens.allowlist.json`,
   `docs/design-system/tokens.agent-rules.md`, `*.module.css.d.ts`, `docs/decisions/README.md`.
   A `PreToolUse` hook blocks it.
