@@ -43,3 +43,4 @@ Architecture Decision Records for this project, in [MADR](https://adr.github.io/
 | [0037](0037-core-non-goals-transport-llm-markdown.md) | 0037. Core has no transport, LLM SDK binding, or markdown renderer | accepted | 2026-08-09 |
 | [0038](0038-semver-gated-by-surface-snapshots.md) | 0038. Semantic versioning for published packages, gated by generated surface snapshots | proposed | 2026-08-24 |
 | [0039](0039-tagged-releases-published-by-trusted-publishing.md) | 0039. Releases are cut from a per-package tag and published from CI by trusted publishing | proposed | 2026-08-25 |
+| [0040](0040-registry-describes-itself-to-the-model.md) | 0040. The registry describes itself to the model, through an injected schema converter | proposed | 2026-08-25 |
