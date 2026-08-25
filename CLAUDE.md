@@ -66,6 +66,12 @@ When a change needs a decision no ADR covers: record the ADR first, then impleme
   from `packages/theme/src/tokens.css`. **Run after every token change**; CI drift-checks it.
 - `npm run gen:css-types` — regenerate the committed `*.module.css.d.ts` declarations. **Run
   after adding or renaming a class.**
+- `npm run test:visual` — the visual regression gate (0042). Compares 90 reference images against
+  `packages/theme/src/visual/__screenshots__/`. **It only passes in the Linux container**: the
+  theme's font tokens are system stacks, so a macOS run legitimately fails. Regenerate with
+  `npm run test:visual:update`, which captures the set inside the pinned Playwright image — the
+  same rasteriser CI compares against. Never edit or delete a reference by hand; a `PreToolUse`
+  hook blocks it.
 - `npm run check:all` — every gate. `npm run check:gates` — the meta-harness that proves each
   gate still rejects its own violator.
 - `npm run check:api-signatures` — diffs every exported symbol's rendered signature against

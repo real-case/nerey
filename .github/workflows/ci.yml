@@ -96,3 +96,31 @@ jobs:
       # all of it. The first CI run failed exactly this way.
       - name: tests and merged coverage
         run: npx vitest run --coverage
+
+  # Split out and PINNED TO AN IMAGE, not merely to Linux. ADR 0042 captures the reference images
+  # in `mcr.microsoft.com/playwright:v1.62.1-noble`, and the first attempt ran this on the plain
+  # ubuntu-latest runner on the assumption that Linux plus Chromium was enough. 78 of 90 references
+  # disagreed: the runner has a different font set, and the theme's font tokens are system stacks
+  # (ADR 0024), so "same OS" is not "same rasteriser". The comparison has to happen in the image the
+  # references came out of, or it is comparing two different renderings of the same correct code.
+  #
+  # The image carries Node 24 and npm 11 already, which is what `engine-strict` in .npmrc requires,
+  # so there is no setup-node step here on purpose: adding one would install a second toolchain over
+  # the one the image was built with.
+  visual:
+    name: visual
+    runs-on: ubuntu-latest
+    container: mcr.microsoft.com/playwright:v1.62.1-noble
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: cache npm
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-playwright-image-${{ hashFiles('package-lock.json') }}
+
+      - run: npm ci
+
+      - name: visual regression
+        run: npm run test:visual

@@ -27,3 +27,7 @@ packages/*/src/**/*.d.ts.map
 # design, ADR 0023) and the ambient fallback.
 !packages/*/src/**/*.module.css.d.ts
 !packages/theme/src/css-modules.d.ts
+
+# Vitest writes the actual/expected/diff images here when a visual comparison fails
+# (ADR 0042). They are evidence for one run, never part of the reference set.
+.vitest-attachments/

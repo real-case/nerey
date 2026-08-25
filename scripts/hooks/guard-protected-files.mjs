@@ -59,8 +59,16 @@ const input = payload.tool_input ?? {};
 // Bash branch: `vitest -u` regenerates snapshot baselines, including the public-API and
 // data-attribute contract snapshots. Those encode a semver-relevant public contract
 // (ADR 0020 / 0028 / 0029), so the update is a reviewed human action.
+//
+// The visual config is exempt, and the exemption is narrow on purpose. `vitest.visual.config.ts`
+// includes only `*.visual.test.tsx` (ADR 0042), which carry no contract snapshot of any kind — so
+// blocking it was this rule firing on the word `--update` rather than on what the command actually
+// rewrites. The reference IMAGES are protected instead by rule 4 below, and unlike a JSON baseline
+// a changed PNG shows up in a pull request as a picture, which is the review this rule exists to
+// force.
 if (payload.tool_name === 'Bash' && typeof input.command === 'string') {
-  if (/\bvitest\b[^|;&\n]*\s--?u(pdate)?\b/.test(input.command)) {
+  const visualOnly = /--config[= ]\S*vitest\.visual\.config\.ts/.test(input.command);
+  if (!visualOnly && /\bvitest\b[^|;&\n]*\s--?u(pdate)?\b/.test(input.command)) {
     block(
       '`vitest -u` regenerates the public-API and data-attribute contract snapshots, which ' +
         'lock a PUBLIC contract with semver consequences (ADR 0020 / 0028 / 0029). Show the ' +
@@ -113,6 +121,18 @@ if (GENERATED.some((re) => re.test(relPosix))) {
 // actually lock a public contract were editable by hand. Hand-editing one is how a MAJOR reaches
 // npm labelled as a patch: the gate goes green because its expectation moved, not because the
 // surface did. Each has an `--update-baseline` path that prints what it blessed; that is the way in.
+// Visual references (ADR 0042) are the same kind of artifact in a different format. Deleting one
+// is how a visual regression becomes a green run: the gate compares against what is on disk, so an
+// absent image passes by having nothing to disagree with. Regeneration goes through the container,
+// which is the only rasteriser CI agrees with.
+if (/(^|\/)__screenshots__\//.test(relPosix)) {
+  block(
+    `${relPosix} is a visual reference image (ADR 0042). Regenerate the whole set with ` +
+      `\`npm run test:visual:update\`, which captures it in the same Linux container CI compares ` +
+      `against — never edit or delete one by hand.`,
+  );
+}
+
 const BASELINES = /^docs\/design-system\/(public-api|api-signatures|data-contract)\.json$/;
 if (BASELINES.test(relPosix)) {
   const gate = relPosix.includes('data-contract')

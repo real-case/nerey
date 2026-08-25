@@ -43,6 +43,12 @@ export default defineConfig({
           globals: true,
           setupFiles: [path.join(dirname, 'vitest.setup.ts')],
           include: ['packages/*/src/**/*.{test,spec}.{ts,tsx}'],
+          // The visual suite is a browser-only run against Linux reference images and lives in
+          // `vitest.visual.config.ts` (ADR 0042). Its files end in `.test.tsx`, so without this
+          // they are collected here too, in the forks pool, where importing `vitest/browser`
+          // throws — a failing file in `npm test` for a reason that has nothing to do with the
+          // code under it.
+          exclude: ['packages/*/src/**/*.visual.test.{ts,tsx}'],
         },
       },
       {

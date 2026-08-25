@@ -25,6 +25,7 @@
     ".storybook/**/*.ts",
     ".storybook/**/*.tsx",
     "vitest.config.ts",
+    "vitest.visual.config.ts",
     "vitest.setup.ts",
     "vitest.shims.d.ts"
   ],
