@@ -1,0 +1,120 @@
+name: Release
+
+# ADR 0039 — the tag publishes. `npm run gen:release -- --package @nerey/core` prepares the
+# version, the changelog and the tag name locally; pushing the tag is the human act that starts
+# this workflow, and this workflow is the only thing that ever runs `npm publish`.
+#
+# Tags are per package (`@nerey/core@0.2.0`), because versions are independent (ADR 0002 / 0029).
+# `@nerey/**` rather than `@nerey/*`: the tag contains a slash, which a single star does not cross.
+on:
+  push:
+    tags: ['@nerey/**']
+
+# No `NODE_AUTH_TOKEN`, no `NPM_TOKEN`, and nothing to rotate. `id-token: write` is what lets npm
+# authenticate this workflow through its trusted-publisher relationship, and it is also what makes
+# npm generate the provenance attestation — with trusted publishing that happens by default, so
+# `--provenance` is not passed anywhere below.
+permissions:
+  contents: read
+  id-token: write
+
+# A release must never race another release of the same tag, and must never be cancelled halfway:
+# `npm publish` is not idempotent, and a half-published version cannot be re-published.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NODE_OPTIONS: --no-warnings=ExperimentalWarning
+
+jobs:
+  release:
+    name: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # check:commits walks a range; a shallow clone leaves it nothing to walk and it degrades
+          # to "0 commits conform", which is a pass for the wrong reason (ADR 0033 / 0036).
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          # Required even with trusted publishing: it writes the .npmrc that points the publish at
+          # the public registry.
+          registry-url: 'https://registry.npmjs.org'
+
+      # Split the tag before anything expensive runs. `@nerey/core@0.2.0` → name `@nerey/core`,
+      # version `0.2.0`; the split is on the LAST `@`, because the scope contributes the first one.
+      - name: parse the tag
+        id: tag
+        run: |
+          tag='${{ github.ref_name }}'
+          name="${tag%@*}"
+          version="${tag##*@}"
+          if [ -z "$name" ] || [ -z "$version" ]; then
+            echo "::error::tag '$tag' is not <package>@<version>"
+            exit 1
+          fi
+          echo "name=$name"    >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Releasing $name at $version"
+
+      - run: npm ci
+
+      # Everything CI already proves on a pull request, proved again here — on the checkout the
+      # tarball is actually built from. The verification record has two entries whose whole cause
+      # was a check that passed locally for a reason that did not survive a clean environment.
+      - name: typecheck
+        run: npm run typecheck
+
+      - name: lint
+        run: npm run lint
+
+      - name: format:check
+        run: npm run format:check
+
+      - name: gen:check
+        run: npm run gen:check
+
+      - name: check:all
+        run: npm run check:all
+
+      - name: install chromium
+        run: npx playwright install chromium
+
+      - name: tests and merged coverage
+        run: npx vitest run --coverage
+
+      - name: build
+        run: npm run build
+
+      - name: check:exports
+        run: npm run check:exports
+
+      # The tag is a human artifact; the manifest is what npm reads. If they disagree, the tag is
+      # a lie about what is being published, and every later `git checkout @nerey/core@0.2.0`
+      # lands on something that is not 0.2.0.
+      - name: tag matches the manifest
+        run: |
+          actual=$(node -p "
+            const { readFileSync, readdirSync } = require('node:fs');
+            const dirs = readdirSync('packages');
+            const hit = dirs
+              .map((d) => ['packages/' + d, JSON.parse(readFileSync('packages/' + d + '/package.json', 'utf8'))])
+              .find(([, m]) => m.name === '${{ steps.tag.outputs.name }}');
+            if (!hit) { console.error('no workspace package named ${{ steps.tag.outputs.name }}'); process.exit(1); }
+            hit[1].version;
+          ")
+          if [ "$actual" != "${{ steps.tag.outputs.version }}" ]; then
+            echo "::error::tag says ${{ steps.tag.outputs.version }} but ${{ steps.tag.outputs.name }} is at $actual in its manifest"
+            exit 1
+          fi
+          echo "manifest agrees: $actual"
+
+      # `publishConfig.access` is `public` in every manifest, so no `--access` flag is needed here;
+      # the manifest is the single place that decision lives (ADR 0028).
+      - name: publish
+        run: npm publish --workspace ${{ steps.tag.outputs.name }}
