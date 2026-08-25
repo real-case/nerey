@@ -21,6 +21,8 @@
     "test": "vitest run",
     "test:unit": "vitest run --project unit",
     "test:watch": "vitest",
+    "test:visual": "vitest run --config vitest.visual.config.ts",
+    "test:visual:update": "docker run --rm -v \"$PWD\":/work -v nerey-visual-modules:/work/node_modules -w /work mcr.microsoft.com/playwright:v1.62.1-noble sh -c 'npm ci --no-audit --no-fund && npx vitest run --config vitest.visual.config.ts -u'",
     "test:coverage": "vitest run --coverage",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
