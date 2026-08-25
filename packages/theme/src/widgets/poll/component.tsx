@@ -10,16 +10,11 @@ import { Collapsible } from '../../components/collapsible/collapsible';
 import { CheckIcon } from '../../components/icons/icons';
 import { Radio, RadioGroup } from '../../components/radio-group/radio-group';
 import { VisuallyHidden } from '../../components/visually-hidden/visually-hidden';
+import { useNereyLabels } from '../../labels/labels';
 import styles from './poll.module.css';
 import {
-  DEFAULT_POLL_SUBMIT_LABEL,
   EMPTY_POLL_STATE,
-  POLL_ANSWERED_LABEL,
-  POLL_DETAILS_LABEL,
-  POLL_MULTIPLE_GROUP_LABEL,
   POLL_PLACEMENT,
-  POLL_SAVE_FAILED_NOTICE,
-  POLL_SINGLE_GROUP_LABEL,
   POLL_TYPE,
   POLL_VERSION,
   replyFor,
@@ -83,6 +78,7 @@ type OptionRowProps = {
 };
 
 function OptionRow({ option, multiple, selected, readOnly }: OptionRowProps): ReactElement {
+  const labels = useNereyLabels();
   return (
     <WidgetPart part="option" state={selected ? 'selected' : undefined} className={styles.optionRow}>
       {/*
@@ -109,13 +105,13 @@ function OptionRow({ option, multiple, selected, readOnly }: OptionRowProps): Re
         */
         <Collapsible.Root>
           <Collapsible.Trigger>
-            {POLL_DETAILS_LABEL}
+            {labels.poll.details}
             {/*
               Six triggers all called "Details" are six identical entries in a screen reader's
               element list. The suffix is hidden from the page and present in the accessible name,
               which keeps the visible label a prefix of it — what WCAG 2.5.3 asks for.
             */}
-            <VisuallyHidden> for {option.title}</VisuallyHidden>
+            <VisuallyHidden>{labels.poll.detailsFor({ title: option.title })}</VisuallyHidden>
           </Collapsible.Trigger>
           <Collapsible.Panel>
             <p className={styles.optionDescription}>{option.description}</p>
@@ -148,6 +144,7 @@ function OptionRow({ option, multiple, selected, readOnly }: OptionRowProps): Re
  */
 export function PollWidget(props: PollWidgetProps): ReactElement {
   const { messageId, payload, state, readonly, status, onInteraction } = props;
+  const labels = useNereyLabels();
 
   /**
    * `debounceMs: 0` because a poll writes exactly once in its entire life. Debouncing exists to
@@ -188,7 +185,7 @@ export function PollWidget(props: PollWidgetProps): ReactElement {
 
   const scope = useId();
   const questionId = `${scope}question`;
-  const groupLabel = multiple ? POLL_MULTIPLE_GROUP_LABEL : POLL_SINGLE_GROUP_LABEL;
+  const groupLabel = multiple ? labels.poll.multipleGroup : labels.poll.singleGroup;
   const labelledBy = payload.question === undefined ? undefined : questionId;
   const ariaLabel = payload.question === undefined ? groupLabel : undefined;
 
@@ -219,7 +216,10 @@ export function PollWidget(props: PollWidgetProps): ReactElement {
     // width of a host handler that may well throw, which is exactly long enough for a second
     // click on an answer that has already been sent.
     setState({ selected });
-    onInteraction(SUBMIT_ACTION, { text: replyFor(payload, tentative), meta: { selected } });
+    onInteraction(SUBMIT_ACTION, {
+      text: replyFor(payload, tentative, { noneReply: labels.poll.noneReply }),
+      meta: { selected },
+    });
   }
 
   const rows = options.map((option) => (
@@ -316,10 +316,10 @@ export function PollWidget(props: PollWidgetProps): ReactElement {
           {answered ? (
             <>
               <CheckIcon size={14} />
-              {POLL_ANSWERED_LABEL}
+              {labels.poll.answered}
             </>
           ) : (
-            DEFAULT_POLL_SUBMIT_LABEL
+            labels.poll.submit
           )}
         </Button>
       </WidgetPart>
@@ -335,7 +335,7 @@ export function PollWidget(props: PollWidgetProps): ReactElement {
           state="error"
           render={(partProps) => <p {...partProps} role="status" className={styles.notice} />}
         >
-          {POLL_SAVE_FAILED_NOTICE}
+          {labels.poll.saveFailed}
         </WidgetPart>
       )}
     </WidgetRoot>

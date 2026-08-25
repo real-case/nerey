@@ -331,7 +331,15 @@ export function formatValue(field: FormField, value: FormValue): string {
  * Booleans are the exception and are always printed: a switch is answered by existing, and
  * omitting "Window seat: No" would read as though the question had never been asked.
  */
-export function summarise(fields: readonly FormField[], values: Record<string, FormValue>): string {
+/**
+ * ADR 0041 — `emptySubmission` is reply text the agent reads as the user's own words
+ * (ADR 0014). Optional and defaulted; the widget passes the labels context value.
+ */
+export function summarise(
+  fields: readonly FormField[],
+  values: Record<string, FormValue>,
+  labels: { emptySubmission?: string } = {},
+): string {
   const lines: string[] = [];
 
   for (const field of fields) {
@@ -340,5 +348,5 @@ export function summarise(fields: readonly FormField[], values: Record<string, F
     lines.push(`${field.label}: ${rendered}`);
   }
 
-  return lines.length > 0 ? lines.join('\n') : EMPTY_SUBMISSION_TEXT;
+  return lines.length > 0 ? lines.join('\n') : (labels.emptySubmission ?? EMPTY_SUBMISSION_TEXT);
 }

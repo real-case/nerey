@@ -17,10 +17,9 @@ import { Switch } from '../../components/switch/switch';
 import { Text } from '../../components/text/text';
 import { Textarea } from '../../components/input/textarea';
 import { VisuallyHidden } from '../../components/visually-hidden/visually-hidden';
+import { useNereyLabels } from '../../labels/labels';
 import styles from './form.module.css';
 import {
-  DEFAULT_SELECT_PLACEHOLDER,
-  DEFAULT_SUBMIT_LABEL,
   FORM_PLACEMENT,
   FORM_TYPE,
   FORM_VERSION,
@@ -74,6 +73,7 @@ function supportsAriaRequired(field: FormField): boolean {
  * schema is the single rule set; `aria-required` carries the fact to assistive technology.
  */
 function FieldControl({ field, value, disabled, onChange }: FieldRowProps): ReactElement {
+  const labels = useNereyLabels();
   const required = field.required === true && supportsAriaRequired(field) ? true : undefined;
 
   switch (field.kind) {
@@ -143,7 +143,7 @@ function FieldControl({ field, value, disabled, onChange }: FieldRowProps): Reac
           disabled={disabled}
         >
           <Select.Trigger label={field.label} aria-required={required}>
-            <Select.Value placeholder={field.placeholder ?? DEFAULT_SELECT_PLACEHOLDER} />
+            <Select.Value placeholder={field.placeholder ?? labels.form.selectPlaceholder} />
             <Select.Icon />
           </Select.Trigger>
           <Select.Portal>
@@ -207,6 +207,7 @@ function FieldControl({ field, value, disabled, onChange }: FieldRowProps): Reac
  */
 function FieldRow(props: FieldRowProps): ReactElement {
   const { field, value, disabled } = props;
+  const labels = useNereyLabels();
 
   const label = (
     <>
@@ -219,7 +220,7 @@ function FieldRow(props: FieldRowProps): ReactElement {
           <span className={styles.required} aria-hidden="true">
             *
           </span>
-          {!supportsAriaRequired(field) && <VisuallyHidden>(required)</VisuallyHidden>}
+          {!supportsAriaRequired(field) && <VisuallyHidden>{labels.form.requiredHint}</VisuallyHidden>}
         </>
       )}
     </>
@@ -286,6 +287,7 @@ function FieldRow(props: FieldRowProps): ReactElement {
  */
 export function FormWidget(props: FormWidgetProps): ReactElement {
   const { messageId, payload, state, readonly, status, onInteraction } = props;
+  const labels = useNereyLabels();
 
   // The default debounce, unlike the confirmation's `0`. A form IS the burst case — a sentence
   // typed into a text box is thirty writes — and coalescing them is what the window exists for.
@@ -328,7 +330,7 @@ export function FormWidget(props: FormWidgetProps): ReactElement {
     // cost of being wrong once is a duplicate reply in someone's transcript.
     if (!actionable) return;
 
-    const text = summarise(payload.fields, values);
+    const text = summarise(payload.fields, values, { emptySubmission: labels.form.emptySubmission });
 
     // State first, reply second. If the host's handler throws, the form is already locked; a form
     // left enabled by someone else's exception invites the press that duplicates a reply the host
@@ -337,7 +339,7 @@ export function FormWidget(props: FormWidgetProps): ReactElement {
     onInteraction('submit', { text, meta: { values } });
   }
 
-  const submitLabel = payload.submitLabel ?? DEFAULT_SUBMIT_LABEL;
+  const submitLabel = payload.submitLabel ?? labels.form.submit;
 
   return (
     <WidgetRoot

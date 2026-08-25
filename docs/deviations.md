@@ -100,6 +100,27 @@ inherited as aspirations: the `@nerey/eslint-config` rule snapshot, and the two-
 against the `!` commit marker. This entry closes when 0038 is accepted and
 `npm run adr -- supersede --old 0029 --new 0038` has run.
 
+## D-7 · ADR 0037 claimed chrome strings were overridable through props
+
+**Record says** (0037): Nerey ships no i18n layer, and the chrome strings it emits "are English
+literals **and overridable through props**".
+
+**Code did**: the first half held; the second was false. `DEFAULT_DISMISS_LABEL` in
+`OverlaySlotHost` had no way in at all — the source said so in a comment — and `@nerey/theme`'s
+thirty-nine strings were module constants reaching widgets whose props are fixed by
+`WidgetComponentProps` (ADR 0008 / 0014), so there was no seam to be overridable through.
+
+The consequence was not cosmetic. Several of those strings are **accessible names**, and the WCAG
+2.2 AA gate cannot catch a wrong language — axe checks that a name exists, never what language it
+is in (ADR 0032). Several others are **reply text the agent reads as the user's own words**
+(ADR 0014).
+
+**Fix direction**: code, and it landed on 2026-08-25. ADR 0041 adds `NereyLabelsProvider` /
+`useNereyLabels` to `@nerey/theme` and one `dismissLabel` prop to core's `OverlaySlotHost` — a prop
+rather than a context, so core still has no locale anything and 0037's non-goal holds. 0037's claim
+is now true rather than aspirational, so this entry records a gap that was real rather than one
+that is open.
+
 ---
 
 ## Not deviations

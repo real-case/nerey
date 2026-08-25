@@ -156,7 +156,15 @@ function joinClauses(parts: readonly string[]): string {
  * It doubles as the preview shown inside the panel, so what is displayed and what is sent are the
  * same string by construction rather than by two functions that agree today.
  */
-export function composeQuery(facets: readonly Facet[], selection: FilterSelection): string {
+/**
+ * ADR 0041 — `queryPrefix` opens the sentence this widget SENDS, so it is reply text rather
+ * than chrome (ADR 0014). Optional and defaulted; the widget passes the labels context value.
+ */
+export function composeQuery(
+  facets: readonly Facet[],
+  selection: FilterSelection,
+  labels: { queryPrefix?: string } = {},
+): string {
   const clauses: string[] = [];
 
   for (const facet of facets) {
@@ -171,5 +179,5 @@ export function composeQuery(facets: readonly Facet[], selection: FilterSelectio
   }
 
   if (clauses.length === 0) return '';
-  return `${QUERY_PREFIX}${joinClauses(clauses)}.`;
+  return `${labels.queryPrefix ?? QUERY_PREFIX}${joinClauses(clauses)}.`;
 }

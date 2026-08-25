@@ -136,12 +136,22 @@ export function selectionValue(selected: readonly string[], multiple: boolean): 
  * persisted state written against an older payload (ADR 0030), and inventing a line for one would
  * send the agent an identifier it never offered.
  */
-export function replyFor(payload: PollPayload, selected: readonly string[]): string {
+/**
+ * ADR 0041 — `noneReply` is REPLY text, not chrome: the agent reads it as something the user
+ * typed (ADR 0014). Optional and defaulted, so every existing call is unchanged; the widget
+ * passes the value from the labels context so a non-English deployment does not put an English
+ * sentence in its user's mouth.
+ */
+export function replyFor(
+  payload: PollPayload,
+  selected: readonly string[],
+  labels: { noneReply?: string } = {},
+): string {
   const lines: string[] = [];
 
   for (const value of selected) {
     if (payload.noneOption?.value === value) {
-      lines.push(POLL_NONE_REPLY);
+      lines.push(labels.noneReply ?? POLL_NONE_REPLY);
       continue;
     }
     const option = payload.options.find((candidate) => candidate.value === value);

@@ -197,6 +197,47 @@ model that simply chose not to use a widget.
 
 ---
 
+## Localising the chrome
+
+Nerey's widgets render a small number of strings of their own — `Details`, `Answer sent`,
+`No matching options.` — and they are English by default. A widget cannot take a prop for them,
+because its props are fixed by `WidgetComponentProps`, so they resolve through context instead:
+
+```tsx
+import { NereyLabelsProvider } from '@nerey/theme';
+
+<NereyLabelsProvider labels={{ poll: { details: 'Подробнее', answered: 'Ответ отправлен' } }}>
+  {yourChat}
+</NereyLabelsProvider>;
+```
+
+An override replaces any subset and keeps everything it does not name. Mounting the provider is
+optional; without it the defaults apply.
+
+Two things are worth knowing before you skip this section:
+
+- **Some of these strings are accessible names.** `Choose one option`, ` for {option}`,
+  `{label}, {n} results` are what a screen reader announces. The a11y gate cannot catch a wrong
+  language — axe checks that a name exists, never what language it is in — so a non-English
+  deployment that skips this ships English to the users who most depend on the announcement.
+- **Some of them are not display strings at all.** `poll.noneReply`, `filterPanel.queryPrefix` and
+  `form.emptySubmission` are the **reply text a widget sends**, which the agent reads as something
+  the user typed (ADR 0014). Leaving those English puts a sentence in your user's mouth that they
+  did not write.
+
+Nerey has no locale concept: it does not detect one, negotiate one, or pluralise anything. If you
+have an i18n library, resolve the strings with it and pass the result. Interpolation, where it
+exists, is a typed function rather than a format string:
+
+```tsx
+<NereyLabelsProvider labels={{ poll: { detailsFor: ({ title }) => `, вариант «${title}»` } }} />
+```
+
+`@nerey/core` has exactly one such string — the overlay's dismiss control — and it is a prop:
+`<OverlaySlotHost dismissLabel="Закрыть" … />`.
+
+---
+
 ## Styling: two paths
 
 ### You own a design system

@@ -18,6 +18,23 @@
 
 export * from './components/index';
 
+/* ── Chrome strings (ADR 0041) ─────────────────────────────────────────────────────── */
+
+/**
+ * The seam every chrome string resolves through. A widget cannot take a prop — its props are
+ * fixed by `WidgetComponentProps` (ADR 0008 / 0014) — so the strings it renders, and the reply
+ * text it sends, reach it through context instead. Mounting the provider is optional; without it
+ * the defaults are used, which is the behaviour that existed before the record.
+ */
+export { defaultNereyLabels, NereyLabelsProvider, useNereyLabels } from './labels/labels';
+export type {
+  FacetOptionContext,
+  NereyLabelOverrides,
+  NereyLabels,
+  NereyLabelsProviderProps,
+  PollDetailsContext,
+} from './labels/labels';
+
 /* ── Widgets ───────────────────────────────────────────────────────────────────────── */
 
 export * from './widgets/index';
