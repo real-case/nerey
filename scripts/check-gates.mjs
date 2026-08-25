@@ -102,6 +102,11 @@ const GATES = [
     why: 'repo-wide but sub-second; a citation typo is cheapest to fix in the edit that made it',
   },
   {
+    script: 'scripts/check-api-signatures.mjs',
+    hook: 'ci-only',
+    why: 'builds a TypeScript program over four barrels — ~1.1s, well past the ~2s the whole hook gets, and `check-public-api` already covers the same files at edit time (ADR 0038)',
+  },
+  {
     script: 'scripts/check-exports.mjs',
     hook: 'ci-only',
     why: 'packs a tarball and shells out to publint and attw — seconds, not the ~2s the whole hook gets',

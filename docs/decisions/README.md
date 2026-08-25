@@ -41,3 +41,4 @@ Architecture Decision Records for this project, in [MADR](https://adr.github.io/
 | [0035](0035-built-in-widget-scope.md) | 0035. Core ships only the text and confirmation widgets | accepted | 2026-08-09 |
 | [0036](0036-conventional-commits.md) | 0036. Conventional Commits as the commit contract | accepted | 2026-08-09 |
 | [0037](0037-core-non-goals-transport-llm-markdown.md) | 0037. Core has no transport, LLM SDK binding, or markdown renderer | accepted | 2026-08-09 |
+| [0038](0038-semver-gated-by-surface-snapshots.md) | 0038. Semantic versioning for published packages, gated by generated surface snapshots | proposed | 2026-08-24 |
