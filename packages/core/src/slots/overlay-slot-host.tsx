@@ -13,13 +13,20 @@ export type OverlaySlotHostProps = {
   messages: readonly NereyMessage[];
   scope: OverlayScope;
   onDismiss?: (messageId: string | number) => void;
+  /**
+   * The accessible name of the dismiss control. ADR 0041 — this is the seam ADR 0037 claimed core
+   * already had. A control with no accessible name fails the WCAG 2.2 AA gate (ADR 0032) with no
+   * legitimate way to pass, so the default is a real string rather than nothing; a non-English
+   * host passes its own.
+   */
+  dismissLabel?: string;
 };
 
 /**
- * The accessible name of the dismiss control. English and not overridable, which is a stated
- * limitation rather than an oversight: the props of this host are fixed by ADR 0017, and a control
- * with no accessible name fails the WCAG 2.2 AA gate (ADR 0032) with no legitimate way to pass. A
- * `dismissLabel` prop is the intended fix when core grows an i18n seam.
+ * The default accessible name of the dismiss control, and the whole of core's chrome vocabulary
+ * beyond the confirmation labels a payload already carries. Overridable through the
+ * `dismissLabel` prop (ADR 0041) — a prop rather than a context, so core still has no locale
+ * anything (ADR 0037).
  */
 export const DEFAULT_DISMISS_LABEL = 'Dismiss';
 
@@ -46,7 +53,7 @@ type MatchedOverlay = { message: NereyMessage; dismissible: boolean };
  * worse for a screen-reader user than announcing nothing.
  */
 export function OverlaySlotHost(props: OverlaySlotHostProps): ReactElement | null {
-  const { messages, scope, onDismiss } = props;
+  const { messages, scope, onDismiss, dismissLabel = DEFAULT_DISMISS_LABEL } = props;
   const { registry } = useWidgetHost();
 
   const overlays = useMemo<readonly MatchedOverlay[]>(() => {
@@ -99,7 +106,7 @@ export function OverlaySlotHost(props: OverlaySlotHostProps): ReactElement | nul
                 <button
                   {...partProps}
                   type="button"
-                  aria-label={DEFAULT_DISMISS_LABEL}
+                  aria-label={dismissLabel}
                   onClick={() => {
                     onDismiss(message.id);
                   }}
