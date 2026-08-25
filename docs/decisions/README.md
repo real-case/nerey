@@ -45,4 +45,4 @@ Architecture Decision Records for this project, in [MADR](https://adr.github.io/
 | [0039](0039-tagged-releases-published-by-trusted-publishing.md) | 0039. Releases are cut from a per-package tag and published from CI by trusted publishing | proposed | 2026-08-25 |
 | [0040](0040-registry-describes-itself-to-the-model.md) | 0040. The registry describes itself to the model, through an injected schema converter | proposed | 2026-08-25 |
 | [0041](0041-chrome-strings-through-a-labels-context.md) | 0041. Chrome strings resolve through a labels context in @nerey/theme | proposed | 2026-08-25 |
-| [0042](0042-visual-regression-against-linux-references.md) | 0042. Visual regression against committed Linux reference images | proposed | 2026-08-25 |
+| [0042](0042-visual-regression-against-pinned-references.md) | 0042. Visual regression against committed, container-pinned reference images | proposed | 2026-08-25 |

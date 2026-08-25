@@ -4,7 +4,7 @@ date: 2026-08-25
 decision-makers: Yurii Anichkin
 ---
 
-# 0042. Visual regression against committed Linux reference images
+# 0042. Visual regression against committed, container-pinned reference images
 
 ## Context and Problem Statement
 
@@ -46,15 +46,15 @@ for everybody except whoever generated the references.
 
 ## Considered Options
 
-- Committed reference images, captured by Vitest browser mode, authoritative on Linux
+- Committed reference images, captured by Vitest browser mode, authoritative in a pinned image
 - Chromatic
 - Computed-style snapshots instead of pixels
 - Leave it uncovered and record the limitation
 
 ## Decision Outcome
 
-Chosen option: "Committed reference images, captured by Vitest browser mode, authoritative on
-Linux", because `@vitest/browser` already ships `toMatchScreenshot`, so it costs no new dependency
+Chosen option: "Committed reference images, captured by Vitest browser mode, authoritative in a
+pinned image", because `@vitest/browser` already ships `toMatchScreenshot`, so it costs no new dependency
 and reuses the Chromium that already runs the story suite — and because a PNG in a pull request is
 the most reviewable artifact any of these gates produce.
 
@@ -71,7 +71,9 @@ default: the alternative is a component nothing has ever looked at.
 (ADR 0027), so setting it is exercising the real contract. Dark mode is where a token override
 silently stops matching, and it is exactly half of what nothing was checking.
 
-**Linux is the only authority, and the platform token is deliberately dropped.** Vitest's default
+**The container image is the only authority, and the platform token is deliberately dropped.**
+Not the operating system — the image. Two Linux machines with different fonts installed render the
+same component differently, which is measured rather than supposed: see `Confirmation`. Vitest's default
 path template ends in `-${browserName}-${platform}`, which would let a macOS run quietly write a
 second set of references beside the Linux ones and pass. Removing the token leaves exactly one
 image per screenshot, so running the suite outside the container fails loudly. That is the correct
@@ -86,12 +88,16 @@ for a reason that has nothing to do with the change being made.
 which is the same Linux image CI compares against. Docker is therefore a requirement to *update*
 references, never to run the rest of the repository.
 
-**Motion is frozen and the tolerance is not zero.** Transitions, animations and the text caret are
-disabled during capture, because a screenshot taken 40% through a fade differs from the same
-screenshot at 60%. `allowedMismatchedPixelRatio` is `0.002` — Chromium's anti-aliasing shifts by a
-few pixels between patch releases, and a gate that reddens on a browser bump nobody made is a gate
-people stop reading. Two tenths of a percent is far below a changed colour, a moved border or a
-different font size.
+**Motion is frozen and the tolerance is exactly zero.** Transitions, animations and the text caret
+are disabled during capture, because a screenshot taken 40% through a fade differs from the same
+screenshot at 60%.
+
+Zero is the point of pinning the image, and it was arrived at by measurement. The first attempt
+allowed `0.002` as a hedge against anti-aliasing; a planted regression — `--nerey-radius-md` from
+`0.375rem` to `0.875rem`, a token **seventeen stylesheets use** — moved only **2 of 90** references,
+because a corner radius touches a few dozen pixels. At zero the same change fails **38**. A hedge
+against a rasteriser you do not control is pointless once you control it, and a gate that absorbs a
+visible change to seventeen components is a gate that only looks like it works.
 
 ### Consequences
 
@@ -111,9 +117,15 @@ different font size.
 ### Confirmation
 
 `npm run test:visual` (`vitest.visual.config.ts`) renders every captured story in both colour
-schemes and compares against `packages/theme/src/visual/__screenshots__/`. It runs in CI as its own
-step, after the existing suite, and a mismatch fails the build with the actual, expected and diff
-images attached.
+schemes and compares against `packages/theme/src/visual/__screenshots__/`. A mismatch fails the
+build with the actual, expected and diff images attached.
+
+It runs in CI as its **own job, pinned to the container image**, not as a step on the ordinary
+runner. That distinction was learned rather than designed: the first wiring ran it on
+`ubuntu-latest` on the reasoning that Linux plus Chromium was enough, and **78 of 90 references
+disagreed**. A GitHub runner and the Playwright image ship different font sets, and the theme's
+font tokens are system stacks — so "same operating system" is not "same rasteriser", and only the
+image the references came out of can be trusted to reproduce them.
 
 `npm run test:visual:update` regenerates the whole set inside
 `mcr.microsoft.com/playwright:v1.62.1-noble` — the image CI's browser comes from — so the
@@ -136,7 +148,7 @@ picture, which is as close to forcing the look as a repository can get.
 
 ## Pros and Cons of the Options
 
-### Committed reference images, captured by Vitest browser mode, authoritative on Linux
+### Committed reference images, captured by Vitest browser mode, authoritative in a pinned image
 
 - Good, because the references live in the repository, so "correct" is readable from a clean
   checkout and diffable in review.
