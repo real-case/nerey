@@ -89,6 +89,10 @@ When a change needs a decision no ADR covers: record the ADR first, then impleme
   wiring bug in this design, and why exact-by-default is right.
 - Registries are built by **explicit composition** (`createWidgetRegistry`,
   `composeRegistries`). No global mutable map, no `registerWidget()` at import time.
+- What the model is told is **derived from the registry**, never retyped beside it:
+  `describeRegistry(registry, { toJsonSchema })` emits `type`, `version`, `key`, `description` and
+  the converted payload schema. The converter is injected — core depends on the Standard Schema
+  spec, which has no conversion in it (0040). An entry's `description` is what a model chooses on.
 - Evolve a widget's payload with `migrate` on the entry — a tolerant reader, applied on read,
   before validation.
 

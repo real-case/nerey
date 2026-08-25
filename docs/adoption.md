@@ -152,6 +152,51 @@ text, and it hides the version-mismatch bug that is by far the most common wirin
 
 ---
 
+## Step 6 — tell the model what it may render
+
+The registry knows the exact `type@version` it will resolve and the exact schema it will validate
+against. Do not retype either into a prompt or a tool definition — derive them:
+
+```ts
+import { describeRegistry } from '@nerey/core';
+import { z } from 'zod';
+
+const catalog = describeRegistry(registry, { toJsonSchema: (schema) => z.toJSONSchema(schema) });
+```
+
+Each entry comes out as `{ type, version, key, description?, placement, payloadSchema? }`, where
+`key` is `` `${type}@${version}` `` — the registry's own lookup key. Shape it into whatever your
+provider wants; Nerey emits no tool format of its own, because a provider binding is a non-goal
+(ADR 0037).
+
+```ts
+const tools = catalog.map((widget) => ({
+  name: `render_${widget.type}`,
+  description: widget.description,
+  input_schema: widget.payloadSchema,
+}));
+```
+
+The converter is injected rather than imported: `@nerey/core` depends on the Standard Schema
+_spec_, which has no JSON Schema conversion in it, so taking one as a dependency would put a
+validator back in the package a consumer chose it to stay out of (ADR 0011 / 0040). Zod 4 ships
+`z.toJSONSchema`; Valibot and ArkType are the same one-liner.
+
+Two things worth knowing:
+
+- **Omit the converter and no `payloadSchema` is emitted at all** — you get types, versions and
+  descriptions, and no error. That is deliberate, and it is the one way to hand a model a widget
+  with no constraints, so pass the converter unless you are attaching schemas yourself.
+- **`description` is what a model chooses on.** It is optional on an entry and absent from the
+  descriptor when unset. A widget with no description tells the model what it is called and not
+  what it is for.
+
+This is the half of the loop that used to be hand-maintained. When it drifts, the payload's
+version stops matching an entry, and the message renders as plain text — indistinguishable from a
+model that simply chose not to use a widget.
+
+---
+
 ## Styling: two paths
 
 ### You own a design system
