@@ -1,15 +1,26 @@
 {
   "name": "@nerey/theme",
   "version": "0.1.0",
-  "description": "The reference theme for @nerey/core \u2014 CSS Modules compiled to a static stylesheet, driven entirely by --nerey-* custom properties.",
+  "description": "The reference theme for @nerey/core — CSS Modules compiled to a static stylesheet, driven entirely by --nerey-* custom properties.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/real-case/nerey.git",
+    "directory": "packages/theme"
+  },
+  "homepage": "https://github.com/real-case/nerey/tree/main/packages/theme#readme",
+  "bugs": {
+    "url": "https://github.com/real-case/nerey/issues"
+  },
+  "author": "Yurii Anichkin",
   "type": "module",
   "sideEffects": [
     "**/*.css"
   ],
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "CHANGELOG.md"
   ],
   "exports": {
     ".": {

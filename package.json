@@ -27,6 +27,7 @@
     "gen:tokens": "node scripts/gen-tokens.mjs",
     "gen:css-types": "node scripts/gen-css-types.mjs",
     "gen:check": "node scripts/gen-tokens.mjs --check && node scripts/gen-css-types.mjs --check",
+    "gen:release": "node scripts/gen-release.mjs",
     "check:tokens": "node scripts/check-tokens.mjs",
     "check:core-purity": "node scripts/check-core-purity.mjs",
     "check:exports": "node scripts/check-exports.mjs",

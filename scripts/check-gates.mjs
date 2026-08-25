@@ -122,6 +122,11 @@ const GATES = [
     why: 'a generator writes files; the hook surfaces a drift reminder as context instead (ADR 0034)',
   },
   {
+    script: 'scripts/gen-release.mjs',
+    hook: 'ci-only',
+    why: 'prepares a release — it reads git history and writes a manifest and a changelog, which is neither file-scoped nor something an edit should ever trigger (ADR 0039)',
+  },
+  {
     script: 'scripts/gen-css-types.mjs',
     hook: 'ci-only',
     why: 'a generator writes files; the hook surfaces a drift reminder as context instead (ADR 0034)',
