@@ -149,6 +149,14 @@ export function nextVersion(current, level) {
   return `${major}.${minor}.${patch + 1}`;
 }
 
+/**
+ * The version a release lands on. With no previous tag the manifest version has never been
+ * published, so it IS the release; the bump arithmetic starts at the second release.
+ */
+export function firstReleaseVersion(lastTag, current, level) {
+  return lastTag ? nextVersion(current, level) : current;
+}
+
 export function compareVersions(a, b) {
   const pa = a.split('.').map(Number);
   const pb = b.split('.').map(Number);
@@ -364,11 +372,18 @@ function main(argv) {
   }
 
   const effective = applyPreOne(level, manifest.version);
-  const version = nextVersion(manifest.version, effective);
+  // A first release publishes the manifest version AS IS. There is no previous tag, so nothing
+  // has ever been published under it, and bumping would burn 0.1.0 without anyone ever being able
+  // to install it. The bump arithmetic starts applying at the second release, which is the first
+  // one that has a predecessor to be incremented from.
+  const version = firstReleaseVersion(last, manifest.version, effective);
   const date = runGit(['log', '-1', '--format=%ad', '--date=short']);
   const entry = renderChangelogEntry(version, date, commits);
 
-  console.log(`\n${packageArg}  ${manifest.version} → ${version}   (${level} → ${effective} on 0.x)`);
+  const arithmetic = last
+    ? `${manifest.version} → ${version}   (${level} → ${effective} on 0.x)`
+    : `${version}   (first release — the manifest version, unbumped; ${level} noted for the record)`;
+  console.log(`\n${packageArg}  ${arithmetic}`);
   console.log(`  range: ${last?.tag ?? 'first release'}..HEAD, ${commits.length} commit(s) in scope\n`);
   console.log(entry.replace(/^/gm, '  '));
 
@@ -438,6 +453,15 @@ if (process.argv.includes('--self-test')) {
     outcomes.push(['no-commits', classify(parseCommitRecords(readFileSync(logFile, 'utf8'))) === null]);
 
     outcomes.push(['bumps the number', nextVersion('0.1.0', 'patch') === '0.1.1']);
+    // The first release is the one case where the arithmetic must NOT run. It is asserted here
+    // rather than only in `main`, because it was a real defect: the tool computed 0.1.1 for a
+    // package whose 0.1.0 had never been published, which would have burned a version nobody
+    // could ever install.
+    outcomes.push([
+      'allows a first release to keep the manifest version',
+      firstReleaseVersion(null, '0.1.0', 'patch') === '0.1.0' &&
+        firstReleaseVersion({ tag: 'x' }, '0.1.0', 'patch') === '0.1.1',
+    ]);
 
     // undeclared-break — the two-signal check, over both baseline shapes.
     const owns = OWNED_BARRELS['@nerey/core'];

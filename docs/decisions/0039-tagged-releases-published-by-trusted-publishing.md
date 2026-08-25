@@ -66,6 +66,11 @@ The shape is three steps, and the split between them is the point:
    `packages/theme/`), applies the pre-1.0 arithmetic of ADR 0029, writes the manifest version and
    a `CHANGELOG.md` entry, and prints the commit, tag and push commands. It writes files and
    nothing else: it does not commit, does not tag, and does not touch the network.
+
+   The one case where the arithmetic does **not** run is a first release. With no previous tag the
+   manifest version has never been published, so it is the version to publish; bumping it would
+   burn `0.1.0` on a release nobody could ever install. The arithmetic starts at the second
+   release, which is the first one with a predecessor to increment from.
 2. **Tag, deliberately.** The human reads the printed changelog, agrees with the number, and
    pushes `@nerey/core@0.2.0`. This is where the judgement ADR 0038 keeps manual actually happens.
 3. **Publish, from CI.** `.github/workflows/release.yml` triggers on that tag, runs the full gate

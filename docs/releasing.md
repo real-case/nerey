@@ -56,6 +56,9 @@ npm run gen:release -- --package @nerey/core --dry-run
 It prints the computed bump, the range it read, and the changelog entry it would write. Nothing is
 written under `--dry-run`.
 
+On a **first release** — no tag for that package yet — it publishes the manifest version as it
+stands rather than bumping it. `0.1.0` has never been published, so it is what `0.1.0` should be.
+
 It derives the number from the commit range since that package's last tag, using the commit
 **scope** as the attribution — `fix(core): …` belongs to `@nerey/core` whether or not it touched a
 file under `packages/core/`. That is deliberate (ADR 0036): a change to a core type breaks theme
