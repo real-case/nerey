@@ -7,16 +7,12 @@ import type { NereyState, WidgetComponentProps } from '@nerey/core';
 import { Button } from '../../components/button/button';
 import { CheckIcon } from '../../components/icons/icons';
 import { Toggle, ToggleGroup } from '../../components/toggle-group/toggle-group';
+import { useNereyLabels } from '../../labels/labels';
 import styles from './choice-chips.module.css';
 import {
-  CHOICE_CHIPS_MULTIPLE_GROUP_LABEL,
   CHOICE_CHIPS_PLACEMENT,
-  CHOICE_CHIPS_SAVE_FAILED_NOTICE,
-  CHOICE_CHIPS_SENT_LABEL,
-  CHOICE_CHIPS_SINGLE_GROUP_LABEL,
   CHOICE_CHIPS_TYPE,
   CHOICE_CHIPS_VERSION,
-  DEFAULT_CHOICE_CHIPS_SEND_LABEL,
   EMPTY_CHOICE_CHIPS_STATE,
   replyFor,
   selectionValue,
@@ -50,6 +46,7 @@ function toArray(selected: string | string[] | undefined): string[] {
  */
 export function ChoiceChipsWidget(props: ChoiceChipsWidgetProps): ReactElement {
   const { messageId, payload, state, readonly, status, onInteraction } = props;
+  const labels = useNereyLabels();
 
   /**
    * `debounceMs: 0` — a chip row writes exactly once in its life. The default 400ms window would
@@ -121,7 +118,7 @@ export function ChoiceChipsWidget(props: ChoiceChipsWidgetProps): ReactElement {
     reply([value]);
   }
 
-  const groupLabel = multiple ? CHOICE_CHIPS_MULTIPLE_GROUP_LABEL : CHOICE_CHIPS_SINGLE_GROUP_LABEL;
+  const groupLabel = multiple ? labels.choiceChips.multipleGroup : labels.choiceChips.singleGroup;
 
   return (
     <WidgetRoot
@@ -175,10 +172,10 @@ export function ChoiceChipsWidget(props: ChoiceChipsWidgetProps): ReactElement {
             {answered ? (
               <>
                 <CheckIcon size={14} />
-                {CHOICE_CHIPS_SENT_LABEL}
+                {labels.choiceChips.sent}
               </>
             ) : (
-              DEFAULT_CHOICE_CHIPS_SEND_LABEL
+              labels.choiceChips.send
             )}
           </Button>
         </WidgetPart>
@@ -195,7 +192,7 @@ export function ChoiceChipsWidget(props: ChoiceChipsWidgetProps): ReactElement {
           state="error"
           render={(partProps) => <p {...partProps} role="status" className={styles.notice} />}
         >
-          {CHOICE_CHIPS_SAVE_FAILED_NOTICE}
+          {labels.choiceChips.saveFailed}
         </WidgetPart>
       )}
     </WidgetRoot>

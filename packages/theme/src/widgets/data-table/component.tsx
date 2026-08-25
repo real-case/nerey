@@ -6,15 +6,9 @@ import type { NereyState, WidgetComponentProps } from '@nerey/core';
 
 import { ChevronDownIcon, ChevronUpIcon } from '../../components/icons/icons';
 import { cx } from '../../internal/cx';
+import { useNereyLabels } from '../../labels/labels';
 import styles from './data-table.module.css';
-import {
-  DATA_TABLE_PLACEMENT,
-  DATA_TABLE_TYPE,
-  DATA_TABLE_VERSION,
-  DEFAULT_EMPTY_LABEL,
-  DEFAULT_TABLE_LABEL,
-  rowComparator,
-} from './schema';
+import { DATA_TABLE_PLACEMENT, DATA_TABLE_TYPE, DATA_TABLE_VERSION, rowComparator } from './schema';
 import type { DataTableCell, DataTableColumn, DataTablePayload, DataTableState } from './schema';
 
 export type DataTableWidgetProps = WidgetComponentProps<DataTablePayload, DataTableState>;
@@ -42,6 +36,7 @@ const GLYPH_SIZE = 12;
  */
 export function DataTableWidget(props: DataTableWidgetProps): ReactElement {
   const { messageId, payload, state, readonly, status } = props;
+  const labels = useNereyLabels();
 
   /**
    * The default debounce window, unlike the confirmation widget's zero. A reader hunting for a
@@ -141,7 +136,7 @@ export function DataTableWidget(props: DataTableWidgetProps): ReactElement {
             tabIndex={0}
             role="group"
             aria-labelledby={payload.caption === undefined ? undefined : captionId}
-            aria-label={payload.caption === undefined ? DEFAULT_TABLE_LABEL : undefined}
+            aria-label={payload.caption === undefined ? labels.dataTable.label : undefined}
           />
         )}
       >
@@ -215,7 +210,7 @@ export function DataTableWidget(props: DataTableWidgetProps): ReactElement {
                     <td {...partProps} colSpan={payload.columns.length} className={styles.empty} />
                   )}
                 >
-                  {DEFAULT_EMPTY_LABEL}
+                  {labels.dataTable.empty}
                 </WidgetPart>
               </tr>
             ) : (

@@ -10,17 +10,12 @@ import { Surface } from '../../components/surface/surface';
 import { Text } from '../../components/text/text';
 import { Toggle, ToggleGroup } from '../../components/toggle-group/toggle-group';
 import { VisuallyHidden } from '../../components/visually-hidden/visually-hidden';
+import { useNereyLabels } from '../../labels/labels';
 import styles from './filter-panel.module.css';
 import {
-  DEFAULT_CLEAR_LABEL,
-  DEFAULT_FACET_PLACEHOLDER,
-  DEFAULT_SEARCH_LABEL,
-  EMPTY_QUERY_HINT,
   FILTER_PANEL_PLACEMENT,
   FILTER_PANEL_TYPE,
   FILTER_PANEL_VERSION,
-  NO_MATCHES_TEXT,
-  PANEL_LABEL,
   composeQuery,
   hasSelection,
   selectionFor,
@@ -64,6 +59,7 @@ type OptionContentProps = { option: FilterOption };
  * plain text node and the extra markup is not paid for.
  */
 function OptionContent({ option }: OptionContentProps): ReactElement {
+  const labels = useNereyLabels();
   if (option.count === undefined) return <>{option.label}</>;
 
   return (
@@ -72,7 +68,9 @@ function OptionContent({ option }: OptionContentProps): ReactElement {
       <span className={styles.count} aria-hidden="true">
         {option.count}
       </span>
-      <VisuallyHidden>{`${option.label}, ${String(option.count)} results`}</VisuallyHidden>
+      <VisuallyHidden>
+        {labels.filterPanel.facetOption({ label: option.label, count: option.count })}
+      </VisuallyHidden>
     </>
   );
 }
@@ -87,6 +85,7 @@ function OptionContent({ option }: OptionContentProps): ReactElement {
  * this theme has not wrapped yet — shipping it half-styled would be worse than not shipping it.
  */
 function FacetControl({ facet, values, disabled, onChange }: FacetControlProps): ReactElement {
+  const labels = useNereyLabels();
   const selectedOption = useMemo(
     () => facet.options.find((option) => option.value === values[0]) ?? null,
     [facet.options, values],
@@ -104,14 +103,14 @@ function FacetControl({ facet, values, disabled, onChange }: FacetControlProps):
         disabled={disabled}
       >
         <Combobox.InputGroup>
-          <Combobox.Input label={facet.label} placeholder={DEFAULT_FACET_PLACEHOLDER} />
+          <Combobox.Input label={facet.label} placeholder={labels.filterPanel.facetPlaceholder} />
           <Combobox.Clear />
           <Combobox.Trigger />
         </Combobox.InputGroup>
         <Combobox.Portal>
           <Combobox.Positioner>
             <Combobox.Popup>
-              <Combobox.Empty>{NO_MATCHES_TEXT}</Combobox.Empty>
+              <Combobox.Empty>{labels.filterPanel.noMatches}</Combobox.Empty>
               <Combobox.List<FilterOption>>
                 {(item) => (
                   <Combobox.Item key={item.value} value={item}>
@@ -161,6 +160,7 @@ function FacetControl({ facet, values, disabled, onChange }: FacetControlProps):
  */
 export function FilterPanelWidget(props: FilterPanelWidgetProps): ReactElement {
   const { messageId, payload, state, readonly, status, onInteraction } = props;
+  const labels = useNereyLabels();
 
   // The default debounce: ticking four chips in a row is one burst, and the window is what stops
   // it from being four writes through the persistence port.
@@ -171,7 +171,7 @@ export function FilterPanelWidget(props: FilterPanelWidgetProps): ReactElement {
     [payload.facets, persisted.selected],
   );
 
-  const query = composeQuery(payload.facets, selection);
+  const query = composeQuery(payload.facets, selection, { queryPrefix: labels.filterPanel.queryPrefix });
   const anySelected = hasSelection(selection);
 
   // No `submitted` flag in state, unlike the form. This entry expires on the search and hides
@@ -217,7 +217,7 @@ export function FilterPanelWidget(props: FilterPanelWidgetProps): ReactElement {
       // is otherwise announced as loose buttons with no explanation of what they belong to. The
       // name is written here because nothing outside this component can reach in and add it
       // (ADR 0022 / 0032).
-      render={(rootProps) => <div {...rootProps} role="group" aria-label={PANEL_LABEL} />}
+      render={(rootProps) => <div {...rootProps} role="group" aria-label={labels.filterPanel.panel} />}
     >
       {/* `sunken` rather than `raised`: this panel is attached to the composer, not floating in
           the transcript, and a raised card above a text box reads as a second message. */}
@@ -258,7 +258,7 @@ export function FilterPanelWidget(props: FilterPanelWidgetProps): ReactElement {
               {/* `secondary`, never `muted`: muted measures 4.08:1 on the canvas in light, which
                   is under AA for normal-size text and is how a hint like this fails the gate. */}
               <Text size="sm" tone="secondary">
-                {anySelected ? query : EMPTY_QUERY_HINT}
+                {anySelected ? query : labels.filterPanel.emptyQueryHint}
               </Text>
             </WidgetPart>
 
@@ -269,10 +269,10 @@ export function FilterPanelWidget(props: FilterPanelWidgetProps): ReactElement {
               onClick={clear}
               disabled={!actionable || !anySelected}
             >
-              {DEFAULT_CLEAR_LABEL}
+              {labels.filterPanel.clear}
             </Button>
             <Button size="sm" onClick={search} disabled={!actionable || !anySelected}>
-              {DEFAULT_SEARCH_LABEL}
+              {labels.filterPanel.search}
             </Button>
           </WidgetPart>
         </Stack>

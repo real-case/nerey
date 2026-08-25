@@ -9,9 +9,6 @@ import { Progress } from '../../components/progress/progress';
 import { Spinner } from '../../components/spinner/spinner';
 import { cx } from '../../internal/cx';
 import {
-  DEFAULT_PROGRESS_LABEL,
-  DEFAULT_RUNNING_LABEL,
-  DEFAULT_STEPS_LABEL,
   PROGRESS_TRACKER_PLACEMENT,
   PROGRESS_TRACKER_TYPE,
   PROGRESS_TRACKER_VERSION,
@@ -22,6 +19,7 @@ import {
   stepStateAt,
 } from './schema';
 import type { ProgressTrackerPayload, ProgressTrackerState, StepState } from './schema';
+import { useNereyLabels } from '../../labels/labels';
 import styles from './progress-tracker.module.css';
 
 export type ProgressTrackerWidgetProps = WidgetComponentProps<ProgressTrackerPayload, ProgressTrackerState>;
@@ -69,6 +67,7 @@ type StepMarkerProps = { state: StepState; frozen: boolean };
  * cannot possibly support. The static arc says "this was in progress" and stops there.
  */
 function StepMarker({ state, frozen }: StepMarkerProps): ReactElement {
+  const labels = useNereyLabels();
   if (state === 'done') return <CheckIcon size={MARKER_SIZE} />;
   if (state === 'failed') return <AlertCircleIcon size={MARKER_SIZE} />;
   if (state === 'pending') return <DotsHorizontalIcon size={MARKER_SIZE} />;
@@ -79,12 +78,13 @@ function StepMarker({ state, frozen }: StepMarkerProps): ReactElement {
     // live region above already says which step is running and a `role="status"` per step would
     // announce the same fact once more per step. It is passed anyway, so that removing the wrapper
     // some day produces a named spinner rather than a silent one.
-    <Spinner size="sm" label={DEFAULT_RUNNING_LABEL} />
+    <Spinner size="sm" label={labels.progressTracker.running} />
   );
 }
 
 export function ProgressTrackerWidget(props: ProgressTrackerWidgetProps): ReactElement {
   const { payload, readonly, status } = props;
+  const labels = useNereyLabels();
 
   // `payload?.` rather than `payload.`: while streaming the value has been through no schema at all
   // (ADR 0019), so the declared type is a promise about the finished object, not about this render.
@@ -109,7 +109,7 @@ export function ProgressTrackerWidget(props: ProgressTrackerWidgetProps): ReactE
   const percent = clampPercent(payload?.percent);
   const value = indeterminate ? null : (percent ?? Math.round((finished / total) * 100));
 
-  const label = payload?.label ?? DEFAULT_PROGRESS_LABEL;
+  const label = payload?.label ?? labels.progressTracker.progress;
   const tone = failed ? 'danger' : complete ? 'success' : 'accent';
 
   const sentence = announcement({ steps, current, failed, streaming: status === 'streaming' });
@@ -180,7 +180,7 @@ export function ProgressTrackerWidget(props: ProgressTrackerWidgetProps): ReactE
            * items". Stating the role keeps the count, which is the part of a step list that carries
            * the most information per word.
            */
-          render={(partProps) => <ol {...partProps} role="list" aria-label={DEFAULT_STEPS_LABEL} />}
+          render={(partProps) => <ol {...partProps} role="list" aria-label={labels.progressTracker.steps} />}
         >
           {steps.map((step, index) => {
             const state = complete ? 'done' : stepStateAt(index, current, failed);

@@ -9,14 +9,12 @@ import { ExternalLinkIcon } from '../../components/icons/icons';
 import { Popover } from '../../components/popover/popover';
 import { VisuallyHidden } from '../../components/visually-hidden/visually-hidden';
 import { cx } from '../../internal/cx';
+import { useNereyLabels } from '../../labels/labels';
 import styles from './citations.module.css';
 import {
   CITATIONS_PLACEMENT,
   CITATIONS_TYPE,
   CITATIONS_VERSION,
-  DEFAULT_NO_SOURCES_LABEL,
-  DEFAULT_QUOTE_LABEL,
-  NEW_TAB_HINT,
   QUOTE_ACTION,
   displayHost,
   quoteRequest,
@@ -60,6 +58,7 @@ const NO_IDS: readonly string[] = Object.freeze([]);
  */
 export function CitationsWidget(props: CitationsWidgetProps): ReactElement {
   const { messageId, payload, state, readonly, status, onInteraction } = props;
+  const labels = useNereyLabels();
 
   /**
    * `debounceMs: 0` because this state is written at most once per source and never in a burst —
@@ -178,7 +177,7 @@ export function CitationsWidget(props: CitationsWidgetProps): ReactElement {
                         <ExternalLinkIcon />
                         {/* The glyph is decorative by construction, so the warning that this leaves
                           the conversation has to reach the accessibility tree some other way. */}
-                        <VisuallyHidden>{`(${NEW_TAB_HINT})`}</VisuallyHidden>
+                        <VisuallyHidden>{`(${labels.citations.newTabHint})`}</VisuallyHidden>
                       </a>
 
                       <Button
@@ -190,7 +189,7 @@ export function CitationsWidget(props: CitationsWidgetProps): ReactElement {
                           ask(source);
                         }}
                       >
-                        {DEFAULT_QUOTE_LABEL}
+                        {labels.citations.quote}
                       </Button>
                     </Popover.Popup>
                   </Popover.Positioner>
@@ -210,7 +209,7 @@ export function CitationsWidget(props: CitationsWidgetProps): ReactElement {
           // widget exists to make visible, and a blank space where the markers would be reads
           // as a rendering bug rather than as the absence of evidence.
         >
-          {DEFAULT_NO_SOURCES_LABEL}
+          {labels.citations.noSources}
         </WidgetPart>
       )}
     </WidgetRoot>

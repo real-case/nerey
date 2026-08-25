@@ -19,8 +19,6 @@ import { Spinner } from '../../components/spinner/spinner';
 import { Text } from '../../components/text/text';
 import { cx } from '../../internal/cx';
 import {
-  DEFAULT_TASK_TREE_TITLE,
-  TASK_STATUS_LABEL,
   TASK_TREE_PLACEMENT,
   TASK_TREE_TYPE,
   TASK_TREE_VERSION,
@@ -30,6 +28,7 @@ import {
   readTasks,
 } from './schema';
 import type { Task, TaskStatus, TaskTreePayload, TaskTreeState } from './schema';
+import { useNereyLabels } from '../../labels/labels';
 import styles from './task-tree.module.css';
 
 export type TaskTreeWidgetProps = WidgetComponentProps<TaskTreePayload, TaskTreeState>;
@@ -149,13 +148,14 @@ type MarkerProps = { status: TaskStatus; frozen: boolean };
  * it still is.
  */
 function Marker({ status, frozen }: MarkerProps): ReactElement {
+  const labels = useNereyLabels();
   if (status === 'running') {
     return frozen ? (
       <SpinnerArcIcon size={MARKER_SIZE} />
     ) : (
       // The label is carried by the treeitem's own `aria-label`; a live region per running row
       // would announce "Running" once for every task the moment the tree mounted.
-      <Spinner size="sm" label={TASK_STATUS_LABEL.running} />
+      <Spinner size="sm" label={labels.taskTree.status.running} />
     );
   }
   if (status === 'done') return <CheckIcon size={MARKER_SIZE} />;
@@ -180,6 +180,7 @@ type NodeProps = {
 };
 
 function TaskNode(props: NodeProps): ReactElement {
+  const labels = useNereyLabels();
   const {
     task,
     level,
@@ -216,7 +217,7 @@ function TaskNode(props: NodeProps): ReactElement {
       </span>
       <span className={styles.label}>{task.label}</span>
       <Badge size="sm" tone={STATUS_TONE[task.status]}>
-        {TASK_STATUS_LABEL[task.status]}
+        {labels.taskTree.status[task.status]}
       </Badge>
       {expandable && (
         <span className={styles.chevron} aria-hidden="true">
@@ -281,7 +282,7 @@ function TaskNode(props: NodeProps): ReactElement {
            * would announce the whole tree under it. The status word is part of the name because a
            * coloured glyph is not information a screen reader can reach.
            */
-          aria-label={`${task.label} — ${TASK_STATUS_LABEL[task.status]}`}
+          aria-label={`${task.label} — ${labels.taskTree.status[task.status]}`}
           aria-expanded={expandable ? expanded : undefined}
           tabIndex={task.id === activeId ? 0 : -1}
           onFocus={(event) => {
@@ -311,6 +312,7 @@ function TaskNode(props: NodeProps): ReactElement {
 
 export function TaskTreeWidget(props: TaskTreeWidgetProps): ReactElement {
   const { messageId, payload, state, readonly, status } = props;
+  const labels = useNereyLabels();
 
   const { state: persisted, setState } = useWidgetState<TaskTreeState>(messageId, state ?? EMPTY_STATE);
 
@@ -448,7 +450,7 @@ export function TaskTreeWidget(props: TaskTreeWidgetProps): ReactElement {
 
   const scope = useId();
   const titleId = `${scope}title`;
-  const title = payload?.title ?? DEFAULT_TASK_TREE_TITLE;
+  const title = payload?.title ?? labels.taskTree.title;
 
   /**
    * `error` covers both a payload that arrived broken and a run that reported a failure. The second
