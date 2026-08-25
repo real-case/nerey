@@ -29,6 +29,7 @@ export const taskTreeWidget = defineWidget<TaskTreePayload, TaskTreeState>({
   type: TASK_TREE_TYPE,
   version: TASK_TREE_VERSION,
   component: TaskTreeWidget,
+  description: 'Show a hierarchy of tasks with their statuses. Display only — it reports nothing back.',
   placement: TASK_TREE_PLACEMENT,
   lifecycle: {
     persist: 'forever',

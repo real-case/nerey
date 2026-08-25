@@ -27,6 +27,9 @@ export const pollWidget = defineWidget<PollPayload, PollState>({
   type: POLL_TYPE,
   version: POLL_VERSION,
   component: PollWidget,
+  description:
+    'Ask the user to pick one of the options you list, or several when `multiple` is set. Use it ' +
+    'for a question with a closed set of answers; the reply names the chosen option.',
   placement: POLL_PLACEMENT,
   lifecycle: {
     persist: 'forever',

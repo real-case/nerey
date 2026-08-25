@@ -24,6 +24,9 @@ export const citationsWidget = defineWidget<CitationsPayload, CitationsState>({
   type: CITATIONS_TYPE,
   version: CITATIONS_VERSION,
   component: CitationsWidget,
+  description:
+    'Show the sources behind a claim so the user can open one or quote it back into the ' +
+    'conversation. Use it when an answer rests on retrieved material.',
   placement: CITATIONS_PLACEMENT,
   lifecycle: CITATIONS_LIFECYCLE,
   payloadSchema: citationsPayloadSchema,

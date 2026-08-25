@@ -25,6 +25,9 @@ export const toastNoticeWidget = defineWidget<ToastNoticePayload, ToastNoticeSta
   type: TOAST_NOTICE_TYPE,
   version: TOAST_NOTICE_VERSION,
   component: ToastNoticeWidget,
+  description:
+    'Announce something about the session rather than the conversation — a finished background ' +
+    'job, an expiring token, a rate limit. It floats above the chat and leaves no turn behind.',
   placement: TOAST_NOTICE_PLACEMENT,
   lifecycle: TOAST_NOTICE_LIFECYCLE,
   payloadSchema: toastNoticePayloadSchema,

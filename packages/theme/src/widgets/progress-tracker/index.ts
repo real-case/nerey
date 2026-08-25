@@ -32,6 +32,9 @@ export const progressTrackerWidget = defineWidget<ProgressTrackerPayload, Progre
   type: PROGRESS_TRACKER_TYPE,
   version: PROGRESS_TRACKER_VERSION,
   component: ProgressTrackerWidget,
+  description:
+    'Show how far a multi-step operation already under way has got. Display only — it reports ' +
+    'nothing back and does not advance on its own.',
   placement: PROGRESS_TRACKER_PLACEMENT,
   lifecycle: {
     persist: 'forever',

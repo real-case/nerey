@@ -23,6 +23,9 @@ export const dataTableWidget = defineWidget<DataTablePayload, DataTableState>({
   type: DATA_TABLE_TYPE,
   version: DATA_TABLE_VERSION,
   component: DataTableWidget,
+  description:
+    'Present rows and columns of data you have already retrieved. Display only — it reports ' +
+    'nothing back, so do not use it to ask for a selection.',
   placement: DATA_TABLE_PLACEMENT,
   lifecycle: DATA_TABLE_LIFECYCLE,
   payloadSchema: dataTablePayloadSchema,
