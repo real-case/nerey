@@ -139,6 +139,17 @@ export {
 } from './adapter';
 export type { MessageAdapter } from './adapter';
 
+/* ── Describing the registry to a producer (ADR 0040) ──────────────────────────────── */
+
+/**
+ * The other half of FR-11's dual role. `describeRegistry` derives the exact `type@version` a
+ * payload must carry from the registry that will resolve it, so the strings the model is told and
+ * the strings the registry accepts cannot drift apart. The JSON Schema converter is injected —
+ * core depends on the Standard Schema spec, which has no conversion in it (ADR 0011 / 0037).
+ */
+export { describeRegistry } from './describe';
+export type { DescribeRegistryOptions, WidgetDescriptor } from './describe';
+
 /* ── Validation (ADR 0011) ─────────────────────────────────────────────────────────── */
 
 export { flattenIssues, formatIssuePath, validateOptional, validateSync } from './validate';

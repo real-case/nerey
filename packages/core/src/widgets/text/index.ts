@@ -24,6 +24,9 @@ export const textWidget = defineWidget<TextPayload, Record<string, never>>({
   type: TEXT_WIDGET_TYPE,
   version: TEXT_WIDGET_VERSION,
   component: TextWidget,
+  description:
+    'Plain assistant prose, optionally with preformatted blocks. Every message that carries no ' +
+    'widget renders through this, so a producer does not normally select it explicitly.',
   placement: { slot: 'message' },
   lifecycle: NEVER_EXPIRES,
   payloadSchema: textPayloadSchema,

@@ -161,6 +161,16 @@ export type WidgetRegistryEntry<Payload = unknown, State = unknown, Event = unkn
   lifecycle: Lifecycle;
 
   /**
+   * What this widget is FOR, in one sentence, aimed at the producer that fills it — usually a
+   * model (ADR 0040). Optional: an entry without one still resolves and still validates, it just
+   * describes itself less well, and `describeRegistry` omits the field rather than emitting an
+   * empty string.
+   *
+   * Not a doc comment, because a doc comment does not survive into a prompt.
+   */
+  description?: string;
+
+  /**
    * Validated at the boundary and, in a well-built system, handed to the model as the
    * generation constraint. Any Standard Schema v1 implementation works — Zod 4, Valibot,
    * ArkType — because Nerey depends on the spec, not on a validator (ADR 0011).
