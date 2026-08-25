@@ -89,6 +89,13 @@ jobs:
       - name: install chromium
         run: npx playwright install chromium
 
+      # ADR 0042 — the visual references are LINUX images, so this step is meaningful here and
+      # nowhere else. It is deliberately separate from the suite below: a pixel mismatch and a
+      # failing assertion are different findings, and reporting them as one run makes the cheaper
+      # of the two harder to read.
+      - name: visual regression
+        run: npm run test:visual
+
       # ONE invocation across BOTH projects, because ADR 0007 defines the threshold over the
       # MERGED number. Running `--project unit --coverage` and the storybook project separately
       # reports 44% and fails, not because coverage is bad but because most of @nerey/theme is
