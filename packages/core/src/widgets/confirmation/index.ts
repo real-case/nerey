@@ -27,6 +27,9 @@ export const confirmationWidget = defineWidget<ConfirmationPayload, Confirmation
   type: CONFIRMATION_TYPE,
   version: CONFIRMATION_VERSION,
   component: ConfirmationWidget,
+  description:
+    'Ask the user to confirm or cancel one action before it is taken. Use it when the action has ' +
+    'a consequence worth pausing for; the reply names which choice was made.',
   placement: CONFIRMATION_PLACEMENT,
   lifecycle: {
     persist: 'forever',

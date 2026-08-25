@@ -124,8 +124,10 @@ That produces 83 KB across 472 symbols and four barrels, byte-identical between 
 over the four barrels of ADR 0028, renders each exported symbol as described above, and diffs the
 result against `docs/design-system/api-signatures.json`:
 
-- `signature-changed` — **fails**. A symbol whose rendering differs from the baseline. MAJOR under
-  the rules restated below, MINOR while a package is `0.x`.
+- `signature-changed` — **fails**, but not as a verdict of "breaking". An added optional field is
+  additive and a narrowed parameter is not, and both render as one changed line; classifying them
+  needs a reader. So the gate prints both shapes and stops, and the classification — and therefore
+  the bump under the rules restated below — is made by the person re-blessing the baseline.
 - `signature-added` / `signature-removed` — reported, does not fail. Names are `check:public-api`'s
   surface and it already fails on a removal; reporting them here without failing keeps one verdict
   per fact instead of two gates blocking on the same removal.

@@ -26,6 +26,9 @@ export const formWidget = defineWidget<FormPayload, FormState>({
   type: FORM_TYPE,
   version: FORM_VERSION,
   component: FormWidget,
+  description:
+    'Collect several related fields in one submit. Use it when the answer needs more than a ' +
+    'single choice; fields are flat and primitive.',
   placement: FORM_PLACEMENT,
   lifecycle: {
     persist: 'forever',

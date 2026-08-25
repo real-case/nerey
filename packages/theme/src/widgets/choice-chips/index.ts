@@ -20,6 +20,9 @@ export const choiceChipsWidget = defineWidget<ChoiceChipsPayload, ChoiceChipsSta
   type: CHOICE_CHIPS_TYPE,
   version: CHOICE_CHIPS_VERSION,
   component: ChoiceChipsWidget,
+  description:
+    'Offer a short row of quick replies. Use it when each option is a complete answer on its own ' +
+    'and no separate submit step is wanted.',
   placement: CHOICE_CHIPS_PLACEMENT,
   lifecycle: CHOICE_CHIPS_LIFECYCLE,
   payloadSchema: choiceChipsPayloadSchema,

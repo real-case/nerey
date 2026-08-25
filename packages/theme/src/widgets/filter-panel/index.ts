@@ -36,6 +36,9 @@ export const filterPanelWidget = defineWidget<FilterPanelPayload, FilterPanelSta
   type: FILTER_PANEL_TYPE,
   version: FILTER_PANEL_VERSION,
   component: FilterPanelWidget,
+  description:
+    'Let the user narrow a result set along the facets you list. It renders above the composer ' +
+    'and its reply is a sentence stating the chosen filters.',
   placement: FILTER_PANEL_PLACEMENT,
   lifecycle: {
     persist: 'ephemeral',
