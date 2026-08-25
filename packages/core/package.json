@@ -1,13 +1,24 @@
 {
   "name": "@nerey/core",
   "version": "0.1.0",
-  "description": "Headless generative UI for React \u2014 widget registry, lifecycle runtime, and a data-attribute styling contract. Ships zero CSS.",
+  "description": "Headless generative UI for React — widget registry, lifecycle runtime, and a data-attribute styling contract. Ships zero CSS.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/real-case/nerey.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/real-case/nerey/tree/main/packages/core#readme",
+  "bugs": {
+    "url": "https://github.com/real-case/nerey/issues"
+  },
+  "author": "Yurii Anichkin",
   "type": "module",
   "sideEffects": false,
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "CHANGELOG.md"
   ],
   "exports": {
     ".": {
