@@ -18,8 +18,10 @@
 //
 // Rules:
 //
-//   signature-changed  a symbol's rendering differs from the baseline. FAILS. MAJOR under
-//                      ADR 0038, MINOR while the package is 0.x.
+//   signature-changed  a symbol's rendering differs from the baseline. FAILS — but NOT as a
+//                      verdict of "breaking". An added optional field is additive; a narrowed
+//                      parameter is not, and both render as one changed line. Classifying them is
+//                      a judgement the gate cannot make, so it prints both shapes and stops.
 //   signature-added    a symbol the baseline does not carry. Reported, does not fail — a new
 //                      export is a MINOR bump.
 //   signature-removed  a symbol the baseline carries and the barrel no longer exports. Reported,
@@ -428,11 +430,13 @@ for (const note of problems.filter((p) => !FATAL.has(p.rule))) {
 }
 
 if (blocking.length) {
-  console.error(`\n✗ API signatures: ${blocking.length} breaking change(s) against ${relOf(BASELINE)}\n`);
+  console.error(`\n✗ API signatures: ${blocking.length} shape change(s) against ${relOf(BASELINE)}\n`);
   for (const problem of blocking) console.error(`  [${problem.rule}] ${problem.message}`);
   console.error(
-    `\n  A break is allowed — it is not allowed to be quiet. Declare it with a \`!\` commit ` +
-      `(ADR 0036), then re-run with \`--update-baseline\` and commit the snapshot (ADR 0038).`,
+    `\n  Classify each one before re-blessing: an added optional field is additive (MINOR, PATCH ` +
+      `on 0.x), a removed member or a narrowed parameter is breaking. A break is allowed — it is ` +
+      `not allowed to be quiet, so declare it with a \`!\` commit (ADR 0036). Then re-run with ` +
+      `\`--update-baseline\` and commit the snapshot in the same commit as the bump (ADR 0038).`,
   );
   process.exit(1);
 }
