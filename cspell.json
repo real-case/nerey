@@ -1,0 +1,22 @@
+{
+  "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
+  "version": "0.2",
+  "language": "en,en-GB",
+  "dictionaryDefinitions": [
+    {
+      "name": "nerey",
+      "path": "./project-words.txt",
+      "description": "Proper nouns and coined terms this repository uses on purpose (ADR 0001).",
+      "addWords": false
+    }
+  ],
+  "dictionaries": ["nerey"],
+  "ignorePaths": [
+    "node_modules/**",
+    "packages/*/dist/**",
+    "storybook-static/**",
+    "coverage/**",
+    ".vitest-attachments/**",
+    "package-lock.json"
+  ]
+}

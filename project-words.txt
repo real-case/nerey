@@ -1,0 +1,97 @@
+# Words this repository uses on purpose, for `npm run check:spelling` (ADR 0001).
+#
+# Everything here is a deliberate addition, not a way to silence a report. British and American
+# spellings are both accepted by `cspell.json` — the prose is British, the technical vocabulary is
+# American — so a word only belongs here when no dictionary would have it.
+
+# ── Proper nouns ────────────────────────────────────────────────────────────────────────
+Nerey
+Anichkin
+Yurii
+
+# ── Tools, libraries and specifications named in the records ────────────────────────────
+arktype
+depcruise
+eventsource
+formatjs
+modelcontextprotocol
+ofetch
+Rspack
+visx
+CRDT
+WCAG
+oklch
+
+# ── Font families named in the token layer ──────────────────────────────────────────────
+Consolas
+Neue
+Segoe
+
+# ── Vocabulary this repository coined and uses consistently ─────────────────────────────
+#
+# Mostly `-able` and `-ing` forms built from words the dictionary does have. They are kept because
+# the records use them repeatedly and precisely; a reader meets each one many times.
+assertable
+baselined
+bypassable
+changelogged
+defeatable
+diffable
+effectful
+extensionless
+generatable
+greppable
+inspectable
+lintable
+loggable
+memoising
+parameterisable
+parameterisation
+parameterises
+persistable
+portalling
+profilable
+rebrandable
+refactorable
+renderable
+replayable
+retheming
+scopable
+subclassing
+subpaths
+tokenizable
+unadoptable
+uncompilable
+unhashed
+unlayered
+unreportable
+unreviewable
+versionable
+workstream
+Frontmatter
+
+# ── Both spellings of one word, frozen ──────────────────────────────────────────────────
+#
+# `stylable` and `styleable` both appear, in ADRs 0008, 0018 and 0024. Accepted records are never
+# edited in place (ADR 0001), so the inconsistency cannot be resolved — only accepted. A new record
+# should prefer `stylable`.
+stylable
+styleable
+
+# ── Not a word ──────────────────────────────────────────────────────────────────────────
+#
+# `regi` is a deliberately truncated string in ADR 0019's example of a PARTIAL streaming payload:
+# `{ question: "Which regi" }`, cut mid-word to show what a widget must render before validation
+# runs. It is here rather than fixed because 0019 is accepted and immutable, and rather than
+# ignored file-wide because that would hide real typos in the same record.
+regi
+
+# ── Russian, from ADR 0041's label-override examples ────────────────────────────────────
+#
+# No Russian dictionary ships with cspell and one is not worth a dependency for five words. If a
+# later record needs more, add `@cspell/dict-ru_ru` instead of extending this block.
+Закрыть
+Ответ
+Подробнее
+вариант
+отправлен

@@ -146,7 +146,6 @@ const GATES = [
 /** `check:*` scripts deliberately outside `check:all`, each with the reason it is exempt. */
 const CHECK_ALL_EXEMPT = new Map([
   ['check:exports', 'needs a build first — CI runs it after `npm run build`'],
-  ['check:spelling', 'cspell has no project dictionary yet, so it is not a merge gate'],
 ]);
 
 /**

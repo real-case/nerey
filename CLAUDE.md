@@ -76,6 +76,9 @@ When a change needs a decision no ADR covers: record the ADR first, then impleme
   and the Playwright container tag agrees with `devDependencies.playwright` (0042, 0043). Dependabot
   does not update `container:` images, so that second rule is what stops a routine `playwright`
   bump silently breaking the visual references.
+- `npm run check:spelling` — `cspell` over every `*.md`, in `check:all` since 2026-08-26 (0001).
+  Both English variants are accepted; `project-words.txt` holds the proper nouns and coined terms,
+  and a word belongs there only when no dictionary would have it.
 - `npm run check:all` — every gate. `npm run check:gates` — the meta-harness that proves each
   gate still rejects its own violator.
 - `npm run check:api-signatures` — diffs every exported symbol's rendered signature against
