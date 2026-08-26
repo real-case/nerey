@@ -6,6 +6,9 @@
 
 [`@nerey/core`](packages/core) · [`@nerey/theme`](packages/theme) · [`@nerey/eslint-config`](packages/eslint-config)
 
+[**Browse the workbench →**](https://real-case.github.io/nerey/) — 352 stories across 45
+components and widgets, every one of them interactive.
+
 </div>
 
 ---
