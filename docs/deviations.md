@@ -130,10 +130,15 @@ Recorded here because each looks like one at a glance:
 - **The bootstrap corpus was accepted in bulk** on 2026-08-09, before any package contained code.
   ADR 0001 records this, along with its consequence: the `proposed → accepted` transition first
   runs for real on 0038.
-- **`check:exports` and `check:spelling` are outside `check:all`.** `check:exports` needs a built
-  `dist` and a packed tarball; `cspell` has no project dictionary yet and reports several hundred
-  unknown words, which makes it a nuisance rather than a gate. Both are recorded in
-  `CHECK_ALL_EXEMPT` inside `check-gates.mjs` with those reasons, so the harness does not warn.
+- **`check:exports` is outside `check:all`.** It needs a built `dist` and a packed tarball, so CI
+  runs it after `npm run build`. Recorded in `CHECK_ALL_EXEMPT` inside `check-gates.mjs` with that
+  reason, so the harness does not warn.
+- **`check:spelling` used to be exempt too**, because `cspell` had no project dictionary and
+  reported 812 unknown words across 57 files — a nuisance rather than a gate, while ADR 0001's
+  `Confirmation` named it as one. A `cspell.json` accepting both English variants and a reviewed
+  `project-words.txt` brought that to zero on 2026-08-26, so the exemption is gone and `check:all`
+  runs it. Kept here because an accepted record naming a gate that did not run was real for the
+  whole build, and is the same shape as ADR 0032's `check:a11y` above.
 - **ADR 0032's `check:a11y` gate now exists.** It was named in the record's `Confirmation`
   before it was written, which briefly made the record aspirational. `scripts/check-a11y-waivers.mjs`
   and the `check:a11y` script landed on 2026-08-10 and are registered in the ADR 0033 harness, so
