@@ -101,6 +101,17 @@ have broken it, which is the only moment the failure is cheap.
 - Bad, because the container image is still updated by hand. Dependabot does not touch
   `container:`, so a Playwright bump means editing the tag in two files, and the gate is what makes
   that a failure rather than a surprise.
+- Bad, because adopting Dependabot required narrowing one rule of ADR 0036. Dependabot's subject is
+  the fixed string `Bump X from A to B` — capital included, with no setting to change it — and the
+  `subject-style` rule rejects a capitalised description. Every one of its pull requests arrived
+  red the moment this landed, on something nobody could fix.
+
+  The capital check is therefore skipped for the `deps` scope, and only there. The rule exists so
+  generated changelog entries read consistently, and `deps` commits are `build` or `ci`, neither of
+  which produces a changelog section at all — so the reason for the rule does not apply to the
+  commits being exempted. A `deps` subject must still name a real type and still may not end in a
+  period. The alternative was leaving every dependency bump red, which teaches everyone that a red
+  `quality` is normal, and that is how a gate stops being read.
 
 ### Confirmation
 
