@@ -14,7 +14,9 @@
 //                     root package.json, plus storybook|docs|repo|deps|adr. Computing it is the
 //                     point: a hand-listed scope enum is the part of this convention that rots
 //                     first, because adding a package does not touch it.
-//   subject-style     description empty, ending in a period, or starting with a capital.
+//   subject-style     description empty, ending in a period, or starting with a capital — the
+//                     capital check exempts `deps`, whose commits are machine-written and never
+//                     reach a changelog. See the rule for the argument.
 //   breaking-marker   a `BREAKING CHANGE:` footer with no `!` in the header. The two must agree,
 //                     or the release gate and a human reading `git log --oneline` disagree about
 //                     whether the change is breaking.
@@ -210,7 +212,18 @@ function checkCommit(commit, { scopes, adrNumbers }) {
           `\`${description}\` ends in a period — subjects are a summary line, not a sentence.`,
         );
       }
-      if (/^[A-Z]/.test(description)) {
+      // The lowercase rule serves generated changelog entries, and `deps`-scoped commits never
+      // reach one: they are `build` or `ci`, and neither type produces a changelog section
+      // (ADR 0036, `gen-release`). They are also not written by a person — Dependabot's subject is
+      // the fixed string `Bump X from A to B`, capital included, with no setting to change it.
+      //
+      // So the choice was: exempt them, or have every Dependabot pull request arrive red and teach
+      // everyone that a red `quality` on a dependency bump is normal. A rule that fires on
+      // something nobody can fix is a rule that trains people to ignore the gate (ADR 0043).
+      //
+      // Narrow on purpose: `deps` only, the capital only. A `deps` commit still has to name a real
+      // type, and it still may not end in a period.
+      if (scope !== 'deps' && /^[A-Z]/.test(description)) {
         add(
           1,
           'subject-style',
@@ -393,6 +406,10 @@ if (process.argv.includes('--self-test')) {
     ['subject-style', 'feat(core): '],
     ['subject-style', 'feat(core): add the registry.'],
     ['subject-style', 'feat(core): Add the registry'],
+    // The exemption below is scope-narrow: a capital is still a violation everywhere else,
+    // including in the very types Dependabot uses.
+    ['subject-style', 'ci(repo): Bump the runner image'],
+    ['subject-style', 'ci(deps): Bump actions/checkout from 4.4.0 to 7.0.1.'],
     [
       'breaking-marker',
       'feat(theme): rename the surface token\n\nBREAKING CHANGE: --nerey-surface is now --nerey-surface-raised',
@@ -413,6 +430,11 @@ if (process.argv.includes('--self-test')) {
     ['no scope', 'fix: guard against a missing host value'],
     ['hyphenated derived scope', 'chore(eslint-config): widen the peer range'],
     ['fixed scope', 'chore(deps): bump vite to 8.2.1'],
+    // Dependabot's subject verbatim. It writes `Bump X from A to B` with no way to change
+    // the case, and `deps` commits never reach a changelog, so the capital is exempt there
+    // and only there (ADR 0043).
+    ['a Dependabot subject', 'ci(deps): Bump actions/checkout from 4.4.0 to 7.0.1'],
+    ['a grouped Dependabot subject', 'build(deps): Bump the routine group with 15 updates'],
     [
       'breaking with marker',
       'feat(theme)!: rename the surface token\n\nBREAKING CHANGE: --nerey-surface is now --nerey-surface-raised',
