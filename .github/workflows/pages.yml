@@ -1,0 +1,72 @@
+name: Workbench
+
+# ADR 0044 — the workbench is the documentation for a library of components, and it existed only on
+# a developer's machine. This publishes it, and — the half that matters more — it is the first thing
+# in this repository ever to run `build-storybook` outside somebody's terminal.
+#
+# The story suite runs against Vite's DEV server (ADR 0031). A static build is a different pipeline:
+# it bundles, hashes assets and inlines the story index, and it can break without any existing check
+# noticing. `docs/verification.md` has recorded that gap since the initial build.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Nothing at the workflow level. `id-token: write` is granted to the deploy job alone, so the build
+# job — the one that executes story code from a pull request — cannot mint a token for anything
+# (ADR 0043).
+permissions: {}
+
+# Not cancel-in-progress: a half-finished Pages deployment is not a state worth racing another one
+# into, and the build is cheap enough that finishing it costs less than reasoning about the result.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  NODE_OPTIONS: --no-warnings=ExperimentalWarning
+
+jobs:
+  # The gate. Runs everywhere, publishes nothing, and blocks a merge when the static build breaks.
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: build-storybook
+        run: npm run build-storybook
+
+      # Uploaded unconditionally, deployed conditionally. The artifact has to come from the same run
+      # as the deploy, so it is produced on pull requests too and simply goes unused there.
+      - name: upload
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: storybook-static
+
+  # Only from `main`, and only on a build that actually happened. A pull request cannot publish.
+  deploy:
+    name: deploy
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: deploy to Pages
+        id: deployment
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0

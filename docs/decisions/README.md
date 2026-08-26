@@ -47,3 +47,4 @@ Architecture Decision Records for this project, in [MADR](https://adr.github.io/
 | [0041](0041-chrome-strings-through-a-labels-context.md) | 0041. Chrome strings resolve through a labels context in @nerey/theme | proposed | 2026-08-25 |
 | [0042](0042-visual-regression-against-pinned-references.md) | 0042. Visual regression against committed, container-pinned reference images | proposed | 2026-08-25 |
 | [0043](0043-pinned-ci-supply-chain.md) | 0043. The CI supply chain is pinned by digest and updated by Dependabot | proposed | 2026-08-25 |
+| [0044](0044-publish-the-workbench-to-github-pages.md) | 0044. Publish the workbench to GitHub Pages, and build it on every pull request | proposed | 2026-08-25 |
