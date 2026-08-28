@@ -39,6 +39,9 @@ const DISPATCH = [
   { match: 'packages/**/*.tsx', gate: 'scripts/check-data-contract.mjs' },
   { match: 'packages/core/src/data-attrs.ts', gate: 'scripts/check-data-contract.mjs' },
 
+  { match: 'packages/theme/src/widgets/**/component.tsx', gate: 'scripts/check-widget-labels.mjs' },
+  { match: 'packages/theme/src/labels/**', gate: 'scripts/check-widget-labels.mjs' },
+
   { match: 'packages/**/*.stories.tsx', gate: 'scripts/check-stories.mjs' },
   { match: 'packages/**/*.stories.tsx', gate: 'scripts/check-a11y-waivers.mjs' },
 

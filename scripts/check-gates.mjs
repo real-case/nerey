@@ -91,6 +91,7 @@ const GATES = [
   { script: 'scripts/check-data-contract.mjs', hook: 'dispatch' },
   { script: 'scripts/check-public-api.mjs', hook: 'dispatch' },
   { script: 'scripts/check-stories.mjs', hook: 'dispatch' },
+  { script: 'scripts/check-widget-labels.mjs', hook: 'dispatch' },
   {
     script: 'scripts/check-a11y-waivers.mjs',
     hook: 'dispatch',

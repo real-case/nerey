@@ -113,9 +113,12 @@ aspirational, and it is a prop rather than a context, so core still has no local
   override.
 - Neutral, because a consumer wanting more than one language mounts the provider with the strings
   their own i18n layer resolved. Nerey does not know what a locale is, which is the point.
-- Bad, because nothing prevents a future widget from importing a constant directly and bypassing
-  the context. Catching that needs a source-scanning gate, which is not written; the tests pin the
-  eleven that exist today and a twelfth could regress silently.
+- Neutral, because a future widget could still import a constant directly and bypass the context.
+  That was recorded here as an open gap and is now closed by `npm run check:widget-labels`, which
+  derives the chrome vocabulary from the imports `labels.tsx` itself makes — so adding a string to
+  the record extends the ban with no edit to the gate. What it does not judge is a string literal
+  written inline in a component; catching that means judging every quoted string in JSX, and the
+  false-positive rate over class names and test ids would make the gate unreadable.
 - Bad, because the record is one flat typed object, so adding a widget with chrome strings is now a
   change to a public type — a MINOR release rather than a private detail.
 
@@ -134,6 +137,13 @@ Colocated tests in `packages/theme/src/labels/labels.test.tsx`:
   string must appear in the DOM while the default must not.
 - **Interpolation is typed.** Both functions are called with their context and asserted; a
   `@ts-expect-error` pins that they cannot be called with the wrong shape.
+
+`npm run check:widget-labels` (`scripts/check-widget-labels.mjs`) is the fitness function for the
+rule itself, rather than for the eleven widgets that happen to exist. It fails when a widget
+component imports a chrome constant from its schema module, and it derives which constants those
+are from what `labels.tsx` imports — so the vocabulary cannot drift from the record it describes. A
+second rule, `empty-vocabulary`, fails when nothing was derived at all: a gate whose vocabulary
+silently emptied would pass every component by having nothing to object to.
 
 The existing 352-story browser suite (ADR 0031 / 0032) continues to run against the defaults, so
 the rewiring is covered end to end by the a11y gate as well: a widget that lost a string entirely
