@@ -118,6 +118,11 @@ const GATES = [
     why: 'reads the workflow directory and package.json rather than the edited file, so a PostToolUse hook has nothing to scope it to (ADR 0043)',
   },
   {
+    script: 'scripts/check-eslint-rules.mjs',
+    hook: 'ci-only',
+    why: 'imports the shipped config and diffs a committed baseline; it is scoped to one package rather than to the edited file, and a rule surface changes far less often than an edit hook fires (ADR 0045)',
+  },
+  {
     script: 'scripts/check-commits.mjs',
     hook: 'ci-only',
     why: 'reads git history, not the edited file, so a PostToolUse hook has nothing to scope it to',

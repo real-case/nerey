@@ -40,11 +40,12 @@
     "check:citations": "node scripts/check-adr-citations.mjs",
     "check:ci-pins": "node scripts/check-ci-pins.mjs",
     "check:widget-labels": "node scripts/check-widget-labels.mjs",
+    "check:eslint-rules": "node scripts/check-eslint-rules.mjs",
     "check:commits": "node scripts/check-commits.mjs",
     "check:gates": "node scripts/check-gates.mjs",
     "check:boundaries": "depcruise packages",
     "check:spelling": "cspell --no-progress \"**/*.md\"",
-    "check:all": "npm run check:tokens && npm run check:core-purity && npm run check:data-contract && npm run check:public-api && npm run check:api-signatures && npm run check:stories && npm run check:a11y && npm run check:citations && npm run check:commits && npm run check:boundaries && npm run check:ci-pins && npm run check:widget-labels && npm run check:spelling && npm run check:gates",
+    "check:all": "npm run check:tokens && npm run check:core-purity && npm run check:data-contract && npm run check:public-api && npm run check:api-signatures && npm run check:stories && npm run check:a11y && npm run check:citations && npm run check:commits && npm run check:boundaries && npm run check:ci-pins && npm run check:widget-labels && npm run check:eslint-rules && npm run check:spelling && npm run check:gates",
     "adr": "python3 .claude/skills/adr/scripts/adr.py",
     "typecheck:build": "tsc -p packages/core/tsconfig.build.json && tsc -p packages/theme/tsconfig.build.json",
     "check:a11y": "node scripts/check-a11y-waivers.mjs"
