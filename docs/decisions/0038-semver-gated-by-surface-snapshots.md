@@ -147,9 +147,10 @@ MINOR on `0.x` and MINOR and PATCH classes both bump PATCH. `1.0.0` is cut when 
 
 **What this record deliberately does not claim**, because ADR 0029 claimed it and it was not true:
 
-- There is **no snapshot of `@nerey/eslint-config`'s rule ids and messages**. Its surface is
-  covered by its own tests only. A snapshot is worth having and is not written yet; it needs its
-  own record rather than an aspirational line in this one.
+- There was **no snapshot of `@nerey/eslint-config`'s rule ids and messages** when this record was
+  written; its surface was covered by its own tests only. That gap is closed by ADR 0045, which
+  gives it the separate record this line asked for — and found, on its first run, that the surface
+  it snapshots has two failure directions rather than one.
 - There is **no cross-check between a failing snapshot and a `!` commit marker**. `check:commits`
   validates the marker (ADR 0036) and these gates validate the surface, but nothing joins them
   into the two-signal design 0029 described. Joining them is a release-runbook concern and there
