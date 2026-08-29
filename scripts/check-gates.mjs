@@ -118,6 +118,11 @@ const GATES = [
     why: 'reads the workflow directory and package.json rather than the edited file, so a PostToolUse hook has nothing to scope it to (ADR 0043)',
   },
   {
+    script: 'scripts/check-published-site.mjs',
+    hook: 'ci-only',
+    why: 'fetches a deployed site, so it is the one gate here that is neither hermetic nor offline-runnable; it runs in the deploy job after publishing (ADR 0044)',
+  },
+  {
     script: 'scripts/check-eslint-rules.mjs',
     hook: 'ci-only',
     why: 'imports the shipped config and diffs a committed baseline; it is scoped to one package rather than to the edited file, and a rule surface changes far less often than an edit hook fires (ADR 0045)',
@@ -152,6 +157,10 @@ const GATES = [
 /** `check:*` scripts deliberately outside `check:all`, each with the reason it is exempt. */
 const CHECK_ALL_EXEMPT = new Map([
   ['check:exports', 'needs a build first — CI runs it after `npm run build`'],
+  [
+    'check:published-site',
+    'needs a deployed site and the network — it runs in the deploy job, after publishing',
+  ],
 ]);
 
 /**

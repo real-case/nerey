@@ -34,6 +34,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    # Passed to the smoke check below. Comparing the published index against THIS run's count is
+    # what distinguishes a healthy deployment from a stale one; a floor would pass both (ADR 0044).
+    outputs:
+      stories: ${{ steps.count.outputs.stories }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
@@ -46,6 +50,17 @@ jobs:
 
       - name: build-storybook
         run: npm run build-storybook
+
+      - name: count the stories built
+        id: count
+        run: |
+          stories=$(node -e "
+            const index = require('./storybook-static/index.json');
+            const entries = Object.values(index.entries ?? {});
+            console.log(entries.filter((entry) => entry.type === 'story').length);
+          ")
+          echo "stories=$stories" >> "$GITHUB_OUTPUT"
+          echo "built $stories stories"
 
       # Uploaded unconditionally, deployed conditionally. The artifact has to come from the same run
       # as the deploy, so it is produced on pull requests too and simply goes unused there.
@@ -67,6 +82,22 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
       - name: deploy to Pages
         id: deployment
         uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
+
+      # ADR 0044 recorded that nothing checked whether the published site WORKS — the build
+      # succeeding proves the artifact was produced, not that its story index loads. This is the
+      # only check here that depends on the network, which is why it lives after the publish rather
+      # than in `check:all`: it can only be true of a site that exists.
+      #
+      # It runs AFTER the deploy on purpose. A failure here means "published, and not serving what
+      # we published", which is a true and useful thing to be told; blocking the publish on it
+      # would mean never publishing the fix.
+      - name: smoke the published site
+        run: >
+          node scripts/check-published-site.mjs
+          --url ${{ steps.deployment.outputs.page_url }}
+          --expect-stories ${{ needs.build.outputs.stories }}

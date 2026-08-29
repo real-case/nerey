@@ -76,6 +76,9 @@ When a change needs a decision no ADR covers: record the ADR first, then impleme
   and the Playwright container tag agrees with `devDependencies.playwright` (0042, 0043). Dependabot
   does not update `container:` images, so that second rule is what stops a routine `playwright`
   bump silently breaking the visual references.
+- `npm run check:published-site -- --url <site> --expect-stories <n>` — the deployed workbench
+  serves the workbench and an index carrying the stories that run built (0044). The only check
+  here that needs the network; it runs in the deploy job, never in `check:all`.
 - `npm run check:eslint-rules` — the resolved `@nerey/eslint-config` surface against
   `docs/design-system/eslint-rules.json` (0045). **Both** directions fail: a ban that appears
   breaks a consumer's lint, and a ban that disappears breaks nothing while the invariant stops
