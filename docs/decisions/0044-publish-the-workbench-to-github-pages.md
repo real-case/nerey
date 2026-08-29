@@ -92,11 +92,25 @@ assert beyond the command succeeding — a static build either produces a site o
 commit SHA with a version comment, which matters more here than elsewhere because the deploy job
 holds `id-token: write`.
 
-What is **not** confirmed, and is worth naming rather than implying: nothing checks that the
-published site *works*. The build succeeding proves it was produced, not that its story index loads
-or its assets resolve. A smoke pass over the built site — the second half of the limitation
-`docs/verification.md` records — would need a test runner pointed at the artifact, and is not
-written.
+`npm run check:published-site` closes what this record originally left open. It fetches the
+deployed site after the publish and asserts the root serves the workbench and that `index.json`
+carries **the number of stories this run built** — the count travels from the build job to the
+deploy job as an output. An exact comparison rather than a floor, because a floor passes the
+failure most likely to go unnoticed: Pages serving a previous version.
+
+It is the one check in this repository that depends on the network and on an external system, so it
+is neither hermetic nor deterministic in the sense ADR 0033 means. That is why it lives in the
+deploy job rather than in `check:all`, and why it is recorded in `CHECK_ALL_EXEMPT` with that
+reason. Its parsing and its verdict are pure and self-tested; only the fetch is not, and it retries
+six times over a minute because Pages propagation lags a little behind `deploy-pages` returning.
+
+It runs **after** the deploy deliberately. A failure means "published, and not serving what we
+published", which is a true and useful thing to be told; blocking the publish on it would mean
+never publishing the fix.
+
+What is still not confirmed: that the site *looks* right, or that any asset beyond the index
+resolves. The visual gate (ADR 0042) covers appearance against the dev build, and nothing covers
+the static bundle's assets.
 
 ## Pros and Cons of the Options
 

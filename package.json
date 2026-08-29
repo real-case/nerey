@@ -41,6 +41,7 @@
     "check:ci-pins": "node scripts/check-ci-pins.mjs",
     "check:widget-labels": "node scripts/check-widget-labels.mjs",
     "check:eslint-rules": "node scripts/check-eslint-rules.mjs",
+    "check:published-site": "node scripts/check-published-site.mjs",
     "check:commits": "node scripts/check-commits.mjs",
     "check:gates": "node scripts/check-gates.mjs",
     "check:boundaries": "depcruise packages",
