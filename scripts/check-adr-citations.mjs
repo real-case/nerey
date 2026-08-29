@@ -81,12 +81,17 @@ function toRel(abs) {
  * made by records that have since been superseded, and rewriting history to satisfy a linter is
  * the wrong repair.
  */
-function isScanned(rel) {
+export function isScanned(rel) {
   if (rel.endsWith('.md')) return !basename(rel).startsWith('CHANGELOG');
   if (/^packages\/[^/]+\/src\/.+\.tsx?$/.test(rel)) return true;
   if (/^packages\/[^/]+\/[^/]+\.config\.(ts|mjs)$/.test(rel)) return true;
   if (/^scripts\/.+\.mjs$/.test(rel)) return true;
   if (/^\.storybook\/.+\.tsx?$/.test(rel)) return true;
+  // CI configuration carries eighteen citations across four files — trusted publishing
+  // (ADR 0039), the pinning rules (ADR 0043), the visual container (ADR 0042) and the workbench
+  // deploy (ADR 0044). None of it was scanned until this line existed, so a dangling citation
+  // there resolved to nothing and a record cited only from a workflow read as an orphan.
+  if (/^\.github\/.+\.ya?ml$/.test(rel)) return true;
   if (/^[^/]+\.config\.(ts|mjs)$/.test(rel)) return true;
   return false;
 }
@@ -99,7 +104,8 @@ function isScanned(rel) {
  * particular — linting it would fail the build on third-party text this repository has no
  * business rewriting.
  *
- * `.storybook/` is scanned, but as an explicit root below rather than through the sweep, so
+ * `.storybook/` and `.github/` are scanned, but as explicit roots below rather than through the
+ * sweep, so
  * opting a dot-directory in stays a deliberate act.
  */
 function walk(dir, out = []) {
@@ -119,7 +125,11 @@ function walk(dir, out = []) {
 }
 
 function collect() {
-  return [...walk(repoRoot), ...walk(resolve(repoRoot, '.storybook'))].sort();
+  return [
+    ...walk(repoRoot),
+    ...walk(resolve(repoRoot, '.storybook')),
+    ...walk(resolve(repoRoot, '.github')),
+  ].sort();
 }
 
 function lineOf(text, index) {
@@ -468,6 +478,31 @@ if (process.argv.includes('--self-test')) {
 
   for (const [label, predicate] of CORPUS_CASES) outcomes.push([label, predicate()]);
   for (const [label, predicate] of CORPUS_ALLOWED) outcomes.push([`allows ${label}`, predicate()]);
+
+  /**
+   * The scan set, which was untested until it turned out to be wrong.
+   *
+   * `.github/**` carried eighteen citations that nothing resolved, and a record cited only from a
+   * workflow read as an orphan. A shrinking scan set is the quietest way for this gate to stop
+   * working: it keeps reporting a healthy number while looking at less and less, and the number
+   * going UP is the only visible symptom of it having been too low.
+   */
+  const SCANNED = [
+    ['scans a workflow', '.github/workflows/ci.yml'],
+    ['scans a yaml config in .github', '.github/dependabot.yml'],
+    ['scans a record', 'docs/decisions/0001-thing.md'],
+    ['scans package source', 'packages/core/src/registry.ts'],
+    ['scans a gate', 'scripts/check-adr-citations.mjs'],
+    ['scans the workbench config', '.storybook/main.tsx'],
+  ];
+  const NOT_SCANNED = [
+    ['a changelog', 'packages/core/CHANGELOG.md'],
+    ['a lockfile', 'package-lock.json'],
+    ['a reference image', 'packages/theme/src/visual/__screenshots__/x.png'],
+    ['a workflow-shaped path outside .github', 'docs/workflows/ci.yml'],
+  ];
+  for (const [label, rel] of SCANNED) outcomes.push([`${label} — ${rel}`, isScanned(rel)]);
+  for (const [label, rel] of NOT_SCANNED) outcomes.push([`allows skipping ${label}`, !isScanned(rel)]);
 
   let failures = 0;
   for (const [label, ok, detail] of outcomes) {
