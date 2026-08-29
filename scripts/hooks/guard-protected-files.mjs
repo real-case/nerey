@@ -133,13 +133,15 @@ if (/(^|\/)__screenshots__\//.test(relPosix)) {
   );
 }
 
-const BASELINES = /^docs\/design-system\/(public-api|api-signatures|data-contract)\.json$/;
+const BASELINES = /^docs\/design-system\/(public-api|api-signatures|data-contract|eslint-rules)\.json$/;
 if (BASELINES.test(relPosix)) {
   const gate = relPosix.includes('data-contract')
     ? 'npm run check:data-contract -- --update-baseline'
     : relPosix.includes('api-signatures')
       ? 'npm run check:api-signatures -- --update-baseline'
-      : 'npm run check:public-api -- --update-baseline';
+      : relPosix.includes('eslint-rules')
+        ? 'npm run check:eslint-rules -- --update-baseline'
+        : 'npm run check:public-api -- --update-baseline';
   block(
     `${relPosix} is a CONTRACT BASELINE, not a file to edit. It records a public surface whose ` +
       `change has semver consequences (ADR 0020 / 0028 / 0029 / 0038). Re-bless it with ` +

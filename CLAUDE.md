@@ -76,6 +76,10 @@ When a change needs a decision no ADR covers: record the ADR first, then impleme
   and the Playwright container tag agrees with `devDependencies.playwright` (0042, 0043). Dependabot
   does not update `container:` images, so that second rule is what stops a routine `playwright`
   bump silently breaking the visual references.
+- `npm run check:eslint-rules` — the resolved `@nerey/eslint-config` surface against
+  `docs/design-system/eslint-rules.json` (0045). **Both** directions fail: a ban that appears
+  breaks a consumer's lint, and a ban that disappears breaks nothing while the invariant stops
+  being enforced.
 - `npm run check:widget-labels` — no widget component imports a chrome constant from its schema
   instead of reading it through `useNereyLabels()` (0041). The vocabulary is derived from what
   `labels.tsx` imports, so adding a string to the record extends the ban on its own.
@@ -201,7 +205,7 @@ list, so it cannot drift. A `Refs: ADR NNNN` footer is checked.
   `docs/design-system/tokens.agent-rules.md`, `*.module.css.d.ts`, `docs/decisions/README.md`.
   A `PreToolUse` hook blocks it.
 - Contract baselines (`docs/design-system/data-contract.json`, `public-api.json`,
-  `api-signatures.json`) are updated **deliberately, in the same commit as the version bump** —
+  `api-signatures.json`, `eslint-rules.json`) are updated **deliberately, in the same commit as the version bump** —
   never to make a check pass (0029, 0038). Each has an `--update-baseline` flag that prints what
   it blessed; a `PreToolUse` hook blocks editing them by hand.
 - CSF 2 (`Template.bind({})`, `storiesOf`) fails lint. MDX never defines stories (0031).
