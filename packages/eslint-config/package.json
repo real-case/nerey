@@ -1,7 +1,7 @@
 {
   "name": "@nerey/eslint-config",
   "version": "0.1.0",
-  "description": "The widget boundary as a lint rule — widgets perform no I/O, core imports no CSS, features never reach past a package's public entry point.",
+  "description": "The widget boundary as a lint rule \u2014 widgets perform no I/O, core imports no CSS, features never reach past a package's public entry point.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -25,7 +25,7 @@
   },
   "main": "./index.js",
   "peerDependencies": {
-    "eslint": "^9.0.0"
+    "eslint": "^9.0.0 || ^10.0.0"
   },
   "keywords": [
     "eslint-config",
