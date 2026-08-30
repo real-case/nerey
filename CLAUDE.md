@@ -73,9 +73,10 @@ When a change needs a decision no ADR covers: record the ADR first, then impleme
   same rasteriser CI compares against. Never edit or delete a reference by hand; a `PreToolUse`
   hook blocks it.
 - `npm run check:ci-pins` — every `uses:` in a workflow is a commit SHA with a `# vX.Y.Z` comment,
-  and the Playwright container tag agrees with `devDependencies.playwright` (0042, 0043). Dependabot
-  does not update `container:` images, so that second rule is what stops a routine `playwright`
-  bump silently breaking the visual references.
+  one action is at **one** version across all workflows, and the Playwright container tag agrees with
+  `devDependencies.playwright` (0042, 0043). Dependabot does not update `container:` images, so that
+  last rule is what stops a routine `playwright` bump silently breaking the visual references — and
+  the cross-file rule is what stops a rebased Dependabot bump leaving the usages it never saw behind.
 - `npm run check:published-site -- --url <site> --expect-stories <n>` — the deployed workbench
   serves the workbench and an index carrying the stories that run built (0044). The only check
   here that needs the network; it runs in the deploy job, never in `check:all`.

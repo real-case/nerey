@@ -21,6 +21,10 @@
 //   unpinned-action     a `uses:` naming a tag or branch instead of a 40-character commit SHA.
 //   undocumented-pin    a SHA with no `# vX.Y.Z` comment. A pin nobody can read is a pin nobody
 //                       reviews, and Dependabot uses the comment to know what it is upgrading from.
+//   action-inconsistent one action pinned to two different digests across the workflow set — or to
+//                       one digest under two different version comments. Every such line is legal
+//                       on its own, which is the whole point: this is the shape a rebased
+//                       Dependabot bump leaves behind when `main` grew a job under it.
 //   image-drift         the Playwright image tag disagrees with `devDependencies.playwright`.
 //   image-inconsistent  the two places that name the image disagree with each other.
 //
@@ -91,6 +95,76 @@ export function checkWorkflow(source, rel) {
     }
 
     void full;
+  }
+
+  return problems;
+}
+
+/**
+ * ADR 0043 — the pins must agree with EACH OTHER, not merely be well-formed one line at a time.
+ *
+ * Every rule above judges a single `uses:` in isolation, so a workflow set can be entirely legal
+ * and still run two different versions of the same action. That is not hypothetical: it is what a
+ * Dependabot pull request turns into the moment it is rebased onto a `main` that grew a job. The
+ * bump was computed against the usages that existed when the branch was cut, the usages added since
+ * keep the old digest, and every one of them is a documented digest pin — so nothing fires, and CI
+ * quietly runs `actions/checkout` v4 in one job and v7 in the next.
+ *
+ * This is the action-level twin of `image-inconsistent`, and it exists for the same reason: when
+ * one name resolves to two things, at most one of them is the thing anybody reviewed.
+ *
+ * Two digests for one action is the common shape. One digest under two version comments is the
+ * rarer and nastier one — it means a comment is lying about what the SHA is, and the comment is
+ * what reviewers read and what Dependabot upgrades from.
+ *
+ * @param sources `{ rel: text }` for the workflow files only.
+ */
+export function checkActionVersions(sources) {
+  const problems = [];
+  /** @type {Map<string, Array<{ rel: string, line: number, ref: string, version: string }>>} */
+  const uses = new Map();
+
+  for (const [rel, text] of Object.entries(sources)) {
+    for (const match of text.matchAll(USES_RE)) {
+      const [, spec, comment] = match;
+      if (spec.startsWith('./')) continue;
+
+      const at = spec.lastIndexOf('@');
+      if (at === -1) continue;
+      const ref = spec.slice(at + 1);
+      // An unpinned or undocumented `uses:` is already reported by `checkWorkflow`; reporting it a
+      // second time here would just be noise on top of the finding that matters.
+      if (!SHA_RE.test(ref)) continue;
+
+      const name = spec.slice(0, at);
+      const version = VERSION_COMMENT_RE.exec(comment ?? '')?.[0] ?? '(undocumented)';
+      if (!uses.has(name)) uses.set(name, []);
+      uses.get(name)?.push({ rel, line: lineOf(text, match.index ?? 0), ref, version });
+    }
+  }
+
+  // Sorted: a gate whose report depends on Map insertion order is not a merge gate (ADR 0033).
+  for (const name of [...uses.keys()].sort()) {
+    const sites = uses.get(name) ?? [];
+    const refs = new Set(sites.map((site) => site.ref));
+    const versions = new Set(sites.map((site) => site.version));
+    if (refs.size === 1 && versions.size === 1) continue;
+
+    const where = sites
+      .map((site) => `${site.version} (${site.ref.slice(0, 7)}) at ${site.rel}:${site.line}`)
+      .join(', ');
+
+    problems.push({
+      rel: sites[0]?.rel ?? '',
+      line: sites[0]?.line ?? 0,
+      rule: 'action-inconsistent',
+      message:
+        `\`${name}\` is pinned ${refs.size > 1 ? `to ${String(refs.size)} different digests` : 'to one digest under conflicting version comments'} ` +
+        `across this workflow set — ${where}. Each of those lines passes on its own, which is ` +
+        `exactly why this is checked across files: an update that covered the usages present when ` +
+        `it was raised leaves the ones added since on the old pin, and nothing else here notices ` +
+        `(ADR 0043).`,
+    });
   }
 
   return problems;
@@ -170,6 +244,9 @@ function run() {
     problems.push(...checkWorkflow(text, rel));
   }
 
+  // Before package.json joins `sources`: this rule reads `uses:` lines, and a manifest has none.
+  problems.push(...checkActionVersions(sources));
+
   const manifestText = readFileSync(PACKAGE_JSON, 'utf8');
   sources['package.json'] = manifestText;
 
@@ -214,6 +291,68 @@ if (argv.includes('--self-test')) {
       const found = checkWorkflow(readFileSync(fixture, 'utf8'), 'fixture.yml');
       outcomes.push([`allows ${name}`, found.length === 0, found.map((p) => p.rule).join(', ')]);
     }
+
+    // The cross-file rule needs two files, so it gets two fixtures. Both are read from disk for
+    // the same reason as everything above: the blind probe must have a read to take away.
+    const other = join(dir, 'other.yml');
+    const A = 'a'.repeat(40);
+    const B = 'b'.repeat(40);
+
+    writeFileSync(fixture, `      - uses: actions/checkout@${A} # v4.4.0\n`, 'utf8');
+    writeFileSync(other, `      - uses: actions/checkout@${B} # v7.0.1\n`, 'utf8');
+    outcomes.push([
+      'action-inconsistent',
+      checkActionVersions({
+        'one.yml': readFileSync(fixture, 'utf8'),
+        'two.yml': readFileSync(other, 'utf8'),
+      }).some((problem) => problem.rule === 'action-inconsistent'),
+    ]);
+
+    // One digest, two stories about what it is. Rarer, and worse: the comment is what a reviewer
+    // reads and what Dependabot upgrades from.
+    writeFileSync(fixture, `      - uses: actions/checkout@${A} # v4.4.0\n`, 'utf8');
+    writeFileSync(other, `      - uses: actions/checkout@${A} # v7.0.1\n`, 'utf8');
+    outcomes.push([
+      'action-inconsistent (one digest, two version comments)',
+      checkActionVersions({
+        'one.yml': readFileSync(fixture, 'utf8'),
+        'two.yml': readFileSync(other, 'utf8'),
+      }).some((problem) => problem.rule === 'action-inconsistent'),
+    ]);
+
+    writeFileSync(fixture, `      - uses: actions/checkout@${A} # v4.4.0\n`, 'utf8');
+    writeFileSync(other, `      - uses: actions/checkout@${A} # v4.4.0\n`, 'utf8');
+    outcomes.push([
+      'allows one action at one pin in two files',
+      checkActionVersions({
+        'one.yml': readFileSync(fixture, 'utf8'),
+        'two.yml': readFileSync(other, 'utf8'),
+      }).length === 0,
+    ]);
+
+    // Different actions are unrelated: they are expected to sit at different versions, and a rule
+    // that could not tell them apart would fire on every workflow ever written.
+    writeFileSync(fixture, `      - uses: actions/checkout@${A} # v4.4.0\n`, 'utf8');
+    writeFileSync(other, `      - uses: actions/cache@${B} # v6.1.0\n`, 'utf8');
+    outcomes.push([
+      'allows two different actions at different pins',
+      checkActionVersions({
+        'one.yml': readFileSync(fixture, 'utf8'),
+        'two.yml': readFileSync(other, 'utf8'),
+      }).length === 0,
+    ]);
+
+    // An unpinned `uses:` is `unpinned-action`'s to report. Repeating it here would bury the
+    // finding that actually tells the reader what to do.
+    writeFileSync(fixture, '      - uses: actions/checkout@v4\n', 'utf8');
+    writeFileSync(other, `      - uses: actions/checkout@${A} # v4.4.0\n`, 'utf8');
+    outcomes.push([
+      'allows an unpinned use to be reported by its own rule',
+      checkActionVersions({
+        'one.yml': readFileSync(fixture, 'utf8'),
+        'two.yml': readFileSync(other, 'utf8'),
+      }).length === 0,
+    ]);
 
     writeFileSync(fixture, 'container: mcr.microsoft.com/playwright:v1.0.0-noble\n', 'utf8');
     const drift = checkImagePins({ 'fixture.yml': readFileSync(fixture, 'utf8') }, '9.9.9');
@@ -272,6 +411,6 @@ if (problems.length > 0) {
 }
 
 console.log(
-  `✓ CI pins: ${workflowCount} workflow(s), every action pinned by digest and documented; ` +
-    `the Playwright image agrees with playwright@${declared ?? 'unknown'}`,
+  `✓ CI pins: ${workflowCount} workflow(s), every action pinned by digest, documented, and at ` +
+    `one version across all of them; the Playwright image agrees with playwright@${declared ?? 'unknown'}`,
 );
