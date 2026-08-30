@@ -121,9 +121,31 @@ reached by `check:all`:
 - `unpinned-action` — a `uses:` naming a tag or branch rather than a 40-character SHA. Fails.
 - `undocumented-pin` — a SHA with no `# vX.Y.Z` comment after it. Fails, because a pin nobody can
   read is a pin nobody will review.
+- `action-inconsistent` — one action pinned to two different digests across the workflow set, or
+  to one digest under two different version comments. Fails.
 - `image-drift` — the Playwright image tag in `.github/workflows/ci.yml` or in the
   `test:visual:update` script disagrees with `devDependencies.playwright`. Fails.
 - `image-inconsistent` — the two places that name the image disagree with each other. Fails.
+
+`action-inconsistent` was added after the first Dependabot majors arrived, because the rules above
+it are all per-line and therefore blind to it. Dependabot computes a bump against the usages that
+exist when it raises the pull request; a `main` that grows a job under an open branch leaves that
+branch incomplete, and the usages it missed are still SHAs with honest version comments — legal
+under every other rule here. `actions/checkout` running at v4 in one job and v7 in the next is not
+a supply-chain hole so much as a quiet lie about what CI is, and it is exactly the state this
+repository was one rebase away from: three action majors were open against a tree with four
+`checkout` usages, and `main` had six by the time they were looked at.
+
+It is the action-level twin of `image-inconsistent` and is justified the same way — when one name
+resolves to two things, at most one of them is the thing anybody reviewed.
+
+**What is still not confirmed:** that a version comment tells the truth about its SHA. Every rule
+here is offline and reads only the repository, so a pin written as `@<sha-of-v4> # v7.0.1` passes
+all of them. Resolving the tag needs the network and an external system, which would make this the
+second gate in the class ADR 0044 had to argue for. It is left out because Dependabot is what
+writes these pairs in practice, and a bump it did not write is a hand-edit that a reviewer is
+looking at anyway. The six pairs in the tree were verified against the GitHub API by hand when the
+majors landed; nothing keeps them verified.
 
 Local actions (`./.github/actions/…`) are exempt, since they are this repository's own code and are
 already pinned by being in the commit. There are none today; the exemption exists so adding one
