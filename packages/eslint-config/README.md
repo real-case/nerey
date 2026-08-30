@@ -13,7 +13,10 @@ import nerey from '@nerey/eslint-config';
 export default [...nerey.configs.recommended];
 ```
 
-Peer: `eslint@^9`. No parser, no plugins, no stylistic rules — this package has exactly one job.
+Peer: `eslint@^9 || ^10`. No parser, no plugins, no stylistic rules — this package has exactly
+one job. Two majors are supported because the config is data: flat-config objects built on the
+core `no-restricted-imports` rule, with no imports of its own and nothing that a major could
+take away. CI lints this repository with 10; 9 was verified by hand against the same fixture.
 
 ---
 
