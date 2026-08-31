@@ -75,7 +75,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-storybook": "^10.5.10",
-    "globals": "^16.5.0",
+    "globals": "^17.11.0",
     "happy-css-modules": "^5.0.2",
     "jsdom": "^29.1.1",
     "playwright": "^1.62.1",
