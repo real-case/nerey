@@ -27,7 +27,7 @@ from pathlib import Path
 # so it is automatically excluded from scans.
 ADR_FILE_RE = re.compile(r"^(\d{4})-.*\.md$")
 
-# The legal status vocabulary. A raw status of "superseded by ADR-0007" is a
+# The legal status vocabulary. A raw status of "superseded by ADR 0007" is a
 # well-formed "superseded" (see status_kind).
 STATUS_VOCAB = {"proposed", "accepted", "rejected", "deprecated", "superseded"}
 
@@ -42,7 +42,12 @@ REQUIRED_SECTIONS = (
 # number. Kept narrow on purpose so prose like "Node 24" never reads as a ref.
 ADR_REF_RES = (
     re.compile(r"\*\*(\d{4})\*\*"),            # bold inline ref:  **0002**
-    re.compile(r"\bADR-(\d{4})\b"),            # ADR-0002
+    re.compile(r"\bADR-(\d{4})\b"),            # ADR-0002 — read, never written:
+    #   ADR 0001 fixes the citation form as a bare `ADR NNNN` so one grep finds every
+    #   reference, and `check:citations` fails the hyphenated spelling. This tool used to
+    #   WRITE it into a superseded record's status, which the generated index then rendered
+    #   into a table cell — so the first real supersede failed that gate. The pattern stays
+    #   so any record already carrying the old form still resolves.
     re.compile(r"\]\((\d{4})-[^)]*\.md\)"),    # markdown link:    [..](0002-….md)
     re.compile(r"supersed(?:es|ed by)\b[^\n]*?(\d{4})", re.IGNORECASE),
 )
@@ -109,7 +114,7 @@ def display(value: str, fallback: str = "—") -> str:
 
 
 def status_kind(raw: str) -> str:
-    """Map a raw status value to its vocabulary term ('superseded by ADR-7' -> 'superseded')."""
+    """Map a raw status value to its vocabulary term ('superseded by ADR 0007' -> 'superseded')."""
     s = (raw or "").strip().strip('"').strip("'").lower()
     return "superseded" if s.startswith("superseded") else s
 
@@ -370,17 +375,17 @@ def do_supersede(directory: Path, old: str, new: str, force: bool) -> int:
     old_path = adrs[o]
     old_text = old_path.read_text(encoding="utf-8")
     old_path.write_text(
-        set_frontmatter_field(old_text, "status", f'"superseded by ADR-{m:04d}"'),
+        set_frontmatter_field(old_text, "status", f'"superseded by ADR {m:04d}"'),
         encoding="utf-8",
     )
     if not re.search(rf"supersedes\b[^\n]*{o:04d}", new_text, re.IGNORECASE):
         new_path.write_text(
-            set_frontmatter_field(new_text, "supersedes", f'"ADR-{o:04d}"'),
+            set_frontmatter_field(new_text, "supersedes", f'"ADR {o:04d}"'),
             encoding="utf-8",
         )
     do_index(directory, "Architecture Decision Records")
-    print(f"superseded: {old_path.name} -> 'superseded by ADR-{m:04d}'; "
-          f"{new_path.name} -> 'supersedes ADR-{o:04d}'; index regenerated")
+    print(f"superseded: {old_path.name} -> 'superseded by ADR {m:04d}'; "
+          f"{new_path.name} -> 'supersedes ADR {o:04d}'; index regenerated")
     return 0
 
 
