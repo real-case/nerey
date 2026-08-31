@@ -32,7 +32,7 @@ Architecture Decision Records for this project, in [MADR](https://adr.github.io/
 | [0026](0026-themed-components-variant-not-classname.md) | 0026. Themed components expose variant, size and tone — never className | accepted | 2026-08-09 |
 | [0027](0027-light-dark-token-override.md) | 0027. Light and dark as a token-value override | accepted | 2026-08-09 |
 | [0028](0028-package-exports-policy.md) | 0028. Package exports map policy and the ban on deep imports | accepted | 2026-08-09 |
-| [0029](0029-semantic-versioning-published-packages.md) | 0029. Semantic versioning for published packages | accepted | 2026-08-09 |
+| [0029](0029-semantic-versioning-published-packages.md) | 0029. Semantic versioning for published packages | superseded by ADR 0038 | 2026-08-09 |
 | [0030](0030-widget-schema-migration-on-read.md) | 0030. Tolerant reader and migration-on-read for widget schema evolution | accepted | 2026-08-09 |
 | [0031](0031-storybook-component-workbench.md) | 0031. Storybook 10 as the component workbench, CSF 3 with play functions | accepted | 2026-08-09 |
 | [0032](0032-accessibility-gate-axe-wcag22aa.md) | 0032. Accessibility gate: axe at WCAG 2.2 AA, failing not advisory | accepted | 2026-08-09 |
@@ -41,11 +41,11 @@ Architecture Decision Records for this project, in [MADR](https://adr.github.io/
 | [0035](0035-built-in-widget-scope.md) | 0035. Core ships only the text and confirmation widgets | accepted | 2026-08-09 |
 | [0036](0036-conventional-commits.md) | 0036. Conventional Commits as the commit contract | accepted | 2026-08-09 |
 | [0037](0037-core-non-goals-transport-llm-markdown.md) | 0037. Core has no transport, LLM SDK binding, or markdown renderer | accepted | 2026-08-09 |
-| [0038](0038-semver-gated-by-surface-snapshots.md) | 0038. Semantic versioning for published packages, gated by generated surface snapshots | proposed | 2026-08-24 |
-| [0039](0039-tagged-releases-published-by-trusted-publishing.md) | 0039. Releases are cut from a per-package tag and published from CI by trusted publishing | proposed | 2026-08-25 |
-| [0040](0040-registry-describes-itself-to-the-model.md) | 0040. The registry describes itself to the model, through an injected schema converter | proposed | 2026-08-25 |
-| [0041](0041-chrome-strings-through-a-labels-context.md) | 0041. Chrome strings resolve through a labels context in @nerey/theme | proposed | 2026-08-25 |
-| [0042](0042-visual-regression-against-pinned-references.md) | 0042. Visual regression against committed, container-pinned reference images | proposed | 2026-08-25 |
-| [0043](0043-pinned-ci-supply-chain.md) | 0043. The CI supply chain is pinned by digest and updated by Dependabot | proposed | 2026-08-25 |
-| [0044](0044-publish-the-workbench-to-github-pages.md) | 0044. Publish the workbench to GitHub Pages, and build it on every pull request | proposed | 2026-08-25 |
-| [0045](0045-eslint-config-rule-surface-snapshot.md) | 0045. The eslint-config rule surface is snapshotted, and both directions of change fail | proposed | 2026-08-26 |
+| [0038](0038-semver-gated-by-surface-snapshots.md) | 0038. Semantic versioning for published packages, gated by generated surface snapshots | accepted | 2026-08-31 |
+| [0039](0039-tagged-releases-published-by-trusted-publishing.md) | 0039. Releases are cut from a per-package tag and published from CI by trusted publishing | accepted | 2026-08-31 |
+| [0040](0040-registry-describes-itself-to-the-model.md) | 0040. The registry describes itself to the model, through an injected schema converter | accepted | 2026-08-31 |
+| [0041](0041-chrome-strings-through-a-labels-context.md) | 0041. Chrome strings resolve through a labels context in @nerey/theme | accepted | 2026-08-31 |
+| [0042](0042-visual-regression-against-pinned-references.md) | 0042. Visual regression against committed, container-pinned reference images | accepted | 2026-08-31 |
+| [0043](0043-pinned-ci-supply-chain.md) | 0043. The CI supply chain is pinned by digest and updated by Dependabot | accepted | 2026-08-31 |
+| [0044](0044-publish-the-workbench-to-github-pages.md) | 0044. Publish the workbench to GitHub Pages, and build it on every pull request | accepted | 2026-08-31 |
+| [0045](0045-eslint-config-rule-surface-snapshot.md) | 0045. The eslint-config rule surface is snapshotted, and both directions of change fail | accepted | 2026-08-31 |

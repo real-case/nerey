@@ -1,6 +1,6 @@
 ---
-status: 'proposed'
-date: 2026-08-24
+status: "accepted"
+date: 2026-08-31
 decision-makers: Yurii Anichkin
 ---
 
@@ -99,7 +99,9 @@ reworded comment reads as an API change. The rendering adopted here is neither:
   from `node_modules`. Absolute paths are the one thing that would make the artifact
   machine-dependent, and the rewrite removes them entirely rather than normalising a prefix.
 
-That produces 83 KB across 472 symbols and four barrels, byte-identical between runs.
+That produces 83 KB across four barrels and, when this record was written, 472 symbols —
+byte-identical between runs. The symbol count moves with every release and is not itself the
+invariant; what the gate asserts is that it moves deliberately.
 
 ### Consequences
 

@@ -27,8 +27,14 @@ Architectural decisions are recorded **before** any code depends on them.
   `supersede --old --new`.
 - **Citations** are written bare — `ADR 0018` — so they are greppable. `npm run check:citations`
   fails on a number that does not resolve.
+- **Citations the tooling writes obey the same rule.** `supersede` writes `superseded by ADR 0038`
+  into the old record's status, bare — the generated index renders that into a table cell, so the
+  hyphenated form the tool used to write failed `check:citations` on the corpus's first real
+  supersede. The tool still _reads_ `ADR-NNNN`; it no longer writes it.
 - The bootstrap corpus 0001–0037 was accepted in bulk by the repo owner on 2026-08-09, before
-  any package contained code. The `proposed → accepted` transition first runs for real on 0038.
+  any package contained code. 0038–0045 were ratified on 2026-08-31 — the first time the
+  `proposed → accepted` transition ran for real — and 0029 was superseded by 0038 in the same
+  pass, closing deviation D-6.
 
 When a change needs a decision no ADR covers: record the ADR first, then implement.
 

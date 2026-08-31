@@ -10,6 +10,10 @@ Every deviation here was surfaced by a gate or by an implementing agent reading 
 against the code, which is the intended mechanism: a record whose `Confirmation` names a fitness
 function gets checked, and a mismatch shows up as work rather than as drift.
 
+A resolved entry is **kept and marked `Resolved`**, not deleted. What diverged and how it was
+closed is the useful part of this file; a list that only ever shows open items loses the record of
+which decisions needed a second attempt.
+
 ---
 
 ## D-1 · ADR 0036 describes commitlint; the gate does not use it
@@ -91,14 +95,31 @@ The consequence was not cosmetic: **a signature change passed the release gate i
 Adding a required parameter to an exported function, or dropping a member from an exported union,
 left every name and kind identical and the baseline matching.
 
-**Fix direction**: superseded — in flight. ADR 0038 (`proposed`) restates 0029's versioning rules
-unchanged and replaces the mechanism with what the repository actually wants: a second gate,
-`check:api-signatures`, that renders every exported symbol through the TypeScript checker into
-`docs/design-system/api-signatures.json`. It closed the signature hole on 2026-08-24. Two of
-0029's promises are deliberately **not** carried over and are named as gaps in 0038 rather than
-inherited as aspirations: the `@nerey/eslint-config` rule snapshot, and the two-signal cross-check
-against the `!` commit marker. This entry closes when 0038 is accepted and
-`npm run adr -- supersede --old 0029 --new 0038` has run.
+**Fix direction**: superseded. ADR 0038 restates 0029's versioning rules unchanged and replaces the
+mechanism with what the repository actually wants: a second gate, `check:api-signatures`, that
+renders every exported symbol through the TypeScript checker into
+`docs/design-system/api-signatures.json`. It closed the signature hole on 2026-08-24.
+
+**Resolved** — 2026-08-31. ADR 0038 was accepted and `npm run adr -- supersede --old 0029 --new
+0038` has run; 0029 now reads `superseded by ADR 0038`.
+
+The two promises this entry recorded as deliberately not carried over have both since been kept,
+by later records rather than by 0038:
+
+- the `@nerey/eslint-config` rule snapshot is `check:eslint-rules` (ADR 0045), which renders the
+  resolved config surface to `docs/design-system/eslint-rules.json` and fails in **both**
+  directions;
+- the two-signal cross-check against the `!` commit marker is `gen-release.mjs`'s
+  `undeclared-break` refusal (ADR 0039) — the author declares the bump, the gates derive it, and a
+  disagreement blocks.
+
+One edge of that cross-check is narrower than it reads, and is worth writing down here rather than
+discovering at a release: `undeclared-break` inspects `public-api.json` and `api-signatures.json`
+only, and `@nerey/eslint-config` owns no barrel in either. A ban removed from the published lint
+config would therefore be caught by `check:eslint-rules` — which compares against its baseline —
+but would not, on its own, force a `!` on the release. Widening it means reading a third baseline,
+which is a change to what ADR 0039 says `undeclared-break` reads, so it needs a record rather than
+a patch.
 
 ## D-7 · ADR 0037 claimed chrome strings were overridable through props
 
