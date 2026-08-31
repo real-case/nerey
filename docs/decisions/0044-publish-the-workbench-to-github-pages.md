@@ -108,6 +108,23 @@ It runs **after** the deploy deliberately. A failure means "published, and not s
 published", which is a true and useful thing to be told; blocking the publish on it would mean
 never publishing the fix.
 
+`npm run check:workflow-gates` exists because of a hole in the sentence that opens this section.
+"It runs on every pull request, and a failure blocks the merge" was true of the job and false of the
+workflow: `concurrency.group` was the constant `pages`, so every pull request and every push to main
+queued behind one another, and GitHub cancels a run that is merely *pending* when a third arrives.
+`cancel-in-progress: false` governs the running run, not the pending one.
+
+Two Dependabot pull requests were merged on 2026-08-30 whose build gate had been **cancelled rather
+than run**, and neither looked any different from a green one — a cancelled check is not a failed
+check, so nothing turned red. The group is now `pages-${{ github.ref }}`, which keeps the deploy a
+single queue on main, where the "do not race a half-finished deployment" reasoning above actually
+applies, while giving every pull request its own.
+
+The gate generalises it: a workflow that runs on `pull_request` may not declare a constant
+concurrency group. `ci.yml` and `release.yml` were already scoped this way; this workflow was the one
+that was not, and nothing said so. It was verified against the real defect by running it on this
+file as it stood before the fix.
+
 What is still not confirmed: that the site *looks* right, or that any asset beyond the index
 resolves. The visual gate (ADR 0042) covers appearance against the dev build, and nothing covers
 the static bundle's assets.

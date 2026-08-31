@@ -84,6 +84,10 @@ When a change needs a decision no ADR covers: record the ADR first, then impleme
   `docs/design-system/eslint-rules.json` (0045). **Both** directions fail: a ban that appears
   breaks a consumer's lint, and a ban that disappears breaks nothing while the invariant stops
   being enforced.
+- `npm run check:workflow-gates` — a workflow that runs on `pull_request` may not declare a constant
+  `concurrency.group` (0044). A shared group makes every pull request queue behind every other, and
+  GitHub **cancels** a pending run rather than failing it — so the gate does not run and the pull
+  request still looks green.
 - `npm run check:widget-labels` — no widget component imports a chrome constant from its schema
   instead of reading it through `useNereyLabels()` (0041). The vocabulary is derived from what
   `labels.tsx` imports, so adding a string to the record extends the ban on its own.

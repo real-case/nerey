@@ -118,6 +118,11 @@ const GATES = [
     why: 'reads the workflow directory and package.json rather than the edited file, so a PostToolUse hook has nothing to scope it to (ADR 0043)',
   },
   {
+    script: 'scripts/check-workflow-gates.mjs',
+    hook: 'ci-only',
+    why: "reads the whole workflow directory rather than the edited file, and the state it catches is a repository-wide one: whether any workflow can cancel another workflow's checks",
+  },
+  {
     script: 'scripts/check-published-site.mjs',
     hook: 'ci-only',
     why: 'fetches a deployed site, so it is the one gate here that is neither hermetic nor offline-runnable; it runs in the deploy job after publishing (ADR 0044)',

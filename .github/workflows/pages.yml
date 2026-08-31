@@ -18,10 +18,19 @@ on:
 # (ADR 0043).
 permissions: {}
 
+# Scoped to the ref, NOT a constant. With one group for the whole repository, every pull request
+# and every push to main queue behind each other, and GitHub cancels a run that is merely pending
+# when a third arrives — so under any burst the build gate below simply does not run, and a
+# cancelled check reads almost exactly like a passing one. That is not hypothetical: two Dependabot
+# pull requests lost this gate to it on 2026-08-30. `ci.yml` and `release.yml` were already scoped
+# this way; this workflow was the one that was not.
+#
 # Not cancel-in-progress: a half-finished Pages deployment is not a state worth racing another one
 # into, and the build is cheap enough that finishing it costs less than reasoning about the result.
+# That reasoning is about the deploy, which happens only on main — where this group is still a
+# single queue.
 concurrency:
-  group: pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: false
 
 env:
