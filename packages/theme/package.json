@@ -38,8 +38,8 @@
     "dev": "vite build --watch"
   },
   "dependencies": {
-    "@base-ui/react": "^1.7.0",
-    "zod": "^4.4.3"
+    "@base-ui/react": "^1.8.0",
+    "zod": "^4.6.5"
   },
   "peerDependencies": {
     "@nerey/core": "^0.1.0",
