@@ -221,7 +221,8 @@ list, so it cannot drift. A `Refs: ADR NNNN` footer is checked.
   A `PreToolUse` hook blocks it.
 - Contract baselines (`docs/design-system/data-contract.json`, `public-api.json`,
   `api-signatures.json`, `eslint-rules.json`) are updated **deliberately, in the same commit as the version bump** —
-  never to make a check pass (0029, 0038). Each has an `--update-baseline` flag that prints what
+  never to make a check pass (0029, 0038). Before a package's first release, the commit that moves the
+  contract carries the re-bless instead (`docs/releasing.md`). Each has an `--update-baseline` flag that prints what
   it blessed; a `PreToolUse` hook blocks editing them by hand.
 - CSF 2 (`Template.bind({})`, `storiesOf`) fails lint. MDX never defines stories (0031).
 - a11y opt-outs only as an explicit, reviewed per-story `a11y` parameter with a stated reason

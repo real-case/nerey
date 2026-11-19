@@ -43,6 +43,15 @@ credential, and provenance attestations are generated automatically.
 
 ---
 
+## Contract baselines before the first release
+
+Until a package's first release there is no version bump to carry a re-bless, so the commit that
+moves the contract carries it instead, with a `Refs: ADR NNNN` footer and the `--update-baseline`
+output quoted in the pull request; from the first release on, a baseline moves only in the same
+commit as the version bump (ADR 0038).
+
+---
+
 ## Releasing a package
 
 ### 1. Prepare
