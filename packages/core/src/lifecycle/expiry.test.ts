@@ -12,13 +12,13 @@ import {
   type LifecycleSignals,
 } from './expiry';
 
-const MOUNTED_AT = 1_700_000_000_000;
+const CREATED_AT = 1_700_000_000_000;
 
 function signals(overrides: Partial<LifecycleSignals> = {}): LifecycleSignals {
   return {
     interactions: [],
-    mountedAt: MOUNTED_AT,
-    now: MOUNTED_AT,
+    createdAt: CREATED_AT,
+    now: CREATED_AT,
     messageCountAtMount: 3,
     messageCount: 3,
     navigated: false,
@@ -60,22 +60,22 @@ describe('ruleHasFired — interact', () => {
 describe('ruleHasFired — timeout', () => {
   it('does not fire before the deadline', () => {
     const rule: ExpiryRule = { on: 'timeout', ms: 30_000 };
-    expect(ruleHasFired(rule, signals({ now: MOUNTED_AT + 29_999 }))).toBe(false);
+    expect(ruleHasFired(rule, signals({ now: CREATED_AT + 29_999 }))).toBe(false);
   });
 
   it('fires exactly at the deadline', () => {
     const rule: ExpiryRule = { on: 'timeout', ms: 30_000 };
-    expect(ruleHasFired(rule, signals({ now: MOUNTED_AT + 30_000 }))).toBe(true);
+    expect(ruleHasFired(rule, signals({ now: CREATED_AT + 30_000 }))).toBe(true);
   });
 
   it('fires for a deadline that passed while the tab was closed', () => {
     const rule: ExpiryRule = { on: 'timeout', ms: 30_000 };
-    expect(ruleHasFired(rule, signals({ now: MOUNTED_AT + 86_400_000 }))).toBe(true);
+    expect(ruleHasFired(rule, signals({ now: CREATED_AT + 86_400_000 }))).toBe(true);
   });
 
-  it('does not fire when the clock reads before the mount instant', () => {
+  it('does not fire when the clock reads before the message was created', () => {
     const rule: ExpiryRule = { on: 'timeout', ms: 1_000 };
-    expect(ruleHasFired(rule, signals({ now: MOUNTED_AT - 5_000 }))).toBe(false);
+    expect(ruleHasFired(rule, signals({ now: CREATED_AT - 5_000 }))).toBe(false);
   });
 
   it.each([
@@ -142,7 +142,7 @@ describe('firstFiredRule', () => {
 
   it('returns the earliest declared rule when several have fired', () => {
     const rules = lifecycle([{ on: 'message' }, { on: 'navigate' }, { on: 'timeout', ms: 1_000 }]);
-    const all = signals({ navigated: true, messageCount: 9, now: MOUNTED_AT + 5_000 });
+    const all = signals({ navigated: true, messageCount: 9, now: CREATED_AT + 5_000 });
     expect(firstFiredRule(rules, all)).toEqual({ on: 'message' });
   });
 
@@ -163,7 +163,7 @@ describe('isExpired', () => {
       interactions: ['submit'],
       navigated: true,
       messageCount: 99,
-      now: MOUNTED_AT + 10_000_000,
+      now: CREATED_AT + 10_000_000,
       firedEvents: new Set(['anything']),
     });
     expect(isExpired(lifecycle([]), everything)).toBe(false);
@@ -191,7 +191,7 @@ describe('msUntilNextTimeout', () => {
 
   it('reports the remaining time for a single pending timeout', () => {
     const rules = lifecycle([{ on: 'timeout', ms: 30_000 }]);
-    expect(msUntilNextTimeout(rules, signals({ now: MOUNTED_AT + 10_000 }))).toBe(20_000);
+    expect(msUntilNextTimeout(rules, signals({ now: CREATED_AT + 10_000 }))).toBe(20_000);
   });
 
   it('picks the earliest deadline, not the first declared', () => {
@@ -209,7 +209,7 @@ describe('msUntilNextTimeout', () => {
       { on: 'timeout', ms: 5_000 },
       { on: 'event', name: 'closed' },
     ]);
-    expect(msUntilNextTimeout(rules, signals({ now: MOUNTED_AT + 1_000 }))).toBe(4_000);
+    expect(msUntilNextTimeout(rules, signals({ now: CREATED_AT + 1_000 }))).toBe(4_000);
   });
 
   it('returns undefined once the earliest timeout has elapsed', () => {
@@ -217,7 +217,7 @@ describe('msUntilNextTimeout', () => {
       { on: 'timeout', ms: 20_000 },
       { on: 'timeout', ms: 90_000 },
     ]);
-    expect(msUntilNextTimeout(rules, signals({ now: MOUNTED_AT + 20_000 }))).toBeUndefined();
+    expect(msUntilNextTimeout(rules, signals({ now: CREATED_AT + 20_000 }))).toBeUndefined();
   });
 
   it('returns undefined when a non-timeout rule has already expired the widget', () => {
@@ -231,9 +231,9 @@ describe('msUntilNextTimeout', () => {
     expect(msUntilNextTimeout(rules, signals())).toBeUndefined();
   });
 
-  it('reports a delay larger than the interval when the clock reads before mount', () => {
+  it('reports a delay larger than the interval when the clock reads before the message was created', () => {
     const rules = lifecycle([{ on: 'timeout', ms: 10_000 }]);
-    expect(msUntilNextTimeout(rules, signals({ now: MOUNTED_AT - 2_000 }))).toBe(12_000);
+    expect(msUntilNextTimeout(rules, signals({ now: CREATED_AT - 2_000 }))).toBe(12_000);
   });
 });
 
@@ -243,7 +243,7 @@ describe('preset lifecycles', () => {
       interactions: ['submit', 'cancel'],
       navigated: true,
       messageCount: 500,
-      now: MOUNTED_AT + 10_000_000,
+      now: CREATED_AT + 10_000_000,
       firedEvents: new Set(['checkout-complete']),
     });
     expect(NEVER_EXPIRES).toEqual({ persist: 'forever', expiry: [], afterExpiry: 'snapshot' });

@@ -4,6 +4,7 @@ import type { ReactElement, ReactNode } from 'react';
 import { DEFAULT_HOST_VALUE, WidgetHostProvider } from '../host/host-context';
 import { asAnyWidget, createWidgetRegistry } from '../registry';
 import { createMemoryPersistence } from '../state/memory-persistence';
+import { MOCK_EPOCH } from './fixtures';
 import type { FallbackRenderer, MessagePersistence, WidgetHostValue, WidgetRegistry } from '../types';
 import { confirmationWidget } from '../widgets/confirmation';
 import { textWidget } from '../widgets/text';
@@ -39,6 +40,12 @@ export type MockHostOptions = {
   onSend?: (text: string, meta?: Record<string, unknown>) => void;
   messageCount?: number;
   firedEvents?: Iterable<string>;
+  /**
+   * The lifecycle clock (ADR 0046). Defaults to one that starts at `MOCK_EPOCH` when the host mounts
+   * and advances in real time, so fixture messages (created at `MOCK_EPOCH`) start live and a short
+   * `timeout` still expires while a story watches. Pass a constant clock to freeze time.
+   */
+  now?: () => number;
 };
 
 export type SentMessage = { text: string; meta?: Record<string, unknown> };
@@ -102,6 +109,7 @@ export function MockWidgetHost(props: MockHostOptions & { children: ReactNode })
     onSend,
     messageCount,
     firedEvents,
+    now,
     children,
   } = props;
 
@@ -109,6 +117,13 @@ export function MockWidgetHost(props: MockHostOptions & { children: ReactNode })
   // a new `persistence` identity every time, which re-runs its load effect and reads back the
   // empty store it just created — a widget that forgets its state whenever anything re-renders.
   const [ownPersistence] = useState(() => createMemoryPersistence());
+
+  // Started once per mounted host, for the same identity reason as the store above: a clock rebuilt
+  // per render would re-arm every widget's deadline timer on every render.
+  const [ownClock] = useState(() => {
+    const startedAt = Date.now();
+    return () => MOCK_EPOCH + (Date.now() - startedAt);
+  });
 
   // `sendUserMessage` is kept identity-stable while still calling the *latest* `onSend`. Stories
   // and tests pass an inline arrow, and putting it straight into the host value would rebuild that
@@ -136,6 +151,7 @@ export function MockWidgetHost(props: MockHostOptions & { children: ReactNode })
       sendUserMessage,
       persistence: persistence ?? ownPersistence,
       renderFallback: renderFallback ?? DEFAULT_HOST_VALUE.renderFallback,
+      now: now ?? ownClock,
     };
 
     // Assigned only when supplied, so an unset option leaves the field genuinely absent and the
@@ -157,6 +173,8 @@ export function MockWidgetHost(props: MockHostOptions & { children: ReactNode })
     renderFallback,
     messageCount,
     firedEventsKey,
+    now,
+    ownClock,
   ]);
 
   return <WidgetHostProvider value={value}>{children}</WidgetHostProvider>;

@@ -18,6 +18,13 @@ export type NereyWidgetEnvelope = {
   version: string;
   payload: unknown;
   state?: unknown;
+  /**
+   * The widget's expiry marker, when the host already has it (ADR 0046). A host that loads its
+   * transcript from a server hands the marker over with the message, so the widget renders
+   * expired on the first frame — including on the server — with no read through the port.
+   * Absent, the runtime reads it through `MessagePersistence.getLifecycleRecord` instead.
+   */
+  expiry?: LifecycleRecord;
 };
 
 /**
@@ -33,6 +40,13 @@ export type NereyMessage = {
    * cannot render must still leave the transcript readable.
    */
   text: string;
+  /**
+   * When the message was created, in epoch milliseconds. Required (ADR 0046): a `timeout` rule's
+   * deadline is `createdAt + ms`, so a reload does not restart the clock and a deadline that
+   * passed while the tab was closed is already expired on the first frame. Every chat store keeps
+   * this; an adapter copies it across.
+   */
+  createdAt: number;
   widget?: NereyWidgetEnvelope | null;
 };
 
@@ -56,7 +70,7 @@ export type SlotName = Placement['slot'];
  * the widget.
  *
  * - `interact`         — any interaction expires it; with `action`, only that action does.
- * - `timeout`          — `ms` after the widget first mounted.
+ * - `timeout`          — `ms` after the message's `createdAt` (ADR 0046), not after mount.
  * - `message`          — a later message arrived in the conversation.
  * - `navigate`         — the conversation was left.
  * - `event`            — a host-dispatched named event.
@@ -217,6 +231,14 @@ export type AnyWidgetRegistryEntry = WidgetRegistryEntry<any, any>;
 export type WidgetStateRecord = Record<string, unknown>;
 
 /**
+ * Why and when a widget stopped being interactive (ADR 0018 / 0046 / 0047). Written once, when a
+ * rule fires, and read back on reload before the widget is allowed to be pressed. It lives
+ * alongside the widget's own state, never inside it, so the author's `stateSchema` describes the
+ * author's state and nothing else.
+ */
+export type LifecycleRecord = { expiredAt: number; reason: ExpiryRule };
+
+/**
  * The port through which widget state reaches durable storage. Nerey ships an in-memory
  * implementation; a consumer supplies the real one (TanStack Query, SWR, plain fetch).
  * Core performs no I/O of its own — that is the whole point of the port.
@@ -228,6 +250,21 @@ export type MessagePersistence = {
     messageId: string | number,
     state: WidgetStateRecord,
     options?: { signal?: AbortSignal },
+  ): Promise<void>;
+  /**
+   * Optional (ADR 0047). Reads the expiry marker for a message. A port without it keeps markers
+   * in a session-scoped memory store, which is right for `persist: 'ephemeral'` and lossy for
+   * `persist: 'forever'`.
+   */
+  getLifecycleRecord?(
+    conversationId: string,
+    messageId: string | number,
+  ): Promise<LifecycleRecord | undefined>;
+  /** Optional (ADR 0047). Writes the expiry marker once, when a rule fires. */
+  updateLifecycleRecord?(
+    conversationId: string,
+    messageId: string | number,
+    record: LifecycleRecord,
   ): Promise<void>;
 };
 
@@ -262,6 +299,11 @@ export type WidgetHostValue = {
   firedEvents?: ReadonlySet<string>;
   /** Monotonic count of messages in the conversation, for `{ on: 'message' }` expiry. */
   messageCount?: number;
+  /**
+   * The clock the lifecycle runtime reads, in epoch ms (ADR 0046). Defaults to `Date.now`. Inject
+   * a fixed one in stories and tests, and the same one on the server and the hydrating client.
+   */
+  now?: () => number;
 };
 
 /* ────────────────────────────────────────────────────────────────────────────────────

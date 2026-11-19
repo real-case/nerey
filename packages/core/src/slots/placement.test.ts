@@ -25,10 +25,11 @@ function entry(type: string, placement: Placement): AnyWidgetRegistryEntry {
 }
 
 function message(id: string, type: string | undefined): NereyMessage {
-  if (type === undefined) return { id, role: 'assistant', text: 'plain' };
+  if (type === undefined) return { id, role: 'assistant', createdAt: 0, text: 'plain' };
   return {
     id,
     role: 'assistant',
+    createdAt: 0,
     text: 'plain',
     widget: { type, version: '1.0.0', payload: {}, state: {} },
   };

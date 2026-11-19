@@ -17,6 +17,7 @@ export type {
   ExpiryRule,
   FallbackRenderer,
   Lifecycle,
+  LifecycleRecord,
   MessagePersistence,
   NereyErrorCode,
   NereyErrorLike,

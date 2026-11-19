@@ -176,8 +176,17 @@ widget restarts its full interval on every reload.
 
 **Fix direction**: code. The decision in 0018 is right; the implementation is missing. ADR 0046 adds
 the anchor the record assumed (`NereyMessage.createdAt`, required) and fixes how a reload reads the
-marker, and ADR 0047 adds the port methods that store it. Both were accepted on 2026-11-19; this entry closes when
-the code lands behind them.
+marker, and ADR 0047 adds the port methods that store it. Both were accepted on 2026-11-19.
+
+**Resolved** — 2026-11-19. `NereyMessage.createdAt` is required and `timeout` is measured from it
+against the host's injected `now`; a fired rule writes a `LifecycleRecord` through
+`updateLifecycleRecord` and a remount reads it back through `getLifecycleRecord` (or takes it from
+`NereyWidgetEnvelope.expiry`), and an action-bearing widget stays read-only while that read is
+pending or failed. `lifecycle-reload.test.tsx` asserts the reload case with a widget that has no lock
+of its own, `lifecycle-ssr.test.tsx` the server/client agreement, and the conformance kit's
+`remount-respects-marker` rule carries the same check into a widget author's repository.
+`check:lifecycle-mutants` re-plants both defects described above and requires the reload test to fail
+against each, so the gap that passed every gate the first time now has one that sees it.
 
 ---
 

@@ -1,7 +1,7 @@
 import { resolveEnvelope } from '../adapter';
 import { validateSync } from '../validate';
 import { confirmationPayloadSchema } from '../widgets/confirmation';
-import { sampleConversation, textMessage, widgetMessage } from './fixtures';
+import { MOCK_EPOCH, sampleConversation, textMessage, widgetMessage } from './fixtures';
 
 describe('widgetMessage', () => {
   it('defaults version, role and id, and wraps the payload in an envelope', () => {
@@ -88,7 +88,7 @@ describe('textMessage', () => {
   it('takes a role and an id', () => {
     const message = textMessage({ id: 'u1', role: 'user', text: 'Archive it' });
 
-    expect(message).toEqual({ id: 'u1', role: 'user', text: 'Archive it' });
+    expect(message).toEqual({ id: 'u1', role: 'user', text: 'Archive it', createdAt: MOCK_EPOCH });
   });
 
   it('resolves through the synthesised text envelope, like any real plain message', () => {

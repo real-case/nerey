@@ -6,9 +6,13 @@ import type { StandardSchemaV1 } from '@standard-schema/spec';
 import { NEREY_ATTR, NEREY_STATES } from '../data-attrs';
 import { DEFAULT_HOST_VALUE, WidgetHostProvider } from '../host/host-context';
 import { NEVER_EXPIRES } from '../lifecycle/expiry';
+import { createWidgetRegistry } from '../registry';
+import { WidgetRenderer } from '../render/widget-renderer';
 import { createMemoryPersistence } from '../state/memory-persistence';
 import type {
   AnyWidgetRegistryEntry,
+  LifecycleRecord,
+  NereyMessage,
   WidgetComponent,
   WidgetHostValue,
   WidgetInteractionHandler,
@@ -331,13 +335,38 @@ async function mountWidget(
   state: unknown,
   readonly: boolean,
 ): Promise<Mounted> {
-  const sent: SentMessage[] = [];
-  const host = createMockHost(sent);
-
   // The generics on `AnyWidgetRegistryEntry` are erased to `never`, which leaves the component's
   // props unassignable from outside. The renderer widens the same way (ADR 0010) — to `unknown`
   // and not `any`, because the values handed over have already been through the entry's schemas.
   const Widget = entry.component as unknown as WidgetComponent<unknown, unknown>;
+
+  return mountElement({}, (host) => {
+    const onInteraction: WidgetInteractionHandler = (_action, data) => {
+      // ADR 0014 — the host's whole job on an interaction is to send the text. Modelling that here
+      // is what makes `readonly-is-inert` observable as "no message left the widget", which is the
+      // consequence that actually matters: a second message means a second model turn.
+      host.sendUserMessage(data.text, data.meta);
+    };
+    return (
+      <Widget
+        messageId={MESSAGE_ID}
+        payload={payload}
+        state={state}
+        readonly={readonly}
+        status="ready"
+        onInteraction={onInteraction}
+      />
+    );
+  });
+}
+
+/** Mounts `build(host)` inside a recording mock host; `overrides` widen the host for one rule. */
+async function mountElement(
+  overrides: Partial<WidgetHostValue>,
+  build: (host: WidgetHostValue) => ReactElement,
+): Promise<Mounted> {
+  const sent: SentMessage[] = [];
+  const host: WidgetHostValue = { ...createMockHost(sent), ...overrides };
 
   const container = document.createElement('div');
   document.body.appendChild(container);
@@ -359,27 +388,9 @@ async function mountWidget(
     onRecoverableError: () => undefined,
   });
 
-  const onInteraction: WidgetInteractionHandler = (_action, data) => {
-    // ADR 0014 — the host's whole job on an interaction is to send the text. Modelling that here
-    // is what makes `readonly-is-inert` observable as "no message left the widget", which is the
-    // consequence that actually matters: a second message means a second model turn.
-    host.sendUserMessage(data.text, data.meta);
-  };
-
   try {
     await flush(() => {
-      root.render(
-        <MockWidgetHost host={host}>
-          <Widget
-            messageId={MESSAGE_ID}
-            payload={payload}
-            state={state}
-            readonly={readonly}
-            status="ready"
-            onInteraction={onInteraction}
-          />
-        </MockWidgetHost>,
-      );
+      root.render(<MockWidgetHost host={host}>{build(host)}</MockWidgetHost>);
     });
   } catch (error) {
     thrown ??= error;
@@ -669,6 +680,79 @@ function checkLifecycle(entry: AnyWidgetRegistryEntry, report: Report): void {
 }
 
 /* ────────────────────────────────────────────────────────────────────────────────────
+ * Rule 8b — a stored marker survives a remount (ADR 0046 / 0047)
+ * ──────────────────────────────────────────────────────────────────────────────────── */
+
+/** ADR 0018's selector: a read-only widget has no control a person can still operate. */
+const ENABLED_CONTROL = ':is(button,input,select,textarea):not([disabled])';
+
+/**
+ * Mounts the widget the way a reload does — through `WidgetRenderer`, against a port that already
+ * holds an expiry marker for this message — and requires no enabled control once the read settles.
+ *
+ * This is the rule `readonly-is-inert` cannot be. That rule hands the component `readonly: true`
+ * directly, so it proves the widget honours the prop; this one proves the prop arrives. A widget
+ * that derives its lock from its own state looks correct either way, which is why D-8 shipped.
+ * Only `snapshot` is checked: `hide` and `fallback` render no widget to inspect.
+ */
+async function checkRemountAgainstMarker(
+  entry: AnyWidgetRegistryEntry,
+  payload: unknown,
+  state: unknown,
+  report: Report,
+): Promise<void> {
+  const lifecycle: unknown = entry.lifecycle;
+  if (!isRecord(lifecycle) || lifecycle['afterExpiry'] !== 'snapshot') return;
+  const expiry: unknown = lifecycle['expiry'];
+  if (!Array.isArray(expiry) || expiry.length === 0) return;
+  const reason: unknown = expiry[0];
+
+  // The fixture state is seeded so a widget whose `stateSchema` requires it still renders, rather
+  // than degrading to the fallback and passing this rule with nothing on screen.
+  const persistence = createMemoryPersistence(
+    isRecord(state) ? { [`${CONVERSATION_ID}:${MESSAGE_ID}`]: state } : undefined,
+  );
+  const marker = { expiredAt: 1, reason } as LifecycleRecord;
+  await persistence.updateLifecycleRecord?.(CONVERSATION_ID, MESSAGE_ID, marker);
+
+  const message: NereyMessage = {
+    id: MESSAGE_ID,
+    role: 'assistant',
+    createdAt: 0,
+    text: 'conformance',
+    widget: { type: String(entry.type), version: String(entry.version), payload },
+  };
+
+  let registry: WidgetHostValue['registry'];
+  try {
+    registry = createWidgetRegistry([entry]);
+  } catch {
+    return; // An entry the registry refuses is already reported by `identity`.
+  }
+
+  const mounted = await mountElement({ persistence, registry, now: () => 2 }, () => (
+    <WidgetRenderer message={message} />
+  ));
+  try {
+    // One more turn: the marker read resolves after the first commit.
+    await flush(() => undefined);
+    if (mounted.thrown !== undefined) return; // `renders` already reports a throwing widget.
+    const enabled = Array.from(mounted.container.querySelectorAll(ENABLED_CONTROL));
+    if (enabled.length > 0) {
+      report(
+        'remount-respects-marker',
+        `remounted against a stored expiry marker, the widget still has ${enabled.length} enabled ` +
+          `control(s) (${enabled.map(elementLabel).join(', ')}). After a reload the marker is the ` +
+          `only record that the widget was used; a control that ignores \`readonly\` invites a ` +
+          `second press and a duplicate reply (ADR 0018 / 0046).`,
+      );
+    }
+  } finally {
+    await mounted.unmount();
+  }
+}
+
+/* ────────────────────────────────────────────────────────────────────────────────────
  * Rule 9 — no I/O
  * ──────────────────────────────────────────────────────────────────────────────────── */
 
@@ -748,6 +832,7 @@ export async function checkWidgetConformance(
   const payload = checkSchemas(entry, options, report);
   await checkRendering(entry, payload, options, report);
   checkLifecycle(entry, report);
+  await checkRemountAgainstMarker(entry, payload, options.state, report);
   checkNoIo(options.source, report);
 
   return {

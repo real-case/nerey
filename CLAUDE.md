@@ -36,7 +36,8 @@ Architectural decisions are recorded **before** any code depends on them.
   `proposed → accepted` transition ran for real — and 0029 was superseded by 0038 in the same
   pass, closing deviation D-6. 0046–0053 were ratified on 2026-11-19 for the production-ready
   plan, superseding 0002 (by 0051), 0014 (by 0048), 0016 (by 0047) and 0036 (by 0050) and
-  closing D-1 and D-2. Their code lands in later commits; until it does, D-8 stays open.
+  closing D-1 and D-2. Their code lands in later commits; 0046 and the marker half of 0047
+  landed first and closed D-8.
 
 When a change needs a decision no ADR covers: record the ADR first, then implement.
 
@@ -104,6 +105,10 @@ When a change needs a decision no ADR covers: record the ADR first, then impleme
 - `npm run check:entry-fields` — every property of `WidgetRegistryEntry` is read by a non-test module
   in core (0049). A declared field nothing reads is a promise to every widget author that the
   runtime does not keep; implement it or remove it.
+- `npm run check:lifecycle-mutants` — re-plants the two D-8 defects (`timeout` measured from mount,
+  no expiry marker) in `use-widget-lifecycle.tsx` one at a time and requires
+  `lifecycle-reload.test.tsx` to fail against each (0046). The source is rewritten in place and
+  restored; never run two copies at once.
 - `npm run check:spelling` — `cspell` over every `*.md`, in `check:all` since 2026-08-26 (0001).
   Both English variants are accepted; `project-words.txt` holds the proper nouns and coined terms,
   and a word belongs there only when no dictionary would have it.
