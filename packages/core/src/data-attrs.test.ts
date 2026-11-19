@@ -172,7 +172,9 @@ describe('the attribute contract (ADR 0020 / 0029)', () => {
       {
         "fallback": "data-nerey-fallback",
         "part": "data-nerey-part",
+        "position": "data-nerey-position",
         "readonly": "data-readonly",
+        "scope": "data-nerey-scope",
         "slot": "data-nerey-slot",
         "state": "data-state",
         "status": "data-nerey-status",

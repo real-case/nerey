@@ -25,15 +25,6 @@ export type OverlayScope = OverlayPlacement['scope'];
 export const DEFAULT_INPUT_POSITION: InputPosition = 'above';
 
 /**
- * ADR 0017 names `data-nerey-position` and `data-nerey-scope` as part of the styling contract,
- * next to `data-nerey-slot`. The ADR 0020 vocabulary in `data-attrs.ts` predates both, and they are
- * spelled here rather than bolted onto `NEREY_ATTR` so the contract module keeps a single owner —
- * they belong in it, and `check-data-contract` will need them, the next time it is opened.
- */
-const ATTR_POSITION = 'data-nerey-position';
-const ATTR_SCOPE = 'data-nerey-scope';
-
-/**
  * The placement of the entry that will render this message, or `undefined` when nothing resolves.
  *
  * Routed through `resolveEnvelope` rather than reading `message.widget` directly, so a plain-text
@@ -79,9 +70,9 @@ export function isDismissible(placement: OverlayPlacement): boolean {
  * consumer selecting on a modifier with no subject.
  */
 export function inputSlotAttributes(position: InputPosition): Record<string, string> {
-  return { [NEREY_ATTR.slot]: 'input', [ATTR_POSITION]: position };
+  return { [NEREY_ATTR.slot]: 'input', [NEREY_ATTR.position]: position };
 }
 
 export function overlaySlotAttributes(scope: OverlayScope): Record<string, string> {
-  return { [NEREY_ATTR.slot]: 'overlay', [ATTR_SCOPE]: scope };
+  return { [NEREY_ATTR.slot]: 'overlay', [NEREY_ATTR.scope]: scope };
 }

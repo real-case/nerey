@@ -8,7 +8,9 @@
     "state": "data-state",
     "readonly": "data-readonly",
     "fallback": "data-nerey-fallback",
-    "theme": "data-nerey-theme"
+    "theme": "data-nerey-theme",
+    "position": "data-nerey-position",
+    "scope": "data-nerey-scope"
   },
   "states": [
     "idle",

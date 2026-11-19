@@ -36,7 +36,7 @@
     "MessageSlotHost": "(props: MessageSlotHostProps) => ReactElement",
     "MessageSlotHostProps": "export type MessageSlotHostProps = { messages: readonly NereyMessage[]; statusOf?: (message: NereyMessage) => WidgetStatus; readonlyOf?: (message: NereyMessage) => boolean; };",
     "NAVIGATE_EVENT": "'nerey:navigate'",
-    "NEREY_ATTR": "{ readonly widget: 'data-nerey-widget'; readonly version: 'data-nerey-version'; readonly slot: 'data-nerey-slot'; readonly part: 'data-nerey-part'; readonly status: 'data-nerey-status'; readonly state: 'data-state'; readonly readonly: 'data-readonly'; readonly fallback: 'data-nerey-fallback'; readonly theme: 'data-nerey-theme'; }",
+    "NEREY_ATTR": "{ readonly widget: 'data-nerey-widget'; readonly version: 'data-nerey-version'; readonly slot: 'data-nerey-slot'; readonly part: 'data-nerey-part'; readonly status: 'data-nerey-status'; readonly state: 'data-state'; readonly readonly: 'data-readonly'; readonly fallback: 'data-nerey-fallback'; readonly theme: 'data-nerey-theme'; readonly position: 'data-nerey-position'; readonly scope: 'data-nerey-scope'; }",
     "NEREY_STATES": "readonly ['idle', 'selected', 'submitting', 'locked', 'expired', 'error']",
     "NEVER_EXPIRES": "Lifecycle",
     "NereyError": "class NereyError { new (init: NereyErrorLike): NereyError; cause: unknown; code: NereyErrorCode; issues: readonly { path: string; message: string; }[] | undefined; message: string; messageId: string | number | undefined; name: string; stack: string | undefined; widgetType: string | undefined; widgetVersion: string | undefined }",
