@@ -302,29 +302,25 @@ describe('emptyRegistry', () => {
 
 type CounterPayload = { count: number };
 type CounterState = { bumped: boolean };
-type CounterEvent = { kind: 'bump' };
 
 const CounterComponent: WidgetComponent<CounterPayload, CounterState> = () => null;
 const MismatchedComponent: WidgetComponent<{ label: string }, CounterState> = () => null;
 
 function counterEntry(
   component: WidgetComponent<CounterPayload, CounterState>,
-): WidgetRegistryEntry<CounterPayload, CounterState, CounterEvent> {
-  return defineWidget<CounterPayload, CounterState, CounterEvent>({
+): WidgetRegistryEntry<CounterPayload, CounterState> {
+  return defineWidget<CounterPayload, CounterState>({
     type: 'counter',
     version: '1.0.0',
     component,
     placement: { slot: 'message' },
     lifecycle: LIFECYCLE,
-    // Inference on both reducer parameters is the point of the helper: written as a bare
-    // object literal these widen and the widget author loses the event type.
-    reducer: (previous, event) => (event.kind === 'bump' ? { bumped: true } : previous),
   });
 }
 
 describe('defineWidget', () => {
   it('returns the entry it was given, unchanged and by identity', () => {
-    const entry: WidgetRegistryEntry<CounterPayload, CounterState, CounterEvent> = {
+    const entry: WidgetRegistryEntry<CounterPayload, CounterState> = {
       type: 'counter',
       version: '1.0.0',
       component: CounterComponent,
@@ -335,14 +331,8 @@ describe('defineWidget', () => {
     expect(defineWidget(entry)).toBe(entry);
   });
 
-  it('preserves the generics through the reducer', () => {
-    const entry = counterEntry(CounterComponent);
-
-    expect(entry.reducer?.({ bumped: false }, { kind: 'bump' })).toEqual({ bumped: true });
-  });
-
   it('rejects a component whose payload prop contradicts the declared generic', () => {
-    const entry = defineWidget<CounterPayload, CounterState, CounterEvent>({
+    const entry = defineWidget<CounterPayload, CounterState>({
       type: 'counter',
       version: '1.0.0',
       // @ts-expect-error — a component typed for a different payload must not satisfy the

@@ -108,6 +108,11 @@ const GATES = [
     why: 'builds a TypeScript program over four barrels — ~1.1s, well past the ~2s the whole hook gets, and `check-public-api` already covers the same files at edit time (ADR 0038)',
   },
   {
+    script: 'scripts/check-entry-fields.mjs',
+    hook: 'ci-only',
+    why: 'builds a TypeScript program over every module in core to resolve each property read — the same cost as check-api-signatures, and the field it guards is only ever added in a reviewed contract change (ADR 0049)',
+  },
+  {
     script: 'scripts/check-exports.mjs',
     hook: 'ci-only',
     why: 'packs a tarball and shells out to publint and attw — seconds, not the ~2s the whole hook gets',

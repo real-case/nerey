@@ -153,7 +153,7 @@ export type WidgetComponent<Payload = unknown, State = unknown> = ComponentType<
  */
 export type WidgetMigration = (fromVersion: string, payload: unknown) => unknown;
 
-export type WidgetRegistryEntry<Payload = unknown, State = unknown, Event = unknown> = {
+export type WidgetRegistryEntry<Payload = unknown, State = unknown> = {
   type: string;
   version: string;
   component: WidgetComponent<Payload, State>;
@@ -178,10 +178,6 @@ export type WidgetRegistryEntry<Payload = unknown, State = unknown, Event = unkn
   payloadSchema?: StandardSchemaV1<unknown, Payload>;
   stateSchema?: StandardSchemaV1<unknown, State>;
 
-  /** Applied to `state` when the host dispatches a widget event. */
-  reducer?: (previous: State, event: Event) => State;
-  updateStrategy?: 'optimistic' | 'pessimistic';
-  cancellable?: boolean;
   migrate?: WidgetMigration;
 
   /**
@@ -212,7 +208,7 @@ export type WidgetRegistryEntry<Payload = unknown, State = unknown, Event = unkn
  * site when a reader would otherwise wonder where the types went.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- see above; contained to this alias.
-export type AnyWidgetRegistryEntry = WidgetRegistryEntry<any, any, any>;
+export type AnyWidgetRegistryEntry = WidgetRegistryEntry<any, any>;
 
 /* ────────────────────────────────────────────────────────────────────────────────────
  * Persistence (ADR 0016)

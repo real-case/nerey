@@ -28,7 +28,6 @@ describe('the confirmation registry entry', () => {
     // omissions, so they are asserted rather than assumed.
     expect(confirmationWidget.acceptsVersion).toBeUndefined();
     expect(confirmationWidget.migrate).toBeUndefined();
-    expect(confirmationWidget.reducer).toBeUndefined();
   });
 
   it('resolves out of a registry at its own version and at no other', () => {

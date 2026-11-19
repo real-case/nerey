@@ -119,13 +119,13 @@ export const emptyRegistry: WidgetRegistry = {
 };
 
 /**
- * The authoring entry point. It exists purely to preserve the `<Payload, State, Event>`
- * generics end to end: written as a bare object literal, TypeScript widens the component's
- * props and a widget author loses inference on `payload`, `state` and the reducer's event.
+ * The authoring entry point. It exists purely to preserve the `<Payload, State>` generics end
+ * to end: written as a bare object literal, TypeScript widens the component's props and a
+ * widget author loses inference on `payload` and `state`.
  */
-export function defineWidget<Payload = unknown, State = unknown, Event = unknown>(
-  entry: WidgetRegistryEntry<Payload, State, Event>,
-): WidgetRegistryEntry<Payload, State, Event> {
+export function defineWidget<Payload = unknown, State = unknown>(
+  entry: WidgetRegistryEntry<Payload, State>,
+): WidgetRegistryEntry<Payload, State> {
   return entry;
 }
 
@@ -135,8 +135,8 @@ export function defineWidget<Payload = unknown, State = unknown, Event = unknown
  * parameter can express; the types are reasserted at the consumer end by the widget's own
  * typed component.
  */
-export function asAnyWidget<Payload, State, Event>(
-  entry: WidgetRegistryEntry<Payload, State, Event>,
+export function asAnyWidget<Payload, State>(
+  entry: WidgetRegistryEntry<Payload, State>,
 ): AnyWidgetRegistryEntry {
   // No cast: `AnyWidgetRegistryEntry` already erases the generics (see its definition in
   // types.ts). This function survives as a documented, greppable marker at the point where a
