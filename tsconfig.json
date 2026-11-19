@@ -6,7 +6,6 @@
     "declaration": false,
     "declarationMap": false,
     "types": ["node", "vitest/globals", "@testing-library/jest-dom"],
-    "baseUrl": ".",
     // Workspace packages resolve to SOURCE during development. Without this, typechecking
     // @nerey/theme would require @nerey/core to have been built first, which turns every
     // clean checkout into a two-step and makes editor feedback depend on a build artifact.
