@@ -37,6 +37,8 @@ import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { resolve, join, basename, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { listRecordNumbers } from './check-adr-citations.mjs';
+
 const repoRoot = resolve(fileURLToPath(import.meta.url), '..', '..');
 const DECISIONS = resolve(repoRoot, 'docs/decisions');
 
@@ -138,13 +140,11 @@ function loadScopeVocabulary() {
 }
 
 function loadAdrNumbers() {
-  let entries;
-  try {
-    entries = readdirSync(DECISIONS).sort();
-  } catch {
+  // D-3 — resolved by the citations gate's own resolver, so `Refs: ADR NNNN` and a prose
+  // `ADR NNNN` cannot disagree about which records exist (ADR 0050).
+  if (!existsSync(DECISIONS))
     fail(`${relative(repoRoot, DECISIONS)} is missing, so \`Refs: ADR NNNN\` footers cannot be resolved.`);
-  }
-  const numbers = new Set(entries.map((e) => /^(\d{4})-.+\.md$/.exec(e)?.[1]).filter(Boolean));
+  const numbers = listRecordNumbers(DECISIONS);
   if (!numbers.size)
     fail(`${relative(repoRoot, DECISIONS)} holds no NNNN-*.md records — the citation rule would never fire.`);
   return numbers;

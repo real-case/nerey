@@ -56,6 +56,11 @@ was written in parallel with the citations gate and neither could import the oth
 `check-commits.mjs`'s `loadAdrNumbers()` should call it — one shared implementation, which is
 the same argument that made `post-edit.mjs` a dispatcher rather than a second copy of the rules.
 
+**Resolved** — 2026-11-19. `check-adr-citations.mjs` exports `listRecordNumbers()`, the single
+filename rule for "ADR NNNN exists", and runs its own scan only when executed as a script, so
+importing it has no side effect. `check-commits.mjs` imports it and its inline corpus scan is gone;
+its fail-closed checks (missing directory, empty corpus) stay in the commit gate, where they belong.
+
 ## D-4 · `data-nerey-position` is contract-adjacent but not in `NEREY_ATTR`
 
 **Record says** (0017, 0020): the placement attributes are part of the styling contract.
