@@ -105,10 +105,11 @@ When a change needs a decision no ADR covers: record the ADR first, then impleme
 - `npm run check:entry-fields` — every property of `WidgetRegistryEntry` is read by a non-test module
   in core (0049). A declared field nothing reads is a promise to every widget author that the
   runtime does not keep; implement it or remove it.
-- `npm run check:lifecycle-mutants` — re-plants the two D-8 defects (`timeout` measured from mount,
-  no expiry marker) in `use-widget-lifecycle.tsx` one at a time and requires
-  `lifecycle-reload.test.tsx` to fail against each (0046). The source is rewritten in place and
-  restored; never run two copies at once.
+- `npm run check:mutants` — re-plants known-wrong implementations one at a time and requires the
+  test that guards each to fail: the two D-8 defects (`timeout` from mount, no expiry marker)
+  against `lifecycle-reload.test.tsx` (0046), and ADR 0016's drop-on-unmount write against
+  `use-widget-state.test.tsx` (0047). Sources are rewritten in place and restored; never run two
+  copies at once.
 - `npm run check:spelling` — `cspell` over every `*.md`, in `check:all` since 2026-08-26 (0001).
   Both English variants are accepted; `project-words.txt` holds the proper nouns and coined terms,
   and a word belongs there only when no dictionary would have it.

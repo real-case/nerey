@@ -1,4 +1,4 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, render, renderHook } from '@testing-library/react';
 import { StrictMode } from 'react';
 import type { ReactElement, ReactNode } from 'react';
 import type { Mock } from 'vitest';
@@ -320,7 +320,7 @@ describe('a failed write', () => {
 });
 
 describe('aborting', () => {
-  it('aborts the in-flight write on unmount and reports nothing', async () => {
+  it('lets an in-flight write land after unmount, and reports nothing for it (ADR 0047)', async () => {
     const { store, writes, errors, wrapper } = harness();
     store.setLatency(50);
     const { result, unmount } = renderHook(() => useWidgetState('msg-1', { answer: 'none' }), {
@@ -339,13 +339,13 @@ describe('aborting', () => {
     unmount();
     await advance(200);
 
-    expect(store.snapshot()).toEqual({});
-    // An abort is a cancellation, not a persistence failure; reporting it would light up an
-    // error for every widget the user scrolled past mid-save.
+    // The queue owns the request, so the dead component no longer cancels it.
+    expect(writes).toHaveBeenCalledTimes(1);
+    expect(store.snapshot()).toEqual({ [`${CONVERSATION}:msg-1`]: { answer: 'yes' } });
     expect(errors).toEqual([]);
   });
 
-  it('drops a write still inside its debounce window on unmount', async () => {
+  it('flushes a write still inside its debounce window on unmount, exactly once (ADR 0047)', async () => {
     const { store, writes, errors, wrapper } = harness();
     const { result, unmount } = renderHook(() => useWidgetState('msg-1', { answer: 'none' }), {
       wrapper,
@@ -355,10 +355,13 @@ describe('aborting', () => {
       result.current.setState({ answer: 'yes' });
     });
     unmount();
-    await advance(2_000);
+    // Well inside the 400ms window: the write left at unmount, not when the timer would have fired.
+    await advance(10);
+    expect(writes).toHaveBeenCalledTimes(1);
 
-    expect(writes).not.toHaveBeenCalled();
-    expect(store.snapshot()).toEqual({});
+    await advance(2_000);
+    expect(writes).toHaveBeenCalledTimes(1);
+    expect(store.snapshot()).toEqual({ [`${CONVERSATION}:msg-1`]: { answer: 'yes' } });
     expect(errors).toEqual([]);
   });
 
@@ -582,5 +585,114 @@ describe('with no host provider mounted', () => {
     expect(result.current.state).toEqual({ answer: 'yes' });
     expect(result.current.status).toBe('idle');
     expect(result.current.error).toBeUndefined();
+  });
+});
+
+describe('the host-owned write queue (ADR 0047)', () => {
+  /**
+   * The provider stays mounted while the widget comes and goes, which `renderHook`'s wrapper cannot
+   * express: its `unmount` takes the provider down too. `Slot` holds the widget, `show` toggles it.
+   */
+  function mountToggle(host: WidgetHostValue) {
+    let latest: ReturnType<typeof useWidgetState<{ answer: string }>> | undefined;
+    function Widget({ initial }: { initial: { answer: string } }): ReactElement {
+      latest = useWidgetState('msg-1', initial);
+      return <output>{latest.state.answer}</output>;
+    }
+    function Slot({ show, initial }: { show: boolean; initial: { answer: string } }): ReactElement {
+      return (
+        <WidgetHostProvider value={host}>{show ? <Widget initial={initial} /> : <span />}</WidgetHostProvider>
+      );
+    }
+    const view = render(<Slot show initial={{ answer: 'none' }} />);
+    return {
+      get hook() {
+        if (!latest) throw new Error('widget not mounted');
+        return latest;
+      },
+      show: (initial: { answer: string }) => view.rerender(<Slot show initial={initial} />),
+      hide: () => view.rerender(<Slot show={false} initial={{ answer: 'none' }} />),
+      unmountAll: view.unmount,
+      text: () => view.container.querySelector('output')?.textContent,
+    };
+  }
+
+  it('hydrates a remount inside the debounce window from the queued value, not from `initial`', async () => {
+    const { store, host } = harness();
+    store.setLatency(1_000);
+    const view = mountToggle(host);
+
+    act(() => {
+      view.hook.setState({ answer: 'yes' });
+    });
+    view.hide();
+    // The envelope the host re-renders with was taken before the write: it still says `none`.
+    view.show({ answer: 'none' });
+
+    expect(view.text()).toBe('yes');
+    await advance(1_500);
+    expect(store.snapshot()).toEqual({ [`${CONVERSATION}:msg-1`]: { answer: 'yes' } });
+  });
+
+  it('falls back to `initial` once the port has confirmed the write', async () => {
+    const { host } = harness();
+    const view = mountToggle(host);
+
+    act(() => {
+      view.hook.setState({ answer: 'yes' });
+    });
+    await advance(400);
+    view.hide();
+    view.show({ answer: 'from the host' });
+
+    expect(view.text()).toBe('from the host');
+  });
+
+  it('reports a rejected flush through onWidgetError after the widget is gone', async () => {
+    const { store, host, errors } = harness();
+    store.failNextWrites(1);
+    const view = mountToggle(host);
+
+    act(() => {
+      view.hook.setState({ answer: 'yes' });
+    });
+    view.hide();
+    await advance(10);
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toBeInstanceOf(NereyError);
+    expect(errors[0]).toMatchObject({ code: 'persistence', messageId: 'msg-1' });
+    // Unsettled after a failure, so a remount still shows what the user did — no rollback.
+    view.show({ answer: 'none' });
+    expect(view.text()).toBe('yes');
+  });
+
+  it('flushes what is left when the provider itself unmounts', async () => {
+    const { store, writes, host } = harness();
+    const view = mountToggle(host);
+
+    act(() => {
+      view.hook.setState({ answer: 'yes' });
+    });
+    view.unmountAll();
+    await advance(10);
+
+    expect(writes).toHaveBeenCalledTimes(1);
+    expect(store.snapshot()).toEqual({ [`${CONVERSATION}:msg-1`]: { answer: 'yes' } });
+  });
+
+  it('coalesces two writes for the same key into the later value', async () => {
+    const { store, writes, host } = harness();
+    const view = mountToggle(host);
+
+    act(() => {
+      view.hook.setState({ answer: 'first' });
+      view.hook.setState({ answer: 'second' });
+    });
+    view.hide();
+    await advance(10);
+
+    expect(writes).toHaveBeenCalledTimes(1);
+    expect(store.snapshot()).toEqual({ [`${CONVERSATION}:msg-1`]: { answer: 'second' } });
   });
 });

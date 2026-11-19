@@ -185,7 +185,7 @@ against the host's injected `now`; a fired rule writes a `LifecycleRecord` throu
 pending or failed. `lifecycle-reload.test.tsx` asserts the reload case with a widget that has no lock
 of its own, `lifecycle-ssr.test.tsx` the server/client agreement, and the conformance kit's
 `remount-respects-marker` rule carries the same check into a widget author's repository.
-`check:lifecycle-mutants` re-plants both defects described above and requires the reload test to fail
+`check:mutants` re-plants both defects described above and requires the reload test to fail
 against each, so the gap that passed every gate the first time now has one that sees it.
 
 ---
