@@ -1,44 +1,55 @@
 # Verification record
 
-State of the repository as of 2026-08-10, at the end of the initial build. Every number below
-was produced by running the command named next to it, not by reading a summary.
+State of the repository as of 2026-11-19, on `main` after phase 2 of the production-ready plan
+(commit 7cca749) plus the security policy. Every number below was produced by running the command
+named next to it, on Node 24 in the Linux container, not by reading a summary. The first record,
+taken at the end of the initial build on 2026-08-10, is kept in git history; the two sections after
+the tables are from that build and remain true as history.
 
 ## Gates
 
-| Command                       | Result                                                           |
-| ----------------------------- | ---------------------------------------------------------------- |
-| `npm run typecheck`           | PASS — `tsc --noEmit`, 258 source files, 0 errors                |
-| `npm run lint`                | PASS — 0 errors, 0 warnings                                      |
-| `npm run format:check`        | PASS                                                             |
-| `npm run gen:check`           | PASS — 127 tokens and 44 CSS Module declarations current         |
-| `npm run build`               | PASS — both packages, JS + CSS + declarations                    |
-| `npm run check:tokens`        | PASS — 44 stylesheets                                            |
-| `npm run check:core-purity`   | PASS — 36 shipped source files, manifest and dist                |
-| `npm run check:data-contract` | PASS — 9 attributes, 6 states, 200 source files                  |
-| `npm run check:public-api`    | PASS — 472 symbols across 4 barrels                              |
-| `npm run check:stories`       | PASS — 45 components, 45 with stories, 45 with play functions    |
-| `npm run check:a11y`          | PASS — 2 documented waivers, none expired                        |
-| `npm run check:citations`     | PASS — 1753 citations across 327 files resolve to 37 records     |
-| `npm run check:commits`       | PASS — every commit conforms; no longer vacuous                  |
-| `npm run check:boundaries`    | PASS — 116 modules, 370 dependencies, 0 violations               |
-| `npm run check:exports`       | PASS — manifests, artifacts, `publint`, `attw`                   |
-| `npm run check:gates`         | PASS — **12 gates registered, 12 self-tests passed, 0 warnings** |
+| Command                         | Result                                                                  |
+| ------------------------------- | ----------------------------------------------------------------------- |
+| `npm run typecheck`             | PASS — `tsc -p tsconfig.json`, 0 errors                                 |
+| `npm run lint`                  | PASS — 0 errors, 0 warnings                                             |
+| `npm run format:check`          | PASS                                                                    |
+| `npm run gen:check`             | PASS — 127 tokens and 44 CSS Module declarations current                |
+| `npm run build`                 | PASS — three packages, JS + CSS + declarations                          |
+| `npm run check:tokens`          | PASS — 44 stylesheets                                                   |
+| `npm run check:core-purity`     | PASS — 38 shipped source files, manifest and dist                       |
+| `npm run check:data-contract`   | PASS — 11 attributes, 6 states, 203 source files                        |
+| `npm run check:public-api`      | PASS — 487 symbols across 4 barrels                                     |
+| `npm run check:api-signatures`  | PASS — 487 signatures across 4 barrels                                  |
+| `npm run check:entry-fields`    | PASS — all 11 fields of `WidgetRegistryEntry` read by core              |
+| `npm run check:mutants`         | PASS — 5 of 5 planted defects across 3 suites killed                    |
+| `npm run check:stories`         | PASS — 45 components, 45 with stories, 45 with play functions           |
+| `npm run check:a11y`            | PASS — 2 documented waivers, none expired                               |
+| `npm run check:citations`       | PASS — 2292 citations across 345 files resolve to 53 records            |
+| `npm run check:commits`         | PASS — every commit in the range conforms                               |
+| `npm run check:boundaries`      | PASS — 235 modules, 695 dependencies, 0 violations                      |
+| `npm run check:ci-pins`         | PASS — 3 workflows, every action pinned by digest                       |
+| `npm run check:workflow-gates`  | PASS — 3 workflows, 2 on pull requests, no shared concurrency group     |
+| `npm run check:widget-labels`   | PASS — 11 widgets read all 32 chrome strings through the labels context |
+| `npm run check:eslint-rules`    | PASS — 52 boundary lines across 4 surfaces                              |
+| `npm run check:security-policy` | PASS — private channel named, 3 packages covered, threat model linked   |
+| `npm run check:spelling`        | PASS — 68 Markdown files, 0 issues                                      |
+| `npm run check:exports`         | PASS — 3 packages: manifests, artifacts, `publint`, `attw`              |
+| `npm run check:gates`           | PASS — **22 gates registered, 22 self-tests passed, 0 warnings**        |
+
+`npm run test:visual` and `npm run check:published-site` run in CI only (the pinned Playwright
+image, and the deploy job with network), so they are not in this table.
 
 ## Tests
 
-| Suite                                         | Result                                                                |
-| --------------------------------------------- | --------------------------------------------------------------------- |
-| `vitest --project unit` (jsdom)               | 751 tests, 29 files, all passing                                      |
-| `vitest --project storybook` (Chromium + axe) | 352 tests, 45 files, all passing                                      |
-| Merged coverage                               | statements 95.05% · branches 89.04% · functions 97.19% · lines 96.98% |
+| Suite                                         | Result                                                             |
+| --------------------------------------------- | ------------------------------------------------------------------ |
+| `vitest --project unit` (jsdom)               | 839 tests, 37 files, all passing                                   |
+| `vitest --project storybook` (Chromium + axe) | 352 tests, 45 files, all passing                                   |
+| Merged coverage (`vitest run --coverage`)     | statements 95% · branches 89.91% · functions 96.86% · lines 97.01% |
 
 Thresholds are 80 / 75 / 80 / 80. Coverage is **merged across both projects** — running only
-`--project unit` reports 44%, because most of the theme is covered by stories rather than by
+`--project unit` reports far less, because most of the theme is covered by stories rather than by
 unit tests, and reading that number alone would be reading half the evidence.
-
-The browser suite was confirmed over 18 consecutive full-suite runs, five of them with
-`--sequence.shuffle`. That was not ceremony: one failure in it (`Disclosure/Tabs`) was a race
-that reproduced roughly one run in three, and a single green run would not have been evidence.
 
 ## What the gates caught that review would not have
 
@@ -119,9 +130,6 @@ by more careful reading.
 
 ## Known limitations
 
-- `check:spelling` is outside `check:all`: `cspell` has no project dictionary and reports
-  several hundred unknown words, which makes it noise rather than a gate. Recorded in
-  `CHECK_ALL_EXEMPT` inside `check-gates.mjs`.
 - The Storybook test-runner smoke pass over a _built_ Storybook is not wired. The Vitest browser
   project covers the same stories against the dev build; the static-build-only failure mode is
   uncovered.
@@ -131,6 +139,8 @@ by more careful reading.
 
 ## Deviations
 
-Five places where the code and an accepted ADR disagree are recorded in
-[deviations.md](deviations.md), each with the direction of the fix. None is a silent divergence:
-every one was surfaced by a gate or by an agent reading a record against the code.
+Nine places where the code and an accepted ADR disagreed are recorded in
+[deviations.md](deviations.md), each with the direction of the fix. All nine are resolved: D-1 to
+D-6 and D-8 by code or a superseding record, D-7 by code, and D-9 by an in-place edit of ADR 0018
+that the repo owner authorised. None was a silent divergence: every one was surfaced by a gate or
+by an agent reading a record against the code.
