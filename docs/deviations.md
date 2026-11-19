@@ -69,6 +69,11 @@ than failing.
 change under ADR 0029 — additive, so MINOR — and should happen in one deliberate commit rather
 than as a side effect of some other work.
 
+**Resolved** — 2026-11-19. Both are `NEREY_ATTR.position` and `NEREY_ATTR.scope`, `placement.ts`
+reads them from there, `check-data-contract.mjs` no longer carries an `EXTERNALLY_DECLARED_ATTRS`
+escape hatch, and `data-contract.json` lists eleven attributes. The re-bless happened in that one
+commit, under the pre-release rule in `docs/releasing.md`.
+
 ## D-5 · Error messages other than `unknown-widget` do not name the widget in prose
 
 **Record says** (0013): errors carry the widget coordinates that identify them. They do.

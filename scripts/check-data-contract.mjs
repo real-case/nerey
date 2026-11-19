@@ -37,17 +37,6 @@ const BASELINE = resolve(repoRoot, 'docs/design-system/data-contract.json');
 const PACKAGES = resolve(repoRoot, 'packages');
 const BASELINE_REL = relative(repoRoot, BASELINE).split(sep).join('/');
 
-/**
- * `data-nerey-*` names that belong to the contract but are not spelled in `NEREY_ATTR`.
- *
- * ADR 0017 introduced the placement pair after ADR 0020's vocabulary was written, and
- * `packages/core/src/slots/placement.ts` declares them locally so the contract module keeps a
- * single owner. They are enumerated here rather than pattern-matched away: adding a name to this
- * constant is a deliberate, reviewable act, exactly like adding one to `NEREY_ATTR`. A wildcard
- * escape hatch would turn this rule off without anyone editing it.
- */
-const EXTERNALLY_DECLARED_ATTRS = new Set(['data-nerey-scope', 'data-nerey-position']);
-
 // Which attributes have an OPEN value set, and why only `data-state` gets a value rule below:
 //
 //   part      OPEN — part names are widget/theme-defined; inventing one is the intended usage.
@@ -360,7 +349,7 @@ function checkFile(absPath, contract) {
 
   for (const m of text.matchAll(NEREY_ATTRIBUTE_RE)) {
     const name = m[0];
-    if (declared.has(name) || EXTERNALLY_DECLARED_ATTRS.has(name)) continue;
+    if (declared.has(name)) continue;
     add(
       m.index,
       'unprefixed-attribute',

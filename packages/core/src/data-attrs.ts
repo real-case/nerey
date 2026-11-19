@@ -35,6 +35,10 @@ export const NEREY_ATTR = {
   readonly: 'data-readonly',
   fallback: 'data-nerey-fallback',
   theme: 'data-nerey-theme',
+  /** ADR 0017 — where an `input` slot entry sits relative to the composer. */
+  position: 'data-nerey-position',
+  /** ADR 0017 — the containing surface of an `overlay` slot entry. */
+  scope: 'data-nerey-scope',
 } as const;
 
 /** The value set for `data-state`. Widgets outside this vocabulary fail the contract test. */
