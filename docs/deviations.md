@@ -225,6 +225,13 @@ send, is right; the selector is one way of checking it and is wrong for accessib
 controls. A superseding record for 0018's `Confirmation` should name the behavioural check and the
 three declared-inert exemptions, so the kit and the record agree again.
 
+**Resolved** — 2026-11-19, by an in-place edit of ADR 0018's `Confirmation`, the one exception to
+ADR 0001 so far. The repo owner chose it over a superseding record and authorised it explicitly
+through the guard's `.adr-edit-waiver`, which was removed straight after the edit. The record now
+names the behavioural check and the three declared-inert exemptions, matching the kit;
+`conformance.test.tsx` covers both directions, an exempted control that stays quiet passes and one
+that still sends a reply fails.
+
 ---
 
 ## Not deviations

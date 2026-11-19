@@ -175,9 +175,14 @@ absolute and is the reason `snapshot` exists at all.
   renderer and emits nothing to `onWidgetError` (ADR 0013).
 * The widget conformance kit exported from `@nerey/core/testing` and run under `npm run test:unit`
   adds three entry-level rules: an entry combining `persist: 'ephemeral'` with an action-bearing
-  expiry rule fails; an entry whose component renders an enabled control while `readonly` is true
-  fails, checked by requiring
-  `[data-readonly="true"] :is(button,input,select,textarea):not([disabled])` to match nothing; and an
+  expiry rule fails; an entry whose component lets a read-only widget change its answer or send
+  fails, checked behaviourally by the `remount-respects-marker` rule: it clicks every button of the
+  read-only render and fails on any message sent, and it requires
+  `[data-readonly="true"] :is(button,input,select,textarea):not([disabled])` to match nothing
+  except controls the markup itself declares inert — `readonly` / `aria-readonly="true"`, a hidden
+  mirror input (`aria-hidden="true"` with `tabindex="-1"`), and a disclosure trigger
+  (`aria-expanded`). The exemptions exist because `disabled` drops a radio group out of the tab
+  order, so an accessible read-only widget locks with `readOnly` instead (ADR 0032, D-9); and an
   entry declaring a `navigate` or `event` rule with no registered signal source in its test host fails
   as unreachable.
 * `npm run check:data-contract` (`scripts/check-data-contract.mjs`) locks `data-readonly` and the
