@@ -233,6 +233,25 @@ function readStatus(text) {
   return (m?.[1] ?? '').toLowerCase();
 }
 
+/**
+ * D-3 / ADR 0050 — the one definition of "ADR NNNN exists", shared with `check-commits.mjs` so a
+ * `Refs: ADR NNNN` footer and a prose citation resolve against the same corpus by the same rule.
+ * Filenames only: whether a record exists does not depend on what it says.
+ *
+ * @param {string} [dir] the decisions directory; the self-tests pass a fixture.
+ * @returns {Set<string>} four-digit record numbers. Empty when the directory is missing or holds no
+ *   records; the caller decides whether that is fatal, because for this gate it is a finding and
+ *   for the commit gate it is a broken checkout.
+ */
+export function listRecordNumbers(dir = DECISIONS_DIR) {
+  if (!existsSync(dir)) return new Set();
+  return new Set(
+    readdirSync(dir)
+      .map((file) => RECORD_RE.exec(file)?.[1])
+      .filter((n) => n !== undefined),
+  );
+}
+
 function listRecords() {
   if (!existsSync(DECISIONS_DIR)) return [];
   return readdirSync(DECISIONS_DIR)
@@ -370,7 +389,10 @@ function run() {
   };
 }
 
-if (process.argv.includes('--self-test')) {
+/** Run as a script, not imported for `listRecordNumbers` — importing must not scan the repository. */
+const IS_MAIN = process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (IS_MAIN && process.argv.includes('--self-test')) {
   // ADR 0033 — a gate that cannot be shown to reject its own violator is decorative.
   //
   // The corpus rules take plain data, so their fixtures are a four-record synthetic corpus rather
@@ -504,6 +526,25 @@ if (process.argv.includes('--self-test')) {
   for (const [label, rel] of SCANNED) outcomes.push([`${label} — ${rel}`, isScanned(rel)]);
   for (const [label, rel] of NOT_SCANNED) outcomes.push([`allows skipping ${label}`, !isScanned(rel)]);
 
+  // D-3 — the resolver the commit gate imports. A file that is not a record must not count, and a
+  // missing directory resolves to nothing rather than throwing, so each caller decides how to fail.
+  {
+    const dir = mkdtempSync(join(tmpdir(), 'nerey-adr-records-'));
+    try {
+      for (const name of ['0001-meta.md', '0002-two.md', 'README.md', '12-short.md', '0003-.md']) {
+        writeFileSync(join(dir, name), '', 'utf8');
+      }
+      const numbers = [...listRecordNumbers(dir)].sort().join(',');
+      outcomes.push([`allows only NNNN-title.md as a record [${numbers}]`, numbers === '0001,0002']);
+      outcomes.push([
+        'allows a missing decisions directory to resolve to nothing',
+        listRecordNumbers(join(dir, 'absent')).size === 0,
+      ]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }
+
   let failures = 0;
   for (const [label, ok, detail] of outcomes) {
     const positive = !label.startsWith('allows ');
@@ -523,33 +564,39 @@ if (process.argv.includes('--self-test')) {
   process.exit(failures === 0 ? 0 : 1);
 }
 
-const { files, records, citations, problems, warnings, eligible } = run();
+function main() {
+  const { files, records, citations, problems, warnings, eligible } = run();
 
-for (const w of warnings) {
-  console.log(`  ⚠ ${w.rel}:${w.line}  [${w.rule}] ${w.message}`);
-}
-if (warnings.length) {
-  const share = Math.round((warnings.length / Math.max(eligible, 1)) * 100);
-  console.log(
-    `  ⚠ ${warnings.length}/${eligible} citable record(s) (${share}%) are referenced by nothing. This ` +
-      `does not fail the build — a record can be legitimately uncited for a while — but a corpus ` +
-      `most of which nothing points at has stopped being load-bearing (ADR 0001).\n`,
-  );
-}
-
-if (problems.length) {
-  console.error(`✗ ADR citations: ${problems.length} violation(s) across ${files.length} scanned file(s)\n`);
-  for (const p of problems) {
-    console.error(`  ${p.rel}:${p.line}  [${p.rule}] ${p.message}`);
+  for (const w of warnings) {
+    console.log(`  ⚠ ${w.rel}:${w.line}  [${w.rule}] ${w.message}`);
   }
-  console.error(
-    `\n  ADR 0001 fixes the citation form as a bare \`${TAG} 0029\`, unlinked, so one grep finds ` +
-      `every reference. Records live in docs/decisions/.`,
+  if (warnings.length) {
+    const share = Math.round((warnings.length / Math.max(eligible, 1)) * 100);
+    console.log(
+      `  ⚠ ${warnings.length}/${eligible} citable record(s) (${share}%) are referenced by nothing. This ` +
+        `does not fail the build — a record can be legitimately uncited for a while — but a corpus ` +
+        `most of which nothing points at has stopped being load-bearing (ADR 0001).\n`,
+    );
+  }
+
+  if (problems.length) {
+    console.error(
+      `✗ ADR citations: ${problems.length} violation(s) across ${files.length} scanned file(s)\n`,
+    );
+    for (const p of problems) {
+      console.error(`  ${p.rel}:${p.line}  [${p.rule}] ${p.message}`);
+    }
+    console.error(
+      `\n  ADR 0001 fixes the citation form as a bare \`${TAG} 0029\`, unlinked, so one grep finds ` +
+        `every reference. Records live in docs/decisions/.`,
+    );
+    process.exit(1);
+  }
+
+  console.log(
+    `✓ ADR citations: ${citations.length} citation(s) in ${files.length} scanned file(s) resolve to ` +
+      `${records.length} record(s); ${INDEX_REL} in sync`,
   );
-  process.exit(1);
 }
 
-console.log(
-  `✓ ADR citations: ${citations.length} citation(s) in ${files.length} scanned file(s) resolve to ` +
-    `${records.length} record(s); ${INDEX_REL} in sync`,
-);
+if (IS_MAIN) main();
