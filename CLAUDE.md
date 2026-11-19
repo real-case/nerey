@@ -34,7 +34,9 @@ Architectural decisions are recorded **before** any code depends on them.
 - The bootstrap corpus 0001–0037 was accepted in bulk by the repo owner on 2026-08-09, before
   any package contained code. 0038–0045 were ratified on 2026-08-31 — the first time the
   `proposed → accepted` transition ran for real — and 0029 was superseded by 0038 in the same
-  pass, closing deviation D-6.
+  pass, closing deviation D-6. 0046–0053 were ratified on 2026-11-19 for the production-ready
+  plan, superseding 0002 (by 0051), 0014 (by 0048), 0016 (by 0047) and 0036 (by 0050) and
+  closing D-1 and D-2. Their code lands in later commits; until it does, D-8 stays open.
 
 When a change needs a decision no ADR covers: record the ADR first, then implement.
 
@@ -42,8 +44,9 @@ When a change needs a decision no ADR covers: record the ADR first, then impleme
 
 - **React 19** (peer `^19`), **TypeScript strict** + `noUncheckedIndexedAccess` +
   `noImplicitOverride`, `any` banned (0003).
-- **Node 24**, **npm workspaces**; three published packages, `@nerey/core` never depends on
-  `@nerey/theme` (0002, 0004).
+- **Node 24**, **npm workspaces**; published packages under `packages/*`, private examples
+  under `examples/*`. `@nerey/core` never depends on `@nerey/theme` or an adapter, and an
+  adapter takes core and its SDK as peers with empty `dependencies` (0051, 0004).
 - **Vite 8** library builds; declarations from `tsc --emitDeclarationOnly`. CSS Modules are
   compiled at build time into one static `theme.css` with hashed class names, because a
   consumer must never configure CSS Modules for `node_modules` (0023).
@@ -130,7 +133,7 @@ When a change needs a decision no ADR covers: record the ADR first, then impleme
 - Evolve a widget's payload with `migrate` on the entry — a tolerant reader, applied on read,
   before validation.
 
-**Contracts (0011–0016, 0019)**
+**Contracts (0011–0013, 0015, 0019, 0047, 0048)**
 
 - Validate through Standard Schema; never import a validator into `@nerey/core`.
 - The degradation chain is: unknown `type@version` → invalid payload → component throw →
@@ -188,7 +191,7 @@ When a change needs a decision no ADR covers: record the ADR first, then impleme
 - Widget stories render through `WidgetRenderer` inside `MockWidgetHost`, not by calling the
   component directly — that is what proves the whole chain.
 
-**Commits (0036)** — Conventional Commits. Scope vocabulary is computed from the workspaces
+**Commits (0050)** — Conventional Commits. Scope vocabulary is computed from the workspaces
 list, so it cannot drift. A `Refs: ADR NNNN` footer is checked.
 
 ## Restrictions
@@ -198,7 +201,7 @@ list, so it cannot drift. A `Refs: ADR NNNN` footer is checked.
 - No `console.*` in library code. Errors reach the consumer through `onWidgetError` — a library
   that logs shows up in someone else's error budget (0013).
 - `@nerey/core` ships **zero CSS** and depends only on `@standard-schema/spec`. No validator,
-  no markdown renderer, no HTTP client, no query library, no Base UI (0002, 0011, 0012, 0037).
+  no markdown renderer, no HTTP client, no query library, no Base UI (0051, 0011, 0012, 0037).
 - No transport, no LLM SDK binding, no MCP client, no iframe sandbox, no i18n, no charting —
   each is a documented adapter point, not a dependency (0037).
 - Never `@apply` / `@tailwind` / `@reference` in a `*.module.css`. They cannot see a utility

@@ -29,6 +29,9 @@ install step.
 **Fix direction**: supersede 0036. The decision (Conventional Commits, scope vocabulary derived
 from `workspaces`) is unchanged and correct; only the stated implementation is wrong.
 
+**Resolved** — 2026-11-19. ADR 0050 restates the decision with the implementation as it is, was
+accepted, and `npm run adr -- supersede --old 0036 --new 0050` has run.
+
 ## D-2 · ADR 0036's type and scope vocabularies are narrower than the gate's
 
 **Record says**: types omit `style`; fixed scopes are `storybook`, `docs`, `repo`.
@@ -38,6 +41,9 @@ from `workspaces`) is unchanged and correct; only the stated implementation is w
 
 **Fix direction**: supersede alongside D-1. The additions are right (`deps` for dependency
 bumps, `adr` for corpus work), the record simply predates them.
+
+**Resolved** — 2026-11-19, by ADR 0050 alongside D-1. D-3 stays open: 0050 records its direction
+(one shared resolver), and the code has not moved yet.
 
 ## D-3 · ADR 0036 claims citation resolution is delegated
 
@@ -170,7 +176,7 @@ widget restarts its full interval on every reload.
 
 **Fix direction**: code. The decision in 0018 is right; the implementation is missing. ADR 0046 adds
 the anchor the record assumed (`NereyMessage.createdAt`, required) and fixes how a reload reads the
-marker, and ADR 0047 adds the port methods that store it. Both are `proposed`; this entry closes when
+marker, and ADR 0047 adds the port methods that store it. Both were accepted on 2026-11-19; this entry closes when
 the code lands behind them.
 
 ---
