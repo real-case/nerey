@@ -49,3 +49,11 @@ Architecture Decision Records for this project, in [MADR](https://adr.github.io/
 | [0043](0043-pinned-ci-supply-chain.md) | 0043. The CI supply chain is pinned by digest and updated by Dependabot | accepted | 2026-08-31 |
 | [0044](0044-publish-the-workbench-to-github-pages.md) | 0044. Publish the workbench to GitHub Pages, and build it on every pull request | accepted | 2026-08-31 |
 | [0045](0045-eslint-config-rule-surface-snapshot.md) | 0045. The eslint-config rule surface is snapshotted, and both directions of change fail | accepted | 2026-08-31 |
+| [0046](0046-message-time-anchor-and-expiry-rehydration.md) | 0046. Messages carry a required time anchor, and expiry is rehydrated before first paint | proposed | 2026-11-19 |
+| [0047](0047-persistence-port-lifecycle-records-and-host-write-queue.md) | 0047. The persistence port stores lifecycle records, and the host owns the write queue | proposed | 2026-11-19 |
+| [0048](0048-structured-reply-channel.md) | 0048. The interaction channel carries an optional validated result, and the host may answer a call directly | proposed | 2026-11-19 |
+| [0049](0049-registry-entry-carries-only-read-fields.md) | 0049. A registry entry declares only fields the runtime reads | proposed | 2026-11-19 |
+| [0050](0050-conventional-commits-as-implemented.md) | 0050. Conventional Commits as the commit contract, restated as implemented | proposed | 2026-11-19 |
+| [0051](0051-adapter-packages-and-repository-topology.md) | 0051. Adapter packages join the monorepo as peers of core, and examples stay unpublished | proposed | 2026-11-19 |
+| [0052](0052-server-entry-for-react-server-components.md) | 0052. Core publishes a React-free server entry, `@nerey/core/server` | proposed | 2026-11-19 |
+| [0053](0053-security-policy-and-threat-model.md) | 0053. A security policy and a written threat model ship before the first release | proposed | 2026-11-19 |
