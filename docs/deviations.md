@@ -142,6 +142,37 @@ rather than a context, so core still has no locale anything and 0037's non-goal 
 is now true rather than aspirational, so this entry records a gap that was real rather than one
 that is open.
 
+## D-8 · ADR 0018's lifecycle measures time from mount and does not persist expiry
+
+**Record says** (0018): a `timeout` deadline is "computed from the widget's message timestamp rather
+than from mount, so a reload does not restart the clock". Expiry "is recorded, not recomputed": when
+a rule fires, core writes a marker through the persistence port (ADR 0016), alongside the widget's
+own state, and reads it back before first paint, which is what makes `snapshot` deterministic.
+
+**Code does**: measures from mount. `useWidgetLifecycle` takes `mountedAt: Date.now()` in a lazy
+state initialiser and re-takes it whenever `messageId` changes
+(`packages/core/src/lifecycle/use-widget-lifecycle.tsx`). Interactions live in `useState` and die with
+the component. `NereyMessage` (`packages/core/src/types.ts`) carries no time at all, so there is no
+message timestamp to compute from, and no marker is written or read anywhere. The `ExpiryRule` doc
+comment documents the shipped behaviour ("`ms` after the widget first mounted"), so the code and its
+comments agree with each other and both disagree with the record.
+
+The test files the record's `Confirmation` names (`lifecycle/__tests__/evaluate-lifecycle.test.ts`,
+`lifecycle-runtime.test.tsx`, `after-expiry.test.tsx`) do not exist under those paths. The lifecycle
+is tested in `expiry.test.ts` and `use-widget-lifecycle.test.tsx`, and neither asserts the reload
+case. Every gate checks form, none checks this behaviour, so the gap passed all of them.
+
+**Consequence**: `snapshot` survives a reload only for a widget that derives its own lock from its
+persisted state. The built-in `poll` does (`locked = readonly || answered`), so the reference widgets
+look correct. A third-party widget without that discipline is interactive again after a reload, and a
+second press sends a duplicate reply: the exact failure ADR 0018 was written against. A `timeout`
+widget restarts its full interval on every reload.
+
+**Fix direction**: code. The decision in 0018 is right; the implementation is missing. ADR 0046 adds
+the anchor the record assumed (`NereyMessage.createdAt`, required) and fixes how a reload reads the
+marker, and ADR 0047 adds the port methods that store it. Both are `proposed`; this entry closes when
+the code lands behind them.
+
 ---
 
 ## Not deviations
