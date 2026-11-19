@@ -50,8 +50,9 @@ When a change needs a decision no ADR covers: record the ADR first, then impleme
 - **Standard Schema v1** for validation — core depends on the _spec_ (types only), so a
   consumer brings Zod 4, Valibot or ArkType (0011). `@nerey/theme` uses Zod 4 for its own
   widget schemas.
-- **Base UI 1.7** (`@base-ui/react`) for behaviour — focus trap, floating positioning, roving
-  tabindex, typeahead, scroll lock, ARIA. Wrapped, never re-exported (0022).
+- **Base UI 1.8** (`@base-ui/react`; ADR 0022 sets the floor at `^1.7`) for behaviour — focus
+  trap, floating positioning, roving tabindex, typeahead, scroll lock, ARIA. Wrapped, never
+  re-exported (0022).
 - **Vitest 4** — two projects: `unit` (jsdom, colocated tests) and `storybook` (real browser
   via `@storybook/addon-vitest` + Playwright). One merged coverage gate at 80% (0006, 0007).
 - **Storybook 10** on `@storybook/react-vite`, CSF 3, colocated stories, `addon-a11y` running

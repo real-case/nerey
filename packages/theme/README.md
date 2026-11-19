@@ -68,7 +68,7 @@ Three properties of the stylesheet are load-bearing and easy to miss:
 ## Components
 
 31 components. Anything with behaviour worth getting right — focus trapping, floating
-positioning, roving tabindex, typeahead, scroll locking, the ARIA graph — wraps Base UI 1.7.
+positioning, roving tabindex, typeahead, scroll locking, the ARIA graph — wraps Base UI 1.8.
 Anything without behaviour is Nerey's own markup, because wrapping a primitive that has none is
 pure overhead.
 
