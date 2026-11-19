@@ -113,6 +113,11 @@ const GATES = [
     why: 'builds a TypeScript program over every module in core to resolve each property read — the same cost as check-api-signatures, and the field it guards is only ever added in a reviewed contract change (ADR 0049)',
   },
   {
+    script: 'scripts/check-security-policy.mjs',
+    hook: 'dispatch',
+    why: 'reads two Markdown files and the package manifests, sub-second; a policy that dropped a package is cheapest to fix in the edit that dropped it (ADR 0053)',
+  },
+  {
     script: 'scripts/check-mutants.mjs',
     hook: 'ci-only',
     why: 'runs Vitest once per planted mutant against source files it rewrites in place — ~20s, and an edit hook must never leave a mutated module on disk if it is interrupted (ADR 0046 / 0047)',
