@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { NEVER_EXPIRES } from '@nerey/core';
 import type { Lifecycle, Placement } from '@nerey/core';
 
 /**
@@ -20,11 +21,7 @@ export const CITATIONS_PLACEMENT: Placement = { slot: 'message' };
  * would take the evidence away at the moment doubt arrives, and `{ on: 'interact' }` would let
  * checking one source close the other four.
  */
-export const CITATIONS_LIFECYCLE: Lifecycle = {
-  persist: 'forever',
-  expiry: [],
-  afterExpiry: 'snapshot',
-};
+export const CITATIONS_LIFECYCLE: Lifecycle = NEVER_EXPIRES;
 
 /**
  * `z.url()` alone accepts `javascript:alert(1)`: it parses with `URL`, which has no opinion about

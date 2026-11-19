@@ -1,4 +1,4 @@
-import { defineWidget } from '@nerey/core';
+import { NEVER_EXPIRES, defineWidget } from '@nerey/core';
 
 import { TaskTreeWidget } from './component';
 import {
@@ -31,11 +31,9 @@ export const taskTreeWidget = defineWidget<TaskTreePayload, TaskTreeState>({
   component: TaskTreeWidget,
   description: 'Show a hierarchy of tasks with their statuses. Display only — it reports nothing back.',
   placement: TASK_TREE_PLACEMENT,
-  lifecycle: {
-    persist: 'forever',
-    expiry: [],
-    afterExpiry: 'snapshot',
-  },
+  // `NEVER_EXPIRES` is exactly the lifecycle argued for above, and naming the constant is what tells
+  // the conformance kit the empty `expiry` is deliberate rather than a copy-paste artefact.
+  lifecycle: NEVER_EXPIRES,
   payloadSchema: taskTreePayloadSchema,
   stateSchema: taskTreeStateSchema,
 });
