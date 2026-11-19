@@ -153,7 +153,9 @@ describe('invalidResultError', () => {
     const error = invalidResultError(COORDS, ISSUES);
 
     expect(error.code).toBe('invalid-result');
-    expect(error.message).toMatch(/^Widget result was not sent/);
+    expect(error.message).toMatch(
+      /^Widget result for `confirmation@1\.0\.0` in message `msg-7` was not sent/,
+    );
     expect(error.issues).toEqual(ISSUES);
     expect(error.messageId).toBe('msg-7');
   });
@@ -164,7 +166,9 @@ describe('invalidStateError', () => {
     const error = invalidStateError(COORDS, ISSUES);
 
     expect(error.code).toBe('invalid-state');
-    expect(error.message).toMatch(/^Persisted widget state failed validation/);
+    expect(error.message).toMatch(
+      /^Persisted widget state for `confirmation@1\.0\.0` in message `msg-7` failed validation/,
+    );
     expect(error.message).toContain('title: `title` is required.');
     expect(error.issues).toBe(ISSUES);
     expect(error.widgetType).toBe('confirmation');
@@ -241,6 +245,32 @@ describe('the taxonomy is closed', () => {
       'persistence',
       'invalid-result',
     ]);
+  });
+});
+
+describe('every message names the widget in prose (D-5)', () => {
+  // A host that logs `error.message` alone must still learn which widget failed.
+  it.each<[string, (coords: typeof COORDS) => NereyError]>([
+    ['invalid-payload', (c) => invalidPayloadError(c, ISSUES)],
+    ['invalid-state', (c) => invalidStateError(c, ISSUES)],
+    ['invalid-result', (c) => invalidResultError(c, ISSUES)],
+    ['widget-render', (c) => widgetRenderError(c, new Error('x'))],
+    ['persistence', (c) => persistenceError(c, new Error('x'))],
+  ])('%s names type@version and the message id', (_code, make) => {
+    const { message } = make(COORDS);
+
+    expect(message).toContain('`confirmation@1.0.0`');
+    expect(message).toContain('message `msg-7`');
+  });
+
+  it('names only what it was given', () => {
+    expect(persistenceError({ messageId: 3 }, new Error('x')).message).toMatch(
+      /^Persisting widget state in message `3` failed/,
+    );
+    expect(widgetRenderError({ widgetType: 'poll' }, new Error('x')).message).toMatch(
+      /^Widget for `poll` threw while rendering/,
+    );
+    expect(invalidPayloadError({}, ISSUES).message).toMatch(/^Widget payload failed validation/);
   });
 });
 

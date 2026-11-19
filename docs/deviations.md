@@ -88,6 +88,10 @@ which widget failed.
 has needed to debug so far, which is not a coincidence worth relying on. `errors.test.ts` asserts
 the current behaviour explicitly so the change is a deliberate one.
 
+**Resolved** — 2026-11-19. Every factory in `errors.ts` now names the widget in its message —
+`` `poll@1.0.0` in message `m1` `` — through one `subjectOf()` helper, naming only the coordinates
+the reporting layer actually has. `errors.test.ts` asserts it per code, including the partial cases.
+
 ## D-6 · ADR 0029's release gate describes API Extractor and a surface the gate never checked
 
 **Record says** (0029, Confirmation): the release gate builds three surfaces into committed

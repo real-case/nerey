@@ -28,6 +28,34 @@ export class NereyError extends Error implements NereyErrorLike {
 
 type Coords = { messageId?: string | number; widgetType?: string; widgetVersion?: string };
 
+/**
+ * D-5 — the widget an error is about, in prose. A host that logs `error.message` alone, which is
+ * the common case, must still learn which widget failed: the structured fields are for code that
+ * reads them, and most logging does not. Every part is optional because some layers legitimately
+ * do not know it (the write queue has a message id and nothing else), and inventing coordinates
+ * would be worse than omitting them.
+ */
+function subjectOf(coords: Coords): string {
+  const { widgetType, widgetVersion, messageId } = coords;
+  const widget =
+    widgetType === undefined
+      ? undefined
+      : widgetVersion === undefined
+        ? `\`${widgetType}\``
+        : `\`${widgetType}@${widgetVersion}\``;
+  const message = messageId === undefined ? undefined : `message \`${String(messageId)}\``;
+  if (widget !== undefined && message !== undefined) return ` for ${widget} in ${message}`;
+  if (widget !== undefined) return ` for ${widget}`;
+  if (message !== undefined) return ` in ${message}`;
+  return '';
+}
+
+function issueDetail(issues: readonly { path: string; message: string }[]): string {
+  return issues.length
+    ? issues.map((i) => (i.path ? `${i.path}: ${i.message}` : i.message)).join('; ')
+    : 'no issue detail supplied by the schema';
+}
+
 export function unknownWidgetError(type: string, version: string, messageId?: string | number) {
   return new NereyError({
     code: 'unknown-widget',
@@ -42,24 +70,18 @@ export function unknownWidgetError(type: string, version: string, messageId?: st
 }
 
 export function invalidPayloadError(coords: Coords, issues: readonly { path: string; message: string }[]) {
-  const detail = issues.length
-    ? issues.map((i) => (i.path ? `${i.path}: ${i.message}` : i.message)).join('; ')
-    : 'no issue detail supplied by the schema';
   return new NereyError({
     code: 'invalid-payload',
-    message: `Widget payload failed validation — ${detail}`,
+    message: `Widget payload${subjectOf(coords)} failed validation — ${issueDetail(issues)}`,
     issues,
     ...coords,
   });
 }
 
 export function invalidStateError(coords: Coords, issues: readonly { path: string; message: string }[]) {
-  const detail = issues.length
-    ? issues.map((i) => (i.path ? `${i.path}: ${i.message}` : i.message)).join('; ')
-    : 'no issue detail supplied by the schema';
   return new NereyError({
     code: 'invalid-state',
-    message: `Persisted widget state failed validation — ${detail}`,
+    message: `Persisted widget state${subjectOf(coords)} failed validation — ${issueDetail(issues)}`,
     issues,
     ...coords,
   });
@@ -70,12 +92,9 @@ export function invalidStateError(coords: Coords, issues: readonly { path: strin
  * `resultSchema` to check it against. Either way the interaction went out as text only.
  */
 export function invalidResultError(coords: Coords, issues: readonly { path: string; message: string }[]) {
-  const detail = issues.length
-    ? issues.map((i) => (i.path ? `${i.path}: ${i.message}` : i.message)).join('; ')
-    : 'no issue detail supplied by the schema';
   return new NereyError({
     code: 'invalid-result',
-    message: `Widget result was not sent — ${detail}`,
+    message: `Widget result${subjectOf(coords)} was not sent — ${issueDetail(issues)}`,
     issues,
     ...coords,
   });
@@ -85,7 +104,7 @@ export function widgetRenderError(coords: Coords, cause: unknown) {
   const detail = cause instanceof Error ? cause.message : String(cause);
   return new NereyError({
     code: 'widget-render',
-    message: `Widget threw while rendering — ${detail}`,
+    message: `Widget${subjectOf(coords)} threw while rendering — ${detail}`,
     cause,
     ...coords,
   });
@@ -96,9 +115,9 @@ export function persistenceError(coords: Coords, cause: unknown) {
   return new NereyError({
     code: 'persistence',
     message:
-      `Persisting widget state failed — ${detail}. The widget stays in its committed state; ` +
-      `it must not re-enable, because the reply it produced is already in the transcript ` +
-      `(ADR 0016).`,
+      `Persisting widget state${subjectOf(coords)} failed — ${detail}. The widget stays in its ` +
+      `committed state; it must not re-enable, because the reply it produced is already in the ` +
+      `transcript (ADR 0016).`,
     cause,
     ...coords,
   });
