@@ -112,7 +112,8 @@ this repository. If the range contains one, the bump the tool computed is a floo
 Run the commands the tool printed. They look like:
 
 ```bash
-git commit -m 'chore(core): release 0.1.1' -m 'Refs: ADR 0039' packages/core/package.json packages/core/CHANGELOG.md
+git add packages/core/package.json packages/core/CHANGELOG.md
+git commit -m 'chore(core): release 0.1.1' -m 'Refs: ADR 0039'
 git tag @nerey/core@0.1.1
 git push origin main @nerey/core@0.1.1
 ```
