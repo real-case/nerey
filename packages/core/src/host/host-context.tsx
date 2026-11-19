@@ -1,7 +1,8 @@
-import { createContext, useContext } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactElement, ReactNode } from 'react';
 
 import { emptyRegistry } from '../registry';
+import { createWriteQueue, type WriteQueue } from '../state/write-queue';
 import type { MessagePersistence, WidgetHostValue } from '../types';
 
 /**
@@ -41,13 +42,43 @@ export const DEFAULT_HOST_VALUE: WidgetHostValue = Object.freeze({
 const WidgetHostContext = createContext<WidgetHostValue>(DEFAULT_HOST_VALUE);
 WidgetHostContext.displayName = 'NereyWidgetHost';
 
+/**
+ * ADR 0047 — the queue a widget with no provider above it writes through. Module-level, so a story
+ * or a unit test that renders a bare widget still gets debounced, coalesced writes; it is never
+ * flushed on anyone's unmount, which is the honest cost of having no provider to own it.
+ */
+const DEFAULT_WRITE_QUEUE = createWriteQueue();
+
+const WriteQueueContext = createContext<WriteQueue>(DEFAULT_WRITE_QUEUE);
+WriteQueueContext.displayName = 'NereyWriteQueue';
+
 export function WidgetHostProvider(props: { value: WidgetHostValue; children: ReactNode }): ReactElement {
+  // ADR 0047 — the provider owns the write queue because it outlives every widget under it. A
+  // widget that unmounts mid-debounce flushes into this queue instead of dropping its write, and
+  // the provider's own unmount flushes whatever is left: a closed chat panel still saves.
+  const [queue] = useState(createWriteQueue);
+  useEffect(
+    () => () => {
+      queue.flushAll();
+    },
+    [queue],
+  );
+
   // `value` is passed straight through — deliberately NOT wrapped in `useMemo`. The caller owns
   // this object's identity: if they rebuild it every render, every widget in the transcript
   // re-renders, and that is their bug to see and fix. Memoising it here would hide the symptom
   // while leaving the cause, and would additionally lie about staleness — a memo keyed on the
   // fields we happened to think of drops updates to the ones we did not.
-  return <WidgetHostContext value={props.value}>{props.children}</WidgetHostContext>;
+  return (
+    <WriteQueueContext value={queue}>
+      <WidgetHostContext value={props.value}>{props.children}</WidgetHostContext>
+    </WriteQueueContext>
+  );
+}
+
+/** The write queue of the nearest provider (ADR 0047). Internal: widgets reach it via `useWidgetState`. */
+export function useWriteQueue(): WriteQueue {
+  return useContext(WriteQueueContext);
 }
 
 export function useWidgetHost(): WidgetHostValue {
