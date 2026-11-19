@@ -98,7 +98,7 @@ jobs:
         run: npx vitest run --coverage
 
   # Split out and PINNED TO AN IMAGE, not merely to Linux. ADR 0042 captures the reference images
-  # in `mcr.microsoft.com/playwright:v1.62.1-noble`, and the first attempt ran this on the plain
+  # in `mcr.microsoft.com/playwright:v1.63.0-noble`, and the first attempt ran this on the plain
   # ubuntu-latest runner on the assumption that Linux plus Chromium was enough. 78 of 90 references
   # disagreed: the runner has a different font set, and the theme's font tokens are system stacks
   # (ADR 0024), so "same OS" is not "same rasteriser". The comparison has to happen in the image the
@@ -110,7 +110,7 @@ jobs:
   visual:
     name: visual
     runs-on: ubuntu-latest
-    container: mcr.microsoft.com/playwright:v1.62.1-noble
+    container: mcr.microsoft.com/playwright:v1.63.0-noble
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 

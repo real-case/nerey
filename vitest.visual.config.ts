@@ -46,7 +46,7 @@ export default defineConfig({
           comparatorOptions: {
             // Zero, and that is the point of pinning the container image. A loose tolerance is a
             // hedge against a rasteriser you do not control; references and comparison both come
-            // out of `mcr.microsoft.com/playwright:v1.62.1-noble`, so there is nothing to hedge
+            // out of `mcr.microsoft.com/playwright:v1.63.0-noble`, so there is nothing to hedge
             // against and every mismatched pixel is a real difference.
             //
             // Measured, not assumed: at 0.2% a `--nerey-radius-md` change from 0.375rem to
