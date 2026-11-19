@@ -492,6 +492,32 @@ describe('rule: remount-respects-marker', () => {
     await expect(rulesFor(variant({ component: ReadingWidget }))).resolves.toEqual([]);
   });
 
+  it('still fails a control the markup declares inert when it sends a reply (ADR 0018)', async () => {
+    // The exemptions excuse markup, never behaviour: a read-only option that still answers is the
+    // duplicate reply the rule exists to stop.
+    function LeakyWidget({ readonly, status, onInteraction }: Props): ReactElement {
+      return (
+        <WidgetRoot type="ok" version="1.0.0" slot="message" status={status} readonly={readonly}>
+          <button
+            type="button"
+            role="radio"
+            aria-checked="true"
+            aria-readonly={readonly}
+            onClick={() => {
+              onInteraction('press', { text: 'EU' });
+            }}
+          >
+            EU
+          </button>
+        </WidgetRoot>
+      );
+    }
+
+    // `readonly-is-inert` is the rule that clicks it with `readonly: true` and sees the send; the
+    // exemption only spares it from `remount-respects-marker`'s enabled-control count.
+    await expect(rulesFor(variant({ component: LeakyWidget }))).resolves.toContain('readonly-is-inert');
+  });
+
   it('is not checked for a widget that hides once expired', async () => {
     const rules = await rulesFor(
       variant({
