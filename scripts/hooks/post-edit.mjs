@@ -48,6 +48,10 @@ const DISPATCH = [
   { match: 'packages/core/src/index.ts', gate: 'scripts/check-public-api.mjs' },
   { match: 'packages/**/index.ts', gate: 'scripts/check-public-api.mjs' },
 
+  { match: 'SECURITY.md', gate: 'scripts/check-security-policy.mjs' },
+  { match: 'docs/security/**', gate: 'scripts/check-security-policy.mjs' },
+  { match: 'packages/*/package.json', gate: 'scripts/check-security-policy.mjs' },
+
   { match: '**/*.md', gate: 'scripts/check-adr-citations.mjs' },
   { match: 'packages/**/*.ts', gate: 'scripts/check-adr-citations.mjs' },
   { match: 'scripts/**/*.mjs', gate: 'scripts/check-adr-citations.mjs' },

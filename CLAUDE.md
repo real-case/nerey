@@ -105,6 +105,9 @@ When a change needs a decision no ADR covers: record the ADR first, then impleme
 - `npm run check:entry-fields` — every property of `WidgetRegistryEntry` is read by a non-test module
   in core (0049). A declared field nothing reads is a promise to every widget author that the
   runtime does not keep; implement it or remove it.
+- `npm run check:security-policy` — `SECURITY.md` names GitHub Private Vulnerability Reporting, has a
+  supported-versions row for every non-private package under `packages/*`, and links an existing
+  `docs/security/threat-model.md` (0053). **Add the row in the same change that adds a package.**
 - `npm run check:mutants` — re-plants known-wrong implementations one at a time and requires the
   test that guards each to fail: the two D-8 defects (`timeout` from mount, no expiry marker)
   against `lifecycle-reload.test.tsx` (0046), and ADR 0016's drop-on-unmount write against
