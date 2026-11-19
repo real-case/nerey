@@ -16,6 +16,7 @@ eventsource
 formatjs
 modelcontextprotocol
 ofetch
+posthog
 Rspack
 visx
 CRDT
