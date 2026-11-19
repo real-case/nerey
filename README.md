@@ -67,9 +67,10 @@ packages/core            @nerey/core — headless runtime
 packages/theme           @nerey/theme — CSS Modules theme on Base UI
 packages/eslint-config   @nerey/eslint-config — the boundaries as lint rules
 .storybook               the component workbench (loads tokens.css and nothing else)
-docs/decisions           37 MADR architecture decision records
+docs/decisions           53 MADR architecture decision records
 docs/design-system       generated token reference + committed contract baselines
 docs/requirements.md     the functional requirement this implements
+docs/security            the threat model (SECURITY.md says how to report)
 scripts                  deterministic gates, each self-testing
 ```
 
@@ -92,7 +93,7 @@ The approach is borrowed from
 decisions are recorded before code depends on them, and every rule that matters is
 machine-checkable rather than written down and hoped for.
 
-- **ADRs first.** 37 records, each naming a fitness function in its `Confirmation` section.
+- **ADRs first.** 53 records, each naming a fitness function in its `Confirmation` section.
 - **Gates, not conventions.** `scripts/check-*.mjs` enforce token usage, core purity, the
   `data-*` contract, story coverage, the public API surface, the exports map and commit format.
 - **Gates that test themselves.** `npm run check:gates` plants a violator for every rule and
@@ -105,8 +106,11 @@ machine-checkable rather than written down and hoped for.
 
 ## Status
 
-`0.x`. The public API is the export surface, the `data-*` attribute vocabulary and the
-`--nerey-*` token names — all three are versioned as public API under
-[ADR 0029](docs/decisions/0029-semantic-versioning-published-packages.md).
+`0.x`. The public API is the export surface with its rendered signatures, the `data-*` attribute
+vocabulary and the `--nerey-*` token names — all versioned as public API under
+[ADR 0038](docs/decisions/0038-semver-gated-by-surface-snapshots.md), which superseded ADR 0029.
+Releases are tagged and published from CI with provenance ([docs/releasing.md](docs/releasing.md)).
+
+Report a vulnerability privately, as described in [SECURITY.md](SECURITY.md).
 
 MIT.

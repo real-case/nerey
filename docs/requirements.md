@@ -243,56 +243,82 @@ describes activity, never explanation.
 
 ## Acceptance Criteria
 
-- [ ] AC-1: `npm pack @nerey/core` contains zero `.css` files, and its dependency tree includes
+A ticked criterion names the gate or test that proves it, as of 2026-11-19. An unticked one says what
+is missing.
+
+- [x] AC-1: `npm pack @nerey/core` contains zero `.css` files, and its dependency tree includes
       neither `@nerey/theme`, nor Zod, nor a markdown renderer, nor an HTTP client.
+      **Proved by:** `npm run check:core-purity` (no `.css` in `packages/core/dist`, no validator, markdown renderer, HTTP client or `@nerey/theme` in source or manifest) and `npm run check:exports` (the packed tarball).
 - [ ] AC-2: A fresh Next.js 16 app importing `@nerey/core` from a Server Component file compiles with
       no `'use client'` directive added by the consumer.
-- [ ] AC-3: `createWidgetRegistry([entry, entry])` throws `Duplicate widget registration: <type>@<version>`
+      Open until phase 5 (the Next.js 16 example).
+- [x] AC-3: `createWidgetRegistry([entry, entry])` throws `Duplicate widget registration: <type>@<version>`
       at construction, not at first lookup.
-- [ ] AC-4: `composeRegistries(builtIns, appWidgets)` resolves both catalogs; a colliding key throws
+      **Proved by:** `packages/core/src/registry.test.ts`, `createWidgetRegistry — duplicates`.
+- [x] AC-4: `composeRegistries(builtIns, appWidgets)` resolves both catalogs; a colliding key throws
       unless `{ override: true }` was passed.
-- [ ] AC-5: A widget registered as `poll@1.0.0` against a payload carrying `version: "1.0"` does not
+      **Proved by:** `packages/core/src/registry.test.ts`, `composeRegistries` (collision throws; `{ override: true }` lets the later source win).
+- [x] AC-5: A widget registered as `poll@1.0.0` against a payload carrying `version: "1.0"` does not
       resolve, and the fallback renders — the exact-match rule is observable, not implicit.
-- [ ] AC-6: Each of the four degradation steps (unknown type, invalid payload, component throw, no
+      **Proved by:** `packages/core/src/render/widget-renderer.test.tsx`, "treats a version the registry does not hold as an unknown widget".
+- [x] AC-6: Each of the four degradation steps (unknown type, invalid payload, component throw, no
       fallback configured) renders without throwing, and each emits its own typed error to
       `onWidgetError`.
-- [ ] AC-7: With `status: 'streaming'`, a partial payload that would fail `payloadSchema` renders the
+      **Proved by:** `packages/core/src/render/widget-renderer.test.tsx` (one `describe` per degradation step) and `packages/core/src/render/fallback.test.tsx` ("renders plain text when the host supplies no renderer at all").
+- [x] AC-7: With `status: 'streaming'`, a partial payload that would fail `payloadSchema` renders the
       widget's loading branch and triggers no validation error.
+      **Proved by:** `packages/core/src/render/widget-renderer.test.tsx`, `degradation step 4 is suppressed while streaming`.
 - [ ] AC-8: A widget importing `axios` inside the widgets directory fails lint under
       `@nerey/eslint-config` with the documented message.
-- [ ] AC-9: `onInteraction('reply', { text: 'hi', meta: { a: 1 } })` calls the host's
+      Open: `npm run check:eslint-rules` proves the ban is declared, not that ESLint rejects an `axios` import with the documented message (ADR 0045 records why no behavioural fixture exists).
+- [x] AC-9: `onInteraction('reply', { text: 'hi', meta: { a: 1 } })` calls the host's
       `sendUserMessage` exactly once with `'hi'`; `// @ts-expect-error` on `{ text: 123 }` compiles
       clean, proving the narrowing still holds.
-- [ ] AC-10: A widget that submits, then receives a rejected persistence write, stays locked, surfaces
+      **Proved by:** `packages/core/src/render/interaction-contract.test.tsx` (`sendUserMessage` called exactly once with text and `meta`; `@ts-expect-error` on `{ text: 123 }`).
+- [x] AC-10: A widget that submits, then receives a rejected persistence write, stays locked, surfaces
       `PersistenceError`, and sends no second reply.
-- [ ] AC-11: Two widget instances in one conversation persist and restore state independently, keyed
+      **Proved by:** `packages/core/src/widgets/confirmation/component.test.tsx`, `persistence failure`, and the theme poll's `PersistFailure` story.
+- [x] AC-11: Two widget instances in one conversation persist and restore state independently, keyed
       by `messageId`.
-- [ ] AC-12: `lifecycle.expiry: [{ on: 'interact' }]` flips `readonly` to `true` after the first
+      **Proved by:** `packages/core/src/state/use-widget-state.test.tsx`, "keeps two widget instances in one conversation independent".
+- [x] AC-12: `lifecycle.expiry: [{ on: 'interact' }]` flips `readonly` to `true` after the first
       interaction; `{ on: 'timeout', ms }` after the interval; `afterExpiry: 'snapshot'` renders the
       terminal state read-only on reload and fires no effect.
-- [ ] AC-13: A widget registered at `v2` with `migrate` reads a persisted `v1` payload and renders
+      **Proved by:** `packages/core/src/lifecycle/use-widget-lifecycle.test.tsx` (interact and timeout) and `packages/core/src/lifecycle/lifecycle-reload.test.tsx` ("makes no call at all on a snapshot remount").
+- [x] AC-13: A widget registered at `v2` with `migrate` reads a persisted `v1` payload and renders
       without a fallback.
+      **Proved by:** `packages/core/src/render/widget-renderer.test.tsx`, `degradation step 2: migration on read`.
 - [ ] AC-14: A consumer styles every widget state from their own `.module.css` using only documented
       `data-nerey-*` and `data-state` attributes, importing neither `@nerey/theme` nor any class name.
       A snapshot test locks that attribute surface against silent change.
+      Open: `npm run check:data-contract` locks the attribute surface; no test yet styles every state from a consumer stylesheet.
 - [ ] AC-15: `import '@nerey/theme/theme.css'` in a Next.js app renders styled widgets with no CSS
       Modules configuration for `node_modules`.
+      Open until phase 5 (the Next.js 16 example).
 - [ ] AC-16: Importing `theme.css` **without** `tokens.css` renders every component legibly via
       declared fallbacks — no invisible text, no zero-size boxes.
+      Open: `npm run check:tokens` requires a fallback in every `var()`; no render test loads `theme.css` without `tokens.css`.
 - [ ] AC-17: Redeclaring `--nerey-*` properties in `:root` produces a fully rebranded UI with no
       component override and no `!important` anywhere in the consumer's CSS.
+      Open: no test rebrands through `:root` alone.
 - [ ] AC-18: A page that ships no CSS reset at all renders `@nerey/theme` identically to one that
       ships Preflight — verified by screenshot comparison in both configurations.
+      Open: no screenshot comparison with and without Preflight exists yet.
 - [ ] AC-19: `data-nerey-theme` set to `light` or `dark` overrides `prefers-color-scheme` in both
       directions.
+      Open: `npm run test:visual` captures both explicit themes; neither capture contradicts `prefers-color-scheme`.
 - [ ] AC-20: A Storybook loading only `@nerey/theme/tokens.css` plus the theme's own stylesheet renders
       every widget identically to the app — no Tailwind, no host design system, no cascade leak.
-- [ ] AC-21: A widget authored against `@nerey/core/mock` alone renders, interacts and persists in
+      Open: Storybook loads only `tokens.css` and the theme's own modules, but nothing compares it with an app render.
+- [x] AC-21: A widget authored against `@nerey/core/mock` alone renders, interacts and persists in
       Storybook with no backend and no network.
-- [ ] AC-22: The conformance kit run against both built-in widgets passes, and fails on a deliberately
+      **Proved by:** every widget story renders through `MockWidgetHost` with in-memory persistence in the `storybook` Vitest project (`npm test`), and `npm run check:stories` requires a story and a `play` function per component.
+- [x] AC-22: The conformance kit run against both built-in widgets passes, and fails on a deliberately
       seeded violation of each rule it checks.
+      **Proved by:** `packages/core/src/testing/conformance.test.tsx` (the built-ins pass, and each rule fails on a seeded violation) and `packages/theme/src/widgets/conformance.test.tsx` (all theme widgets pass).
 - [ ] AC-23: `osint-chat-client` replaces `src/shared/generative-ui/` with `@nerey/core` and its own
       widget catalog; the poll widget's fifteen existing acceptance criteria still pass unchanged.
+      Open until the library is adopted by `osint-chat-client`.
 
 ## Coverage Summary
 
