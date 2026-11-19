@@ -38,6 +38,11 @@ export type MockHostOptions = {
   persistence?: MessagePersistence;
   renderFallback?: FallbackRenderer;
   onSend?: (text: string, meta?: Record<string, unknown>) => void;
+  /**
+   * Becomes the host's `respond` (ADR 0048). Absent, the mock host has no `respond`, so a
+   * correlated widget falls back to `onSend` exactly as it would against a host that never wired it.
+   */
+  onRespond?: WidgetHostValue['respond'];
   messageCount?: number;
   firedEvents?: Iterable<string>;
   /**
@@ -107,6 +112,7 @@ export function MockWidgetHost(props: MockHostOptions & { children: ReactNode })
     persistence,
     renderFallback,
     onSend,
+    onRespond,
     messageCount,
     firedEvents,
     now,
@@ -138,6 +144,16 @@ export function MockWidgetHost(props: MockHostOptions & { children: ReactNode })
     onSendRef.current?.(text, meta);
   }, []);
 
+  // Same identity argument as `onSend`; only its presence changes the host value.
+  const onRespondRef = useRef(onRespond);
+  useEffect(() => {
+    onRespondRef.current = onRespond;
+  }, [onRespond]);
+  const hasRespond = onRespond !== undefined;
+  const respond = useCallback<NonNullable<WidgetHostValue['respond']>>((correlationId, response) => {
+    onRespondRef.current?.(correlationId, response);
+  }, []);
+
   // Consumed exactly once: `firedEvents` is an `Iterable`, so it may be a generator that a second
   // traversal would find exhausted. The joined key is what the memo compares, because
   // `firedEvents={['checkout-complete']}` written inline is a new array on every render and
@@ -157,6 +173,7 @@ export function MockWidgetHost(props: MockHostOptions & { children: ReactNode })
     // Assigned only when supplied, so an unset option leaves the field genuinely absent and the
     // lifecycle runtime's own defaults (`?? 0`, `?? NO_EVENTS`) apply rather than being shadowed.
     if (messageCount !== undefined) host.messageCount = messageCount;
+    if (hasRespond) host.respond = respond;
     if (firedEventsKey !== undefined) {
       // Rebuilt from the key rather than from the captured array, so the memo has exactly one
       // dependency and cannot go stale against a list it did not compare.
@@ -175,6 +192,8 @@ export function MockWidgetHost(props: MockHostOptions & { children: ReactNode })
     firedEventsKey,
     now,
     ownClock,
+    hasRespond,
+    respond,
   ]);
 
   return <WidgetHostProvider value={value}>{children}</WidgetHostProvider>;

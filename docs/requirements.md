@@ -107,7 +107,9 @@ renderFallback, onWidgetError }` and `useWidgetHost()` returns a valid value wit
   widget formulates the message; the host is the single place that knows about sending, optimistic
   insertion, thinking indicators and error handling. This mirrors the reverse contract both reference
   implementations settled on — `addToolOutput` + auto-resubmission in the AI SDK, host-mediated
-  JSON-RPC in MCP Apps.
+  JSON-RPC in MCP Apps. Since ADR 0048 the payload may also carry a `result`, validated against the
+  entry's `resultSchema` before it leaves, and an envelope with a `correlationId` is answered through
+  the host's optional `respond` instead of `sendUserMessage`.
 - FR-18: Widgets perform **no I/O**. Ship the boundary as a consumable ESLint config
   (`@nerey/eslint-config`) restricting imports of HTTP clients and app API modules inside a widgets
   directory — the rule that enforces this today lives in the app's `eslint.config.mjs` and does not

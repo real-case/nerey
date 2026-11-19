@@ -25,6 +25,11 @@ export type NereyWidgetEnvelope = {
    * Absent, the runtime reads it through `MessagePersistence.getLifecycleRecord` instead.
    */
   expiry?: LifecycleRecord;
+  /**
+   * The id of the tool call this envelope renders (ADR 0048). An adapter puts the SDK's call id
+   * here; core treats it as an opaque string and hands it back through `WidgetHostValue.respond`.
+   */
+  correlationId?: string;
 };
 
 /**
@@ -128,6 +133,22 @@ export type WidgetStatus = 'streaming' | 'ready' | 'error';
 export type WidgetInteractionPayload = {
   text: string;
   meta?: Record<string, unknown>;
+  /**
+   * The structured answer to the tool call this widget renders (ADR 0048). Validated against the
+   * entry's `resultSchema` before it leaves; an invalid one, or one on an entry with no
+   * `resultSchema`, is reported as `invalid-result` and the interaction goes out as text only.
+   * Unvalidated structured data never reaches a model.
+   */
+  result?: unknown;
+};
+
+/** What `WidgetHostValue.respond` receives: the answer to one correlated tool call (ADR 0048). */
+export type WidgetResponse = {
+  action: string;
+  /** Still sent, so a host that answers the call can show the user what they said. */
+  text: string;
+  /** Present only when it passed the entry's `resultSchema`. */
+  result?: unknown;
 };
 
 export type WidgetInteractionHandler = (action: string, data: WidgetInteractionPayload) => void;
@@ -191,6 +212,11 @@ export type WidgetRegistryEntry<Payload = unknown, State = unknown> = {
    */
   payloadSchema?: StandardSchemaV1<unknown, Payload>;
   stateSchema?: StandardSchemaV1<unknown, State>;
+  /**
+   * Validates an interaction's `result` on the way out (ADR 0048), with the same Standard Schema
+   * treatment the payload gets on the way in. Without it, a widget's `result` is dropped.
+   */
+  resultSchema?: StandardSchemaV1;
 
   migrate?: WidgetMigration;
 
@@ -289,6 +315,11 @@ export type WidgetHostValue = {
    * sending it, optimistic insertion, the thinking indicator and error handling.
    */
   sendUserMessage: (text: string, meta?: Record<string, unknown>) => void;
+  /**
+   * Answers a correlated tool call (ADR 0048). When the envelope carries a `correlationId` and
+   * this is present, an interaction calls it exactly once *instead of* `sendUserMessage`.
+   */
+  respond?: (correlationId: string, response: WidgetResponse) => void;
   persistence: MessagePersistence;
   renderFallback: FallbackRenderer;
   onWidgetError?: (error: NereyErrorLike) => void;
@@ -311,7 +342,7 @@ export type WidgetHostValue = {
  * ──────────────────────────────────────────────────────────────────────────────────── */
 
 export type NereyErrorCode =
-  'unknown-widget' | 'invalid-payload' | 'invalid-state' | 'widget-render' | 'persistence';
+  'unknown-widget' | 'invalid-payload' | 'invalid-state' | 'widget-render' | 'persistence' | 'invalid-result';
 
 export type NereyErrorLike = {
   code: NereyErrorCode;

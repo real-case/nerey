@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { ReactElement } from 'react';
+import type { StandardSchemaV1 } from '@standard-schema/spec';
 
 import { migratePayload, resolveEnvelope } from '../adapter';
 import type { FallbackReason } from '../data-attrs';
 import {
   NereyError,
   invalidPayloadError,
+  invalidResultError,
   invalidStateError,
   unknownWidgetError,
   widgetRenderError,
@@ -20,9 +22,11 @@ import type {
   NereyWidgetEnvelope,
   WidgetComponent,
   WidgetInteractionHandler,
+  WidgetInteractionPayload,
   WidgetStatus,
 } from '../types';
-import { validateOptional } from '../validate';
+import { validateOptional, validateSync } from '../validate';
+import type { ValidationOutcome } from '../validate';
 import { WidgetErrorBoundary } from './error-boundary';
 import { WidgetFallback } from './fallback';
 
@@ -141,6 +145,49 @@ function report(onWidgetError: ((error: NereyErrorLike) => void) | undefined, er
   }
 }
 
+type ResultCheck =
+  { ok: true; value: unknown; error?: undefined } | { ok: false; value?: undefined; error?: NereyError };
+
+const NO_RESULT: ResultCheck = { ok: false };
+
+/**
+ * ADR 0048 — the outbound half of ADR 0011. A `result` leaves only when the entry's `resultSchema`
+ * accepts it; otherwise it is reported and dropped, and the interaction still goes out as text.
+ * A schema that throws (an async one, ADR 0011) is reported the same way rather than escaping into
+ * the widget's click handler, where it would surface as the widget's own crash.
+ */
+function checkResult(
+  schema: StandardSchemaV1 | undefined,
+  data: WidgetInteractionPayload,
+  coords: { messageId: string | number; widgetType: string; widgetVersion: string },
+): ResultCheck {
+  if (data.result === undefined) return NO_RESULT;
+  if (!schema) {
+    return {
+      ok: false,
+      error: invalidResultError(coords, [
+        {
+          path: '',
+          message: 'the entry declares no `resultSchema`, so the result cannot be validated and was dropped',
+        },
+      ]),
+    };
+  }
+  let outcome: ValidationOutcome<unknown>;
+  try {
+    outcome = validateSync(schema, data.result);
+  } catch (cause) {
+    return {
+      ok: false,
+      error: invalidResultError(coords, [
+        { path: '', message: cause instanceof Error ? cause.message : String(cause) },
+      ]),
+    };
+  }
+  if (!outcome.ok) return { ok: false, error: invalidResultError(coords, outcome.issues) };
+  return { ok: true, value: outcome.value };
+}
+
 /**
  * Renders one message: envelope → registry → migration → validation → lifecycle → widget, with a
  * legible fallback at every step that can fail (ADR 0012).
@@ -151,7 +198,7 @@ function report(onWidgetError: ((error: NereyErrorLike) => void) | undefined, er
  */
 export function WidgetRenderer(props: WidgetRendererProps): ReactElement {
   const { message, status = 'ready', readonly: forcedReadonly } = props;
-  const { registry, onWidgetError, sendUserMessage } = useWidgetHost();
+  const { registry, onWidgetError, sendUserMessage, respond } = useWidgetHost();
 
   // Memoised on the message rather than recomputed, because `resolveEnvelope` synthesises a fresh
   // envelope for a plain-text message (ADR 0035) and that new identity would re-run validation —
@@ -211,6 +258,9 @@ export function WidgetRenderer(props: WidgetRendererProps): ReactElement {
     [onWidgetError, message.id, envelope.type, envelope.version],
   );
 
+  const resultSchema = outcome.render === 'widget' ? outcome.entry.resultSchema : undefined;
+  const correlationId = envelope.correlationId;
+
   const onInteraction = useCallback<WidgetInteractionHandler>(
     (action, data) => {
       // Belt and braces (ADR 0018). The lifecycle runtime already renders an expired widget
@@ -221,9 +271,37 @@ export function WidgetRenderer(props: WidgetRendererProps): ReactElement {
       // by the time the host's optimistic insertion re-renders the transcript. Sending first would
       // leave a live widget on screen for the width of that gap — long enough for a second click.
       recordInteraction(action);
+
+      const coords = { messageId: message.id, widgetType: envelope.type, widgetVersion: envelope.version };
+      // ADR 0048 — a `result` is checked on the way out the way a payload is checked on the way in.
+      // Never while streaming: the widget is rendering a partial payload, and whatever it derived
+      // from that is not an answer anyone should validate, let alone send.
+      const result = status === 'streaming' ? NO_RESULT : checkResult(resultSchema, data, coords);
+      if (result.error) report(onWidgetError, result.error);
+
+      if (correlationId !== undefined && respond) {
+        respond(correlationId, {
+          action,
+          text: data.text,
+          ...(result.ok ? { result: result.value } : {}),
+        });
+        return;
+      }
       sendUserMessage(data.text, data.meta);
     },
-    [readonly, recordInteraction, sendUserMessage],
+    [
+      readonly,
+      recordInteraction,
+      sendUserMessage,
+      respond,
+      correlationId,
+      resultSchema,
+      status,
+      onWidgetError,
+      message.id,
+      envelope.type,
+      envelope.version,
+    ],
   );
 
   if (outcome.render === 'fallback') {

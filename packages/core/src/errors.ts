@@ -1,7 +1,7 @@
 import type { NereyErrorCode, NereyErrorLike } from './types';
 
 /**
- * ADR 0013 — a typed error taxonomy. Every failure Nerey can produce is one of five codes,
+ * ADR 0013 / 0048 — a typed error taxonomy. Every failure Nerey can produce is one of six codes,
  * carries the widget coordinates that identify it, and reaches the consumer through the
  * host's `onWidgetError`. Nerey never writes to `console` on a consumer's behalf: a library
  * that logs is a library that shows up in someone else's error budget.
@@ -60,6 +60,22 @@ export function invalidStateError(coords: Coords, issues: readonly { path: strin
   return new NereyError({
     code: 'invalid-state',
     message: `Persisted widget state failed validation — ${detail}`,
+    issues,
+    ...coords,
+  });
+}
+
+/**
+ * ADR 0048 — a widget's outbound `result` failed its entry's `resultSchema`, or the entry has no
+ * `resultSchema` to check it against. Either way the interaction went out as text only.
+ */
+export function invalidResultError(coords: Coords, issues: readonly { path: string; message: string }[]) {
+  const detail = issues.length
+    ? issues.map((i) => (i.path ? `${i.path}: ${i.message}` : i.message)).join('; ')
+    : 'no issue detail supplied by the schema';
+  return new NereyError({
+    code: 'invalid-result',
+    message: `Widget result was not sent — ${detail}`,
     issues,
     ...coords,
   });

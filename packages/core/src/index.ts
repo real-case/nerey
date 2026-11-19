@@ -30,6 +30,7 @@ export type {
   WidgetHostValue,
   WidgetInteractionHandler,
   WidgetInteractionPayload,
+  WidgetResponse,
   WidgetMigration,
   WidgetRegistry,
   WidgetRegistryEntry,
@@ -161,6 +162,7 @@ export type { FlatIssue, ValidationOutcome } from './validate';
 export {
   NereyError,
   invalidPayloadError,
+  invalidResultError,
   invalidStateError,
   isNereyError,
   persistenceError,

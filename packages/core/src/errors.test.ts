@@ -5,6 +5,7 @@ import type { NereyErrorCode } from './types';
 import {
   NereyError,
   invalidPayloadError,
+  invalidResultError,
   invalidStateError,
   isNereyError,
   persistenceError,
@@ -147,6 +148,17 @@ describe('invalidPayloadError', () => {
   });
 });
 
+describe('invalidResultError', () => {
+  it('says the result was not sent, and carries the issues and coordinates', () => {
+    const error = invalidResultError(COORDS, ISSUES);
+
+    expect(error.code).toBe('invalid-result');
+    expect(error.message).toMatch(/^Widget result was not sent/);
+    expect(error.issues).toEqual(ISSUES);
+    expect(error.messageId).toBe('msg-7');
+  });
+});
+
 describe('invalidStateError', () => {
   it('distinguishes persisted state from model payload in both code and message', () => {
     const error = invalidStateError(COORDS, ISSUES);
@@ -211,13 +223,14 @@ describe('persistenceError', () => {
 });
 
 describe('the taxonomy is closed', () => {
-  it('produces exactly the five declared codes', () => {
+  it('produces exactly the six declared codes', () => {
     const codes: NereyErrorCode[] = [
       unknownWidgetError('a', '1.0.0').code,
       invalidPayloadError({}, []).code,
       invalidStateError({}, []).code,
       widgetRenderError({}, new Error('x')).code,
       persistenceError({}, new Error('x')).code,
+      invalidResultError({}, []).code,
     ];
 
     expect(codes).toEqual([
@@ -226,6 +239,7 @@ describe('the taxonomy is closed', () => {
       'invalid-state',
       'widget-render',
       'persistence',
+      'invalid-result',
     ]);
   });
 });
