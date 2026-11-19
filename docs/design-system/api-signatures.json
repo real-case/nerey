@@ -154,7 +154,7 @@
     "widgetMessage": "(input: WidgetMessageInput) => NereyMessage"
   },
   "@nerey/core/testing": {
-    "ConformanceOptions": "export type ConformanceOptions = { validPayload: unknown; invalidPayloads?: readonly unknown[]; state?: unknown; source?: string; };",
+    "ConformanceOptions": "export type ConformanceOptions = { validPayload: unknown; invalidPayloads?: readonly unknown[]; state?: unknown; source?: string; validResult?: unknown; invalidResults?: readonly unknown[]; persistence?: MessagePersistence; };",
     "ConformanceReport": "export type ConformanceReport = { entry: string; passed: boolean; violations: ConformanceViolation[]; };",
     "ConformanceViolation": "export type ConformanceViolation = { rule: string; detail: string; };",
     "checkWidgetConformance": "(entry: AnyWidgetRegistryEntry, options: ConformanceOptions) => Promise<ConformanceReport>",

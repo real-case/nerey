@@ -202,6 +202,29 @@ of its own, `lifecycle-ssr.test.tsx` the server/client agreement, and the confor
 `check:mutants` re-plants both defects described above and requires the reload test to fail
 against each, so the gap that passed every gate the first time now has one that sees it.
 
+## D-9 · ADR 0018's inert-control selector rejects the reference poll
+
+**Record says** (0018, Confirmation; restated by 0046): the conformance kit requires
+`[data-readonly="true"] :is(button,input,select,textarea):not([disabled])` to match nothing.
+
+**Code does**: the kit's `remount-respects-marker` rule starts from that selector and then excludes
+three kinds of control the markup itself declares inert: `readonly` / `aria-readonly="true"`, a
+hidden mirror input (`aria-hidden="true"` with `tabindex="-1"`), and a disclosure trigger
+(`aria-expanded`). It also clicks every button and fails on any message sent, which no markup can
+excuse.
+
+Running the kit over the theme for the first time showed why. The poll locks its options with
+`readOnly` rather than `disabled`, deliberately: a disabled radio group drops out of the tab order,
+so the answer a user just gave becomes unreachable by keyboard (ADR 0032). Base UI mirrors each
+option into a hidden native input, and the poll's per-option "Details" disclosure stays operable
+after answering, because opening it is reading, not deciding. The literal selector fails all three,
+on a widget that sends nothing when locked.
+
+**Fix direction**: record. The rule's intent, that a read-only widget cannot change its answer or
+send, is right; the selector is one way of checking it and is wrong for accessible read-only
+controls. A superseding record for 0018's `Confirmation` should name the behavioural check and the
+three declared-inert exemptions, so the kit and the record agree again.
+
 ---
 
 ## Not deviations

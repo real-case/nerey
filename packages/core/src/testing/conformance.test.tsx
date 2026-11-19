@@ -8,7 +8,8 @@ import type { StandardSchemaV1 } from '@standard-schema/spec';
 import { EXPIRE_ON_INTERACT, NEVER_EXPIRES } from '../lifecycle/expiry';
 import { WidgetRoot } from '../primitives/widget-root';
 import { asAnyWidget, defineWidget } from '../registry';
-import type { AnyWidgetRegistryEntry, WidgetComponentProps } from '../types';
+import { createMemoryPersistence } from '../state/memory-persistence';
+import type { AnyWidgetRegistryEntry, MessagePersistence, WidgetComponentProps } from '../types';
 import { confirmationWidget } from '../widgets/confirmation';
 import { textWidget } from '../widgets/text';
 import { checkWidgetConformance, expectWidgetConformance } from './conformance';
@@ -464,6 +465,33 @@ describe('rule: remount-respects-marker', () => {
     expect(detail).toMatch(/duplicate reply/);
   });
 
+  it('accepts controls the markup declares inert: read-only, hidden mirrors and disclosures (D-9)', async () => {
+    function ReadingWidget({ readonly, status, onInteraction }: Props): ReactElement {
+      return (
+        <WidgetRoot type="ok" version="1.0.0" slot="message" status={status} readonly={readonly}>
+          <button type="button" aria-expanded="false">
+            Details
+          </button>
+          <button type="button" role="radio" aria-checked="true" aria-readonly={readonly}>
+            EU
+          </button>
+          <input aria-hidden="true" tabIndex={-1} readOnly value="eu" />
+          <button
+            type="button"
+            disabled={readonly}
+            onClick={() => {
+              onInteraction('press', { text: 'go' });
+            }}
+          >
+            Submit
+          </button>
+        </WidgetRoot>
+      );
+    }
+
+    await expect(rulesFor(variant({ component: ReadingWidget }))).resolves.toEqual([]);
+  });
+
   it('is not checked for a widget that hides once expired', async () => {
     const rules = await rulesFor(
       variant({
@@ -472,6 +500,90 @@ describe('rule: remount-respects-marker', () => {
       }),
     );
     expect(rules).not.toContain('remount-respects-marker');
+  });
+});
+
+describe('rule: lifecycle-port', () => {
+  const portWithout: MessagePersistence = {
+    getWidgetState: () => Promise.resolve(undefined),
+    updateWidgetState: () => Promise.resolve(),
+  };
+
+  it('fires for a forever, action-expiring entry on a port without the lifecycle methods', async () => {
+    const detail = await detailFor(okEntry, 'lifecycle-port', { persistence: portWithout });
+    expect(detail).toMatch(/getLifecycleRecord/);
+    expect(detail).toMatch(/duplicate reply/);
+  });
+
+  it('stays silent on a port that implements both methods', async () => {
+    await expect(rulesFor(okEntry, { persistence: createMemoryPersistence() })).resolves.toEqual([]);
+  });
+
+  it('stays silent for an ephemeral entry, which forgets on purpose', async () => {
+    const rules = await rulesFor(
+      variant({ lifecycle: { persist: 'ephemeral', expiry: [{ on: 'interact' }], afterExpiry: 'snapshot' } }),
+      { persistence: portWithout },
+    );
+    expect(rules).not.toContain('lifecycle-port');
+  });
+
+  it('is not checked when no port is supplied', async () => {
+    await expect(rulesFor(okEntry)).resolves.toEqual([]);
+  });
+});
+
+describe('rule: result-schema', () => {
+  const resultSchema: StandardSchemaV1<unknown, { ok: boolean }> = {
+    '~standard': {
+      version: 1,
+      vendor: 'nerey-conformance-test',
+      validate(value): StandardSchemaV1.Result<{ ok: boolean }> {
+        if (!isRecord(value) || typeof value['ok'] !== 'boolean') {
+          return { issues: [{ path: ['ok'], message: '`ok` must be a boolean.' }] };
+        }
+        return { value: { ok: value['ok'] } };
+      },
+    },
+  };
+  const withResult = variant({ resultSchema });
+
+  it('stays silent with a valid and an invalid result that the schema sorts correctly', async () => {
+    await expect(
+      rulesFor(withResult, { validResult: { ok: true }, invalidResults: [{ ok: 'yes' }] }),
+    ).resolves.toEqual([]);
+  });
+
+  it('fires when no fixtures are supplied for a declared resultSchema', async () => {
+    const rules = await rulesFor(withResult);
+    expect(rules.filter((r) => r === 'result-schema')).toHaveLength(2);
+  });
+
+  it('fires when the schema rejects the valid result', async () => {
+    const detail = await detailFor(withResult, 'result-schema', {
+      validResult: { ok: 'nope' },
+      invalidResults: [{}],
+    });
+    expect(detail).toMatch(/rejected `validResult`/);
+  });
+
+  it('fires when the schema accepts an invalid result', async () => {
+    const detail = await detailFor(
+      variant({
+        resultSchema: {
+          '~standard': { ...resultSchema['~standard'], validate: (v: unknown) => ({ value: v }) },
+        },
+      }),
+      'result-schema',
+      {
+        validResult: { ok: true },
+        invalidResults: [{ ok: 'yes' }],
+      },
+    );
+    expect(detail).toMatch(/accepted `invalidResults\[0\]`/);
+  });
+
+  it('is not checked for an entry without a resultSchema', async () => {
+    await expect(rulesFor(okEntry)).resolves.toEqual([]);
   });
 });
 
@@ -496,6 +608,13 @@ describe('rule: lifecycle-declared', () => {
       'lifecycle-declared',
     );
     expect(detail).toMatch(/never reaches/);
+  });
+
+  it('does not fire for an ephemeral snapshot, which has no shared constant to use instead', async () => {
+    const rules = await rulesFor(
+      variant({ lifecycle: { persist: 'ephemeral', expiry: [], afterExpiry: 'snapshot' } }),
+    );
+    expect(rules).not.toContain('lifecycle-declared');
   });
 
   it('does not fire on an empty expiry with a reachable afterExpiry', async () => {

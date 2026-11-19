@@ -12,6 +12,7 @@ import { createMemoryPersistence } from '../state/memory-persistence';
 import type {
   AnyWidgetRegistryEntry,
   LifecycleRecord,
+  MessagePersistence,
   NereyMessage,
   WidgetComponent,
   WidgetHostValue,
@@ -58,6 +59,21 @@ export type ConformanceOptions = {
   state?: unknown;
   /** Source text of the widget module, for the static I/O check. */
   source?: string;
+  /**
+   * A `result` the entry's `resultSchema` must accept (ADR 0048). Required when the entry declares
+   * a `resultSchema`, because a structured answer nothing has shown to pass is one that may be
+   * dropped on its first real use.
+   */
+  validResult?: unknown;
+  /** Results the `resultSchema` must REJECT. Required with a `resultSchema`, like `invalidPayloads`. */
+  invalidResults?: readonly unknown[];
+  /**
+   * The persistence port the application will run this widget on (ADR 0047). When supplied, an
+   * entry that persists forever and expires on a person's action is checked against it: a port
+   * without `getLifecycleRecord` / `updateLifecycleRecord` keeps the expiry marker for the session
+   * only, so the widget is pressable again after a reload.
+   */
+  persistence?: MessagePersistence;
 };
 
 const CONVERSATION_ID = 'nerey-conformance';
@@ -668,7 +684,17 @@ function checkLifecycle(entry: AnyWidgetRegistryEntry, report: Report): void {
   // expires. An inline `{ expiry: [], afterExpiry: 'snapshot' }` is what this rule is looking for:
   // it is what a copy-paste from an interactive widget leaves behind, and it is indistinguishable
   // from an author who meant to expire on interaction and forgot to say so.
-  if (lifecycle !== NEVER_EXPIRES && afterExpiry === 'snapshot' && expiry.length === 0) {
+  //
+  // `persist: 'ephemeral'` is exempt too, because the remedy the rule offers does not exist for
+  // it: `NEVER_EXPIRES` persists forever, so an ephemeral display widget — the theme's data table,
+  // whose sort is a viewing preference — has no constant to reach for. And the copy-paste this
+  // rule hunts comes from `EXPIRE_ON_INTERACT`, which is `forever`, so it never produces this shape.
+  if (
+    lifecycle !== NEVER_EXPIRES &&
+    persist !== 'ephemeral' &&
+    afterExpiry === 'snapshot' &&
+    expiry.length === 0
+  ) {
     report(
       'lifecycle-declared',
       `declares \`afterExpiry: 'snapshot'\` with an empty \`expiry\`. Nothing can expire this ` +
@@ -685,6 +711,27 @@ function checkLifecycle(entry: AnyWidgetRegistryEntry, report: Report): void {
 
 /** ADR 0018's selector: a read-only widget has no control a person can still operate. */
 const ENABLED_CONTROL = ':is(button,input,select,textarea):not([disabled])';
+
+/**
+ * D-9 — controls the ADR 0018 selector matches that cannot change the widget's answer, and so are
+ * not what the rule is about. Each is declared inert by the markup itself, never by guesswork:
+ *
+ * - `readonly` / `aria-readonly="true"` — the control announces it cannot change. The theme's poll
+ *   uses read-only rather than disabled on purpose, so an answered question stays reachable by
+ *   keyboard; a disabled group drops out of the tab order (ADR 0018, ADR 0032).
+ * - `aria-hidden="true"` with `tabindex="-1"` — the hidden native input a headless radio or
+ *   checkbox mirrors its value into; nobody can reach it.
+ * - `aria-expanded` — a disclosure trigger. Opening a "details" panel is reading, not deciding.
+ *
+ * What the exemption cannot hide is a send: every button is still clicked below, and a single
+ * message leaving a remounted widget fails the rule regardless of how its controls are marked.
+ */
+function isDeclaredInert(element: Element): boolean {
+  if (element.hasAttribute('readonly') || element.getAttribute('aria-readonly') === 'true') return true;
+  if (element.getAttribute('aria-hidden') === 'true' && element.getAttribute('tabindex') === '-1')
+    return true;
+  return element.hasAttribute('aria-expanded');
+}
 
 /**
  * Mounts the widget the way a reload does — through `WidgetRenderer`, against a port that already
@@ -737,19 +784,117 @@ async function checkRemountAgainstMarker(
     // One more turn: the marker read resolves after the first commit.
     await flush(() => undefined);
     if (mounted.thrown !== undefined) return; // `renders` already reports a throwing widget.
-    const enabled = Array.from(mounted.container.querySelectorAll(ENABLED_CONTROL));
+    const enabled = Array.from(mounted.container.querySelectorAll(ENABLED_CONTROL)).filter(
+      (element) => !isDeclaredInert(element),
+    );
+    await clickEveryButton(mounted.container);
+    if (mounted.sent.length > 0) {
+      report(
+        'remount-respects-marker',
+        `remounted against a stored expiry marker, the widget sent ${mounted.sent.length} ` +
+          `message(s) when its buttons were pressed. After a reload the marker is the only record ` +
+          `that the widget was used, and a second send duplicates a reply the agent has already ` +
+          `answered (ADR 0018 / 0046).`,
+      );
+    }
     if (enabled.length > 0) {
       report(
         'remount-respects-marker',
         `remounted against a stored expiry marker, the widget still has ${enabled.length} enabled ` +
           `control(s) (${enabled.map(elementLabel).join(', ')}). After a reload the marker is the ` +
           `only record that the widget was used; a control that ignores \`readonly\` invites a ` +
-          `second press and a duplicate reply (ADR 0018 / 0046).`,
+          `second press and a duplicate reply (ADR 0018 / 0046). A control that only reads — a ` +
+          `disclosure, a read-only option — should say so with \`aria-expanded\` or \`readonly\`.`,
       );
     }
   } finally {
     await mounted.unmount();
   }
+}
+
+/* ────────────────────────────────────────────────────────────────────────────────────
+ * Rule 8c — the port can hold the marker (ADR 0047)
+ * ──────────────────────────────────────────────────────────────────────────────────── */
+
+function checkLifecyclePort(
+  entry: AnyWidgetRegistryEntry,
+  options: ConformanceOptions,
+  report: Report,
+): void {
+  const port = options.persistence;
+  if (!port) return;
+  const lifecycle: unknown = entry.lifecycle;
+  if (!isRecord(lifecycle) || lifecycle['persist'] !== 'forever') return;
+  const expiry: unknown = lifecycle['expiry'];
+  const actionBearing =
+    Array.isArray(expiry) && expiry.some((rule: unknown) => isRecord(rule) && rule['on'] !== 'timeout');
+  if (!actionBearing) return;
+
+  const missing = (['getLifecycleRecord', 'updateLifecycleRecord'] as const).filter(
+    (name) => typeof port[name] !== 'function',
+  );
+  if (missing.length === 0) return;
+  report(
+    'lifecycle-port',
+    `the entry persists forever and expires on a person's action, but the supplied port has no ` +
+      `${missing.map((name) => `\`${name}\``).join(' or ')}. The expiry marker then lives in this ` +
+      `session's memory only, so after a reload the widget is interactive again and a second press ` +
+      `sends a duplicate reply (ADR 0018 / 0047). Implement both methods on the port, or declare ` +
+      `\`persist: 'ephemeral'\` if forgetting is intended.`,
+  );
+}
+
+/* ────────────────────────────────────────────────────────────────────────────────────
+ * Rule 8d — the result schema (ADR 0048)
+ * ──────────────────────────────────────────────────────────────────────────────────── */
+
+function checkResultSchema(entry: AnyWidgetRegistryEntry, options: ConformanceOptions, report: Report): void {
+  const schema: StandardSchemaV1 | undefined = entry.resultSchema;
+  if (!schema) return;
+
+  if (!('validResult' in options)) {
+    report(
+      'result-schema',
+      'the entry declares a `resultSchema` but no `validResult` was supplied. Supply a result the ' +
+        'widget really sends, so the schema is shown to let it through before a model ever waits on it.',
+    );
+  } else {
+    const outcome = probe(schema, options.validResult);
+    if (outcome.kind === 'rejected') {
+      report(
+        'result-schema',
+        `\`resultSchema\` rejected \`validResult\` — ${formatIssues(outcome.issues)}. In an ` +
+          `application that result would be reported as \`invalid-result\` and dropped, and the ` +
+          `tool call answered with text alone (ADR 0048).`,
+      );
+    } else if (outcome.kind === 'threw') {
+      report('result-schema', `\`resultSchema\` threw on \`validResult\` — ${describeError(outcome.error)}.`);
+    } else if (outcome.kind === 'async') {
+      report(
+        'result-schema',
+        '`resultSchema` validated `validResult` asynchronously. The result is checked inside the ' +
+          "widget's event handler and cannot be awaited (ADR 0011 / 0048).",
+      );
+    }
+  }
+
+  const invalid = options.invalidResults ?? [];
+  if (invalid.length === 0) {
+    report(
+      'result-schema',
+      'the entry declares a `resultSchema` but no `invalidResults` were supplied, so nothing proves ' +
+        'it refuses anything. Unvalidated structured data reaching a model is what it exists to stop.',
+    );
+  }
+  invalid.forEach((candidate, index) => {
+    if (probe(schema, candidate).kind === 'accepted') {
+      report(
+        'result-schema',
+        `\`resultSchema\` accepted \`invalidResults[${index}]\` (${describeValue(candidate)}). A ` +
+          `schema that accepts everything forwards whatever the widget built to the model unchecked.`,
+      );
+    }
+  });
 }
 
 /* ────────────────────────────────────────────────────────────────────────────────────
@@ -833,6 +978,8 @@ export async function checkWidgetConformance(
   await checkRendering(entry, payload, options, report);
   checkLifecycle(entry, report);
   await checkRemountAgainstMarker(entry, payload, options.state, report);
+  checkLifecyclePort(entry, options, report);
+  checkResultSchema(entry, options, report);
   checkNoIo(options.source, report);
 
   return {
