@@ -12,6 +12,7 @@
 //
 //   lifecycle    use-widget-lifecycle.tsx  ×  lifecycle-reload.test.tsx   the two D-8 defects (0046)
 //   write queue  use-widget-state.tsx      ×  use-widget-state.test.tsx   ADR 0016's drop-on-unmount (0047)
+//   reply        widget-renderer.tsx       ×  interaction-contract.test   an unvalidated `result` (0048)
 //
 // Rules:
 //
@@ -87,6 +88,23 @@ export const SUITES = [
           [
             '  const hydrate = (): S => (queue.unsettled(conversationId, messageId) as S | undefined) ?? initial;\n',
             '  const hydrate = (): S => initial;\n',
+          ],
+        ],
+      },
+    ],
+  },
+  {
+    name: 'reply channel',
+    adr: 'ADR 0048',
+    source: 'packages/core/src/render/widget-renderer.tsx',
+    test: 'packages/core/src/render/interaction-contract.test.tsx',
+    mutants: [
+      {
+        name: 'forwards an unvalidated result',
+        edits: [
+          [
+            "      const result = status === 'streaming' ? NO_RESULT : checkResult(resultSchema, data, coords);\n",
+            '      const result: ResultCheck = { ok: true, value: data.result };\n',
           ],
         ],
       },
