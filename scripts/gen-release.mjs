@@ -235,7 +235,7 @@ export function renderChangelogEntry(version, date, commits) {
 }
 
 const CHANGELOG_HEADER = (name) =>
-  `# ${name}\n\nAll notable changes to this package. The format follows the commit range it was\ngenerated from (ADR 0036), and the version numbers follow ADR 0029.\n\n`;
+  `# ${name}\n\nAll notable changes to this package. The format follows the commit range it was\ngenerated from (ADR 0050), and the version numbers follow ADR 0038.\n\n`;
 
 /** Writes the manifest version and prepends the entry. Split out so the self-test can run it. */
 export function applyRelease(packageDir, packageName, version, entry) {
@@ -250,7 +250,10 @@ export function applyRelease(packageDir, packageName, version, entry) {
   const body = existing.startsWith('# ')
     ? existing.replace(/^(# [^\n]*\n\n(?:[^\n]*\n)*?\n)/, `$1${entry}\n`)
     : `${header}${entry}\n`;
-  writeFileSync(changelogPath, body, 'utf8');
+  // Exactly one trailing newline: the entry ends in a blank line so a later prepend leaves one
+  // between releases, and at the end of the file that blank line is what Prettier rejects — which
+  // `release.yml` runs before it publishes.
+  writeFileSync(changelogPath, body.replace(/\n+$/, '\n'), 'utf8');
 
   return { manifestPath, changelogPath };
 }
@@ -398,9 +401,11 @@ function main(argv) {
     `✓ written: ${written.manifestPath.replace(`${repoRoot}/`, '')}, ` +
       `${written.changelogPath.replace(`${repoRoot}/`, '')}\n\n` +
       `  Read the entry above, then:\n\n` +
-      `    git commit -m 'chore(${scope}): release ${version}' -m 'Refs: ADR 0039' \\\n` +
-      `      ${written.manifestPath.replace(`${repoRoot}/`, '')} ` +
+      // `git add` first: on a first release CHANGELOG.md is a new file, and `git commit <path>`
+      // refuses a path git does not track yet.
+      `    git add ${written.manifestPath.replace(`${repoRoot}/`, '')} ` +
       `${written.changelogPath.replace(`${repoRoot}/`, '')}\n` +
+      `    git commit -m 'chore(${scope}): release ${version}' -m 'Refs: ADR 0039'\n` +
       `    git tag ${tag}\n` +
       `    git push origin main ${tag}\n\n` +
       `  The tag is what publishes (ADR 0039). CI runs every gate on a clean checkout first.\n`,
@@ -503,6 +508,11 @@ if (process.argv.includes('--self-test')) {
       'writes a changelog entry',
       changelog.includes('## 0.1.1') && changelog.includes('add a widget'),
     ]);
+    outcomes.push([
+      'ends a new changelog with exactly one newline',
+      changelog.endsWith('\n') && !changelog.endsWith('\n\n'),
+      JSON.stringify(changelog.slice(-20)),
+    ]);
 
     // A second release must not clobber the first — the header stays, the new entry goes on top.
     const second = renderChangelogEntry('0.1.2', '2026-08-26', breakingCommits);
@@ -514,6 +524,11 @@ if (process.argv.includes('--self-test')) {
         twice.includes('## 0.1.1') &&
         twice.indexOf('## 0.1.2') < twice.indexOf('## 0.1.1'),
       twice.slice(0, 200),
+    ]);
+    outcomes.push([
+      'keeps one blank line between releases and one newline at the end',
+      /## 0\.1\.2[\s\S]*[^\n]\n\n## 0\.1\.1/.test(twice) && !twice.endsWith('\n\n'),
+      JSON.stringify(twice),
     ]);
   } finally {
     rmSync(dir, { recursive: true, force: true });
