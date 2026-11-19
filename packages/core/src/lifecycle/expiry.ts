@@ -5,16 +5,16 @@ import type { ExpiryRule, Lifecycle } from '../types';
  * precedence and deadline arithmetic are testable as a table rather than through a rendered
  * tree with fake timers.
  *
- * `now` and `mountedAt` are both injected instead of read from `Date.now()`. That is not only
- * for testability: it lets the runtime start a deadline from the widget's *message* timestamp
- * rather than from the instant this tab painted it, which is what makes a widget whose
- * deadline passed while the tab was closed already expired on first paint (ADR 0018).
+ * `now` and `createdAt` are both injected instead of read from `Date.now()`. That is not only
+ * for testability: the deadline starts from the widget's *message* timestamp rather than from the
+ * instant this tab painted it, which is what makes a widget whose deadline passed while the tab
+ * was closed already expired on first paint (ADR 0018 / 0046).
  */
 export type LifecycleSignals = {
   /** Actions performed on this widget, in order. */
   interactions: readonly string[];
-  /** Epoch ms when the widget first mounted. */
-  mountedAt: number;
+  /** Epoch ms when the widget's message was created — the anchor for `timeout` (ADR 0046). */
+  createdAt: number;
   /** Epoch ms "now". Injected so the runtime is testable without fake timers. */
   now: number;
   /** Conversation message count when the widget mounted. */
@@ -43,7 +43,7 @@ export function ruleHasFired(rule: ExpiryRule, signals: LifecycleSignals): boole
       // yet" — hands the scheduling layer a NaN or Infinity delay, and the widget stays
       // interactive forever with nothing to point at.
       if (!Number.isFinite(rule.ms) || rule.ms <= 0) return true;
-      return signals.now - signals.mountedAt >= rule.ms;
+      return signals.now - signals.createdAt >= rule.ms;
 
     case 'message':
       return signals.messageCount > signals.messageCountAtMount;
@@ -88,7 +88,7 @@ export function msUntilNextTimeout(lifecycle: Lifecycle, signals: LifecycleSigna
     if (rule.on !== 'timeout') continue;
     // Reaching here implies a usable deadline: `isExpired` was false, and the pathological
     // `ms` values fire immediately, so they can never survive to this loop.
-    const remaining = signals.mountedAt + rule.ms - signals.now;
+    const remaining = signals.createdAt + rule.ms - signals.now;
     if (earliest === undefined || remaining < earliest) earliest = remaining;
   }
 

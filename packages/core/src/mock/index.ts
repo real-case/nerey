@@ -11,7 +11,7 @@
 export { MockWidgetHost, createSendRecorder, mockRegistry } from './mock-host';
 export type { MockHostOptions, SendRecorder, SentMessage } from './mock-host';
 
-export { sampleConversation, textMessage, widgetMessage } from './fixtures';
+export { MOCK_EPOCH, sampleConversation, textMessage, widgetMessage } from './fixtures';
 export type { TextMessageInput, WidgetMessageInput } from './fixtures';
 
 export { createDevRegistry } from './dev-registry';

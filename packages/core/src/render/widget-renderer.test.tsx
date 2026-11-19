@@ -106,6 +106,9 @@ function makeHost(entries: AnyWidgetRegistryEntry[], overrides: Partial<WidgetHo
   const onWidgetError = vi.fn<NonNullable<WidgetHostValue['onWidgetError']>>();
   const host: WidgetHostValue = {
     ...DEFAULT_HOST_VALUE,
+    // A fresh port per host: expiry markers are scoped to the port object (ADR 0047), and a
+    // shared one would carry one test's marker into the next.
+    persistence: { ...DEFAULT_HOST_VALUE.persistence },
     registry: createWidgetRegistry(entries),
     conversationId: 'c1',
     sendUserMessage,
@@ -138,7 +141,7 @@ function mount(props: RendererProps, host: WidgetHostValue) {
 }
 
 function message(widget: NereyWidgetEnvelope | null, text = 'Which region? EU or US.'): NereyMessage {
-  return { id: 'm1', role: 'assistant', text, widget };
+  return { id: 'm1', role: 'assistant', createdAt: 0, text, widget };
 }
 
 function pollMessage(overrides: Partial<NereyWidgetEnvelope> = {}): NereyMessage {
@@ -448,6 +451,7 @@ describe('degradation step 6: the widget throws while rendering', () => {
           message={{
             id: 'a',
             role: 'assistant',
+            createdAt: 0,
             text: 'boom text',
             widget: { type: 'boom', version: '1.0.0', payload: {} },
           }}
@@ -456,6 +460,7 @@ describe('degradation step 6: the widget throws while rendering', () => {
           message={{
             id: 'b',
             role: 'assistant',
+            createdAt: 0,
             text: 'poll text',
             widget: { type: 'poll', version: '1.0.0', payload: VALID_PAYLOAD },
           }}

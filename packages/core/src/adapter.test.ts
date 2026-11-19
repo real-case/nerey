@@ -12,7 +12,7 @@ import {
 } from './adapter';
 
 function message(overrides: Partial<NereyMessage> = {}): NereyMessage {
-  return { id: 'm1', role: 'assistant', text: 'Plain prose.', ...overrides };
+  return { id: 'm1', role: 'assistant', text: 'Plain prose.', createdAt: 0, ...overrides };
 }
 
 const ENVELOPE: NereyWidgetEnvelope = {

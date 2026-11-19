@@ -1,4 +1,4 @@
-import type { MessagePersistence, WidgetStateRecord } from '../types';
+import type { LifecycleRecord, MessagePersistence, WidgetStateRecord } from '../types';
 
 /**
  * ADR 0016 — the reference implementation of the persistence port, and what makes a widget
@@ -13,6 +13,8 @@ import type { MessagePersistence, WidgetStateRecord } from '../types';
 export type MemoryPersistence = MessagePersistence & {
   /** All stored state, keyed `${conversationId}:${messageId}`. For assertions and devtools. */
   snapshot(): Readonly<Record<string, WidgetStateRecord>>;
+  /** All stored expiry markers (ADR 0047), keyed like `snapshot()`. */
+  lifecycleSnapshot(): Readonly<Record<string, LifecycleRecord>>;
   /**
    * Restores exactly what `createMemoryPersistence` returned: the seed contents, no armed
    * write failures, no latency.
@@ -135,6 +137,9 @@ export function createMemoryPersistence(
   );
 
   const store = new Map<string, WidgetStateRecord>();
+  // Markers live beside state, never inside it (ADR 0018 / 0047), so a widget's `stateSchema`
+  // never sees one. Not seeded: a seed describes what the widget author's state looked like.
+  const markers = new Map<string, LifecycleRecord>();
 
   let latencyMs = 0;
   let pendingWriteFailures = 0;
@@ -193,6 +198,34 @@ export function createMemoryPersistence(
     store.set(keyOf(conversationId, messageId), record);
   }
 
+  async function getLifecycleRecord(
+    conversationId: string,
+    messageId: string | number,
+  ): Promise<LifecycleRecord | undefined> {
+    await delay(latencyMs);
+    const record = markers.get(keyOf(conversationId, messageId));
+    return record === undefined ? undefined : copy(record);
+  }
+
+  async function updateLifecycleRecord(
+    conversationId: string,
+    messageId: string | number,
+    record: LifecycleRecord,
+  ): Promise<void> {
+    const stored = copy(record);
+    await delay(latencyMs);
+    // Deliberately outside the `failNextWrites` seam: that seam counts widget-state writes, and a
+    // marker write consuming one of them would move a state failure a test armed onto a write it
+    // never mentioned.
+    markers.set(keyOf(conversationId, messageId), stored);
+  }
+
+  function lifecycleSnapshot(): Readonly<Record<string, LifecycleRecord>> {
+    const out: Record<string, LifecycleRecord> = {};
+    for (const [key, record] of markers) out[key] = copy(record);
+    return out;
+  }
+
   function snapshot(): Readonly<Record<string, WidgetStateRecord>> {
     // A fresh deep copy per call. `Readonly` is a compile-time claim only; copying makes it
     // true at runtime, so an assertion that mutates the snapshot — or holds one across a write
@@ -204,6 +237,7 @@ export function createMemoryPersistence(
 
   function reset(): void {
     restoreSeed();
+    markers.clear();
     pendingWriteFailures = 0;
     writeFailure = undefined;
     latencyMs = 0;
@@ -227,5 +261,15 @@ export function createMemoryPersistence(
     latencyMs = Number.isFinite(ms) && ms > 0 ? ms : 0;
   }
 
-  return { getWidgetState, updateWidgetState, snapshot, reset, failNextWrites, setLatency };
+  return {
+    getWidgetState,
+    updateWidgetState,
+    getLifecycleRecord,
+    updateLifecycleRecord,
+    snapshot,
+    lifecycleSnapshot,
+    reset,
+    failNextWrites,
+    setLatency,
+  };
 }

@@ -42,6 +42,7 @@ function widgetMessage(id: string, type: string, label: string): NereyMessage {
   return {
     id,
     role: 'assistant',
+    createdAt: 0,
     text: `plain text for ${id}`,
     widget: { type, version: VERSION, payload: { label }, state: {} },
   };

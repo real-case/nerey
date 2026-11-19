@@ -12,6 +12,14 @@ import { CONFIRMATION_TYPE, CONFIRMATION_VERSION } from '../widgets/confirmation
 const DEFAULT_VERSION = '1.0.0';
 
 /**
+ * The instant every fixture message is created at unless it says otherwise, and the instant a
+ * `MockWidgetHost`'s clock starts from (ADR 0046). A literal rather than `Date.now()`, so a story's
+ * first frame is the same on every run and every machine; the mock clock then advances in real
+ * time from here, so a story that shortens a `timeout` still watches it expire.
+ */
+export const MOCK_EPOCH = Date.UTC(2026, 0, 1);
+
+/**
  * Ids only have to be *unique* — they key React reconciliation, lifecycle bookkeeping and the
  * persistence record. They are deliberately not stable across runs of different tests: a counter
  * shared by a whole file means the id a fixture gets depends on how many fixtures ran before it,
@@ -53,6 +61,8 @@ export type WidgetMessageInput = {
   payload: unknown;
   state?: unknown;
   text?: string;
+  /** Epoch ms. Defaults to `MOCK_EPOCH`, so fixtures are deterministic. */
+  createdAt?: number;
 };
 
 /** Build a `NereyMessage` carrying a widget, with sensible defaults. */
@@ -70,6 +80,7 @@ export function widgetMessage(input: WidgetMessageInput): NereyMessage {
     // from somewhere, and nothing in the contract produces it.
     role: 'assistant',
     text: input.text ?? synthesiseText(input.type, input.payload),
+    createdAt: input.createdAt ?? MOCK_EPOCH,
     widget,
   };
 }
@@ -78,13 +89,20 @@ export type TextMessageInput = {
   id?: string | number;
   text: string;
   role?: NereyMessage['role'];
+  /** Epoch ms. Defaults to `MOCK_EPOCH`. */
+  createdAt?: number;
 };
 
 /** Build a plain text message. */
 export function textMessage(input: TextMessageInput): NereyMessage {
   // No `widget` key at all, not `widget: null`. Both are absences (`resolveEnvelope` collapses
   // them), and the shorter one is what a consumer's own adapter produces.
-  return { id: input.id ?? autoId('text'), role: input.role ?? 'assistant', text: input.text };
+  return {
+    id: input.id ?? autoId('text'),
+    role: input.role ?? 'assistant',
+    text: input.text,
+    createdAt: input.createdAt ?? MOCK_EPOCH,
+  };
 }
 
 /**

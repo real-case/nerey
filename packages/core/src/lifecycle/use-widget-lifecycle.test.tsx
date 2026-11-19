@@ -31,7 +31,13 @@ function lc(expiry: readonly ExpiryRule[], afterExpiry: AfterExpiry = 'snapshot'
  */
 function renderLifecycle(initialArgs: UseWidgetLifecycleArgs, initialHost: Partial<WidgetHostValue> = {}) {
   let args = initialArgs;
-  let host: WidgetHostValue = { ...DEFAULT_HOST_VALUE, ...initialHost };
+  // A fresh port per render: expiry markers are scoped to the port object (ADR 0047), and the
+  // shared default would carry one test's marker into the next.
+  let host: WidgetHostValue = {
+    ...DEFAULT_HOST_VALUE,
+    persistence: { ...DEFAULT_HOST_VALUE.persistence },
+    ...initialHost,
+  };
   let renderCount = 0;
 
   const view = renderHook(
@@ -74,7 +80,10 @@ afterEach(() => {
 
 describe('a lifecycle that never expires', () => {
   it('stays live under every signal at once', () => {
-    const view = renderLifecycle({ lifecycle: NEVER_EXPIRES, messageId: 'm1' }, { messageCount: 3 });
+    const view = renderLifecycle(
+      { lifecycle: NEVER_EXPIRES, messageId: 'm1', createdAt: START },
+      { messageCount: 3 },
+    );
 
     act(() => {
       view.state.recordInteraction('vote');
@@ -90,14 +99,18 @@ describe('a lifecycle that never expires', () => {
   });
 
   it('arms no timer at all', () => {
-    renderLifecycle({ lifecycle: NEVER_EXPIRES, messageId: 'm1' });
+    renderLifecycle({ lifecycle: NEVER_EXPIRES, messageId: 'm1', createdAt: START });
 
     expect(vi.getTimerCount()).toBe(0);
   });
 
   it('reports afterExpiry verbatim, expired or not', () => {
     for (const afterExpiry of ['snapshot', 'fallback', 'hide'] as const) {
-      const view = renderLifecycle({ lifecycle: lc([{ on: 'interact' }], afterExpiry), messageId: 'm1' });
+      const view = renderLifecycle({
+        lifecycle: lc([{ on: 'interact' }], afterExpiry),
+        messageId: 'm1',
+        createdAt: START,
+      });
 
       expect(view.state.afterExpiry).toBe(afterExpiry);
       act(() => {
@@ -110,7 +123,11 @@ describe('a lifecycle that never expires', () => {
 
 describe('expiry on interaction', () => {
   it('flips readonly after the first interaction of any name (AC-12)', () => {
-    const view = renderLifecycle({ lifecycle: EXPIRE_ON_INTERACT, messageId: 'm1' });
+    const view = renderLifecycle({
+      lifecycle: EXPIRE_ON_INTERACT,
+      messageId: 'm1',
+      createdAt: START,
+    });
 
     expect(view.state.expired).toBe(false);
     expect(view.state.readonly).toBe(false);
@@ -126,7 +143,11 @@ describe('expiry on interaction', () => {
 
   it('fires only for the named action, and reports the declared rule object', () => {
     const rule: ExpiryRule = { on: 'interact', action: 'submit' };
-    const view = renderLifecycle({ lifecycle: lc([rule]), messageId: 'm1' });
+    const view = renderLifecycle({
+      lifecycle: lc([rule]),
+      messageId: 'm1',
+      createdAt: START,
+    });
 
     act(() => {
       view.state.recordInteraction('change');
@@ -148,7 +169,11 @@ describe('expiry on interaction', () => {
   });
 
   it('stays expired when an unrelated action is recorded afterwards', () => {
-    const view = renderLifecycle({ lifecycle: EXPIRE_ON_INTERACT, messageId: 'm1' });
+    const view = renderLifecycle({
+      lifecycle: EXPIRE_ON_INTERACT,
+      messageId: 'm1',
+      createdAt: START,
+    });
 
     act(() => {
       view.state.recordInteraction('vote');
@@ -161,7 +186,10 @@ describe('expiry on interaction', () => {
   });
 
   it('keeps recordInteraction identity across re-renders and across expiry', () => {
-    const view = renderLifecycle({ lifecycle: EXPIRE_ON_INTERACT, messageId: 'm1' }, { messageCount: 1 });
+    const view = renderLifecycle(
+      { lifecycle: EXPIRE_ON_INTERACT, messageId: 'm1', createdAt: START },
+      { messageCount: 1 },
+    );
     const first = view.state.recordInteraction;
 
     view.update({ host: { messageCount: 2 } });
@@ -174,7 +202,11 @@ describe('expiry on interaction', () => {
   });
 
   it('is idempotent when the same action is recorded twice', () => {
-    const view = renderLifecycle({ lifecycle: NEVER_EXPIRES, messageId: 'm1' });
+    const view = renderLifecycle({
+      lifecycle: NEVER_EXPIRES,
+      messageId: 'm1',
+      createdAt: START,
+    });
 
     act(() => {
       view.state.recordInteraction('vote');
@@ -198,7 +230,11 @@ describe('expiry on interaction', () => {
   });
 
   it('collapses a burst of recordings into one re-render', () => {
-    const view = renderLifecycle({ lifecycle: NEVER_EXPIRES, messageId: 'm1' });
+    const view = renderLifecycle({
+      lifecycle: NEVER_EXPIRES,
+      messageId: 'm1',
+      createdAt: START,
+    });
     const before = view.renderCount;
 
     act(() => {
@@ -213,7 +249,11 @@ describe('expiry on interaction', () => {
 
 describe('expiry on timeout', () => {
   it('does not expire a millisecond early and does expire on the deadline (AC-12)', () => {
-    const view = renderLifecycle({ lifecycle: lc([{ on: 'timeout', ms: 30_000 }]), messageId: 'm1' });
+    const view = renderLifecycle({
+      lifecycle: lc([{ on: 'timeout', ms: 30_000 }]),
+      messageId: 'm1',
+      createdAt: START,
+    });
 
     expect(view.state.expired).toBe(false);
 
@@ -231,7 +271,7 @@ describe('expiry on timeout', () => {
   });
 
   it('schedules exactly one timer and disarms once it has fired', () => {
-    renderLifecycle({ lifecycle: lc([{ on: 'timeout', ms: 30_000 }]), messageId: 'm1' });
+    renderLifecycle({ lifecycle: lc([{ on: 'timeout', ms: 30_000 }]), messageId: 'm1', createdAt: START });
 
     expect(vi.getTimerCount()).toBe(1);
 
@@ -244,7 +284,7 @@ describe('expiry on timeout', () => {
 
   it('does not re-arm the timer when an unrelated re-render happens', () => {
     const view = renderLifecycle(
-      { lifecycle: lc([{ on: 'timeout', ms: 30_000 }]), messageId: 'm1' },
+      { lifecycle: lc([{ on: 'timeout', ms: 30_000 }]), messageId: 'm1', createdAt: START },
       { messageCount: 1 },
     );
 
@@ -264,7 +304,11 @@ describe('expiry on timeout', () => {
 
   it('re-arms across the 32-bit setTimeout ceiling instead of firing early', () => {
     const ms = MAX_TIMEOUT_DELAY + 1_000_000;
-    const view = renderLifecycle({ lifecycle: lc([{ on: 'timeout', ms }]), messageId: 'm1' });
+    const view = renderLifecycle({
+      lifecycle: lc([{ on: 'timeout', ms }]),
+      messageId: 'm1',
+      createdAt: START,
+    });
 
     act(() => {
       vi.advanceTimersByTime(MAX_TIMEOUT_DELAY);
@@ -281,7 +325,11 @@ describe('expiry on timeout', () => {
   });
 
   it('expires on the first render for a pathological ms, arming nothing', () => {
-    const view = renderLifecycle({ lifecycle: lc([{ on: 'timeout', ms: 0 }]), messageId: 'm1' });
+    const view = renderLifecycle({
+      lifecycle: lc([{ on: 'timeout', ms: 0 }]),
+      messageId: 'm1',
+      createdAt: START,
+    });
 
     expect(view.state.expired).toBe(true);
     expect(vi.getTimerCount()).toBe(0);
@@ -294,6 +342,7 @@ describe('expiry on timeout', () => {
         { on: 'timeout', ms: 20_000 },
       ]),
       messageId: 'm1',
+      createdAt: START,
     });
 
     act(() => {
@@ -308,7 +357,7 @@ describe('expiry on timeout', () => {
 describe('expiry on a later message', () => {
   it('takes the mount-time count as the baseline and expires when it grows', () => {
     const view = renderLifecycle(
-      { lifecycle: lc([{ on: 'message' }]), messageId: 'm1' },
+      { lifecycle: lc([{ on: 'message' }]), messageId: 'm1', createdAt: START },
       { messageCount: 3 },
     );
 
@@ -323,7 +372,7 @@ describe('expiry on a later message', () => {
 
   it('does not expire when the transcript shrinks', () => {
     const view = renderLifecycle(
-      { lifecycle: lc([{ on: 'message' }]), messageId: 'm1' },
+      { lifecycle: lc([{ on: 'message' }]), messageId: 'm1', createdAt: START },
       { messageCount: 3 },
     );
 
@@ -335,7 +384,7 @@ describe('expiry on a later message', () => {
   it('never fires when the host supplies no count at all', () => {
     // ADR 0018 — a signal the host never delivers simply never fires; it is a wiring defect the
     // conformance kit catches, not something the runtime papers over.
-    const view = renderLifecycle({ lifecycle: lc([{ on: 'message' }]), messageId: 'm1' });
+    const view = renderLifecycle({ lifecycle: lc([{ on: 'message' }]), messageId: 'm1', createdAt: START });
 
     view.update();
 
@@ -346,7 +395,7 @@ describe('expiry on a later message', () => {
 describe('expiry on a host-dispatched event', () => {
   it('fires on the matching name only', () => {
     const view = renderLifecycle(
-      { lifecycle: lc([{ on: 'event', name: 'checkout-complete' }]), messageId: 'm1' },
+      { lifecycle: lc([{ on: 'event', name: 'checkout-complete' }]), messageId: 'm1', createdAt: START },
       { firedEvents: new Set<string>() },
     );
 
@@ -359,7 +408,11 @@ describe('expiry on a host-dispatched event', () => {
   });
 
   it('never fires when the host dispatches nothing', () => {
-    const view = renderLifecycle({ lifecycle: lc([{ on: 'event', name: 'closed' }]), messageId: 'm1' });
+    const view = renderLifecycle({
+      lifecycle: lc([{ on: 'event', name: 'closed' }]),
+      messageId: 'm1',
+      createdAt: START,
+    });
 
     view.update();
 
@@ -367,7 +420,7 @@ describe('expiry on a host-dispatched event', () => {
   });
 
   it('routes { on: navigate } through the reserved event name', () => {
-    const view = renderLifecycle({ lifecycle: lc([{ on: 'navigate' }]), messageId: 'm1' });
+    const view = renderLifecycle({ lifecycle: lc([{ on: 'navigate' }]), messageId: 'm1', createdAt: START });
 
     view.update({ host: { firedEvents: new Set(['unrelated']) } });
     expect(view.state.expired).toBe(false);
@@ -378,7 +431,11 @@ describe('expiry on a host-dispatched event', () => {
   });
 
   it('does not let the navigate signal expire a widget listening for a different event', () => {
-    const view = renderLifecycle({ lifecycle: lc([{ on: 'event', name: 'closed' }]), messageId: 'm1' });
+    const view = renderLifecycle({
+      lifecycle: lc([{ on: 'event', name: 'closed' }]),
+      messageId: 'm1',
+      createdAt: START,
+    });
 
     view.update({ host: { firedEvents: new Set([NAVIGATE_EVENT]) } });
 
@@ -391,6 +448,7 @@ describe('forcedReadonly', () => {
     const view = renderLifecycle({
       lifecycle: EXPIRE_ON_INTERACT,
       messageId: 'm1',
+      createdAt: START,
       forcedReadonly: true,
     });
 
@@ -403,6 +461,7 @@ describe('forcedReadonly', () => {
     const view = renderLifecycle({
       lifecycle: lc([{ on: 'timeout', ms: 5_000 }], 'fallback'),
       messageId: 'm1',
+      createdAt: START,
       forcedReadonly: true,
     });
 
@@ -419,6 +478,7 @@ describe('forcedReadonly', () => {
     const view = renderLifecycle({
       lifecycle: NEVER_EXPIRES,
       messageId: 'm1',
+      createdAt: START,
       forcedReadonly: true,
     });
     expect(view.state.readonly).toBe(true);
@@ -429,7 +489,11 @@ describe('forcedReadonly', () => {
   });
 
   it('defaults to false when omitted', () => {
-    const view = renderLifecycle({ lifecycle: NEVER_EXPIRES, messageId: 'm1' });
+    const view = renderLifecycle({
+      lifecycle: NEVER_EXPIRES,
+      messageId: 'm1',
+      createdAt: START,
+    });
 
     expect(view.state.readonly).toBe(false);
   });
@@ -437,7 +501,11 @@ describe('forcedReadonly', () => {
 
 describe('unmount', () => {
   it('clears the pending timer and renders nothing afterwards', () => {
-    const view = renderLifecycle({ lifecycle: lc([{ on: 'timeout', ms: 30_000 }]), messageId: 'm1' });
+    const view = renderLifecycle({
+      lifecycle: lc([{ on: 'timeout', ms: 30_000 }]),
+      messageId: 'm1',
+      createdAt: START,
+    });
     expect(vi.getTimerCount()).toBe(1);
 
     const rendersAtUnmount = view.renderCount;
@@ -457,6 +525,7 @@ describe('unmount', () => {
     const view = renderLifecycle({
       lifecycle: lc([{ on: 'timeout', ms: MAX_TIMEOUT_DELAY + 1_000_000 }]),
       messageId: 'm1',
+      createdAt: START,
     });
 
     act(() => {
@@ -472,14 +541,18 @@ describe('unmount', () => {
 
 describe('re-keying on messageId', () => {
   it('drops the previous message’s interactions', () => {
-    const view = renderLifecycle({ lifecycle: EXPIRE_ON_INTERACT, messageId: 'm1' });
+    const view = renderLifecycle({
+      lifecycle: EXPIRE_ON_INTERACT,
+      messageId: 'm1',
+      createdAt: START,
+    });
 
     act(() => {
       view.state.recordInteraction('vote');
     });
     expect(view.state.expired).toBe(true);
 
-    view.update({ args: { messageId: 'm2' } });
+    view.update({ args: { messageId: 'm2', createdAt: START } });
 
     expect(view.state.expired).toBe(false);
     expect(view.state.readonly).toBe(false);
@@ -487,39 +560,49 @@ describe('re-keying on messageId', () => {
 
   it('re-takes the message-count baseline, so a recycled hook does not paint pre-expired', () => {
     const view = renderLifecycle(
-      { lifecycle: lc([{ on: 'message' }]), messageId: 'm1' },
+      { lifecycle: lc([{ on: 'message' }]), messageId: 'm1', createdAt: START },
       { messageCount: 3 },
     );
 
     view.update({ host: { messageCount: 4 } });
     expect(view.state.expired).toBe(true);
 
-    view.update({ args: { messageId: 'm2' } });
+    view.update({ args: { messageId: 'm2', createdAt: START } });
 
     expect(view.state.expired).toBe(false);
   });
 
-  it('re-takes the timeout baseline from the moment of the re-key', () => {
-    const view = renderLifecycle({ lifecycle: lc([{ on: 'timeout', ms: 30_000 }]), messageId: 'm1' });
+  it('measures the re-keyed widget from its own createdAt, not from the re-key (ADR 0046)', () => {
+    const view = renderLifecycle({
+      lifecycle: lc([{ on: 'timeout', ms: 30_000 }]),
+      messageId: 'm1',
+      createdAt: START,
+    });
 
     act(() => {
       vi.advanceTimersByTime(25_000);
     });
-    view.update({ args: { messageId: 'm2' } });
+    // m2 was created 20s after m1, so its deadline is START + 50s — five seconds earlier than a
+    // mount-anchored clock (START + 25s + 30s) would put it.
+    view.update({ args: { messageId: 'm2', createdAt: START + 20_000 } });
 
     act(() => {
-      vi.advanceTimersByTime(20_000);
+      vi.advanceTimersByTime(24_999);
     });
     expect(view.state.expired).toBe(false);
 
     act(() => {
-      vi.advanceTimersByTime(10_000);
+      vi.advanceTimersByTime(1);
     });
     expect(view.state.expired).toBe(true);
   });
 
   it('leaves an unchanged messageId alone', () => {
-    const view = renderLifecycle({ lifecycle: EXPIRE_ON_INTERACT, messageId: 7 });
+    const view = renderLifecycle({
+      lifecycle: EXPIRE_ON_INTERACT,
+      messageId: 7,
+      createdAt: START,
+    });
 
     act(() => {
       view.state.recordInteraction('vote');

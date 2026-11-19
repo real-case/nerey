@@ -170,7 +170,11 @@ export function WidgetRenderer(props: WidgetRendererProps): ReactElement {
   const { expired, readonly, afterExpiry, recordInteraction } = useWidgetLifecycle({
     lifecycle,
     messageId: message.id,
+    createdAt: message.createdAt,
+    ...(envelope.expiry !== undefined ? { expiry: envelope.expiry } : {}),
     forcedReadonly,
+    widgetType: envelope.type,
+    widgetVersion: envelope.version,
   });
 
   const error = outcome.error;

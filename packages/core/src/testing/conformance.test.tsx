@@ -430,6 +430,51 @@ describe('rule: readonly-is-inert', () => {
   });
 });
 
+describe('rule: remount-respects-marker', () => {
+  // Guards its handler, so `readonly-is-inert` passes, but never disables the control: after a
+  // reload it looks pressable, and a consumer's substituted button (ADR 0021) would be.
+  function EnabledWhenLockedWidget({ readonly, status, onInteraction }: Props): ReactElement {
+    return (
+      <WidgetRoot type="ok" version="1.0.0" slot="message" status={status} readonly={readonly}>
+        <button
+          type="button"
+          onClick={() => {
+            if (readonly) return;
+            onInteraction('press', { text: 'go' });
+          }}
+        >
+          Press
+        </button>
+      </WidgetRoot>
+    );
+  }
+
+  it('fires when a widget remounted against a stored marker keeps an enabled control', async () => {
+    const rules = await rulesFor(variant({ component: EnabledWhenLockedWidget }));
+    expect(rules).toContain('remount-respects-marker');
+    expect(rules).not.toContain('readonly-is-inert');
+  });
+
+  it('names the control and the duplicate-reply consequence', async () => {
+    const detail = await detailFor(
+      variant({ component: EnabledWhenLockedWidget }),
+      'remount-respects-marker',
+    );
+    expect(detail).toMatch(/<button>/);
+    expect(detail).toMatch(/duplicate reply/);
+  });
+
+  it('is not checked for a widget that hides once expired', async () => {
+    const rules = await rulesFor(
+      variant({
+        component: EnabledWhenLockedWidget,
+        lifecycle: { persist: 'forever', expiry: [{ on: 'interact' }], afterExpiry: 'hide' },
+      }),
+    );
+    expect(rules).not.toContain('remount-respects-marker');
+  });
+});
+
 describe('rule: lifecycle-declared', () => {
   it('fires on an unknown `persist`', async () => {
     const rules = await rulesFor(

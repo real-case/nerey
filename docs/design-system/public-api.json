@@ -92,6 +92,7 @@
       "InputPosition",
       "InputSlotHostProps",
       "Lifecycle",
+      "LifecycleRecord",
       "LifecycleSignals",
       "MemoryPersistence",
       "MessageAdapter",
@@ -137,6 +138,7 @@
   "@nerey/core/mock": {
     "values": [
       "DevDiagnosticCard",
+      "MOCK_EPOCH",
       "MockWidgetHost",
       "createDevRegistry",
       "createMemoryPersistence",

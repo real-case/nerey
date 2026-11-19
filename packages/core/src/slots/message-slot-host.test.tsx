@@ -48,6 +48,7 @@ function widgetMessage(id: string, type: string, label: string): NereyMessage {
   return {
     id,
     role: 'assistant',
+    createdAt: 0,
     text: `plain text for ${id}`,
     widget: { type, version: VERSION, payload: { label }, state: {} },
   };
@@ -110,7 +111,7 @@ describe('MessageSlotHost', () => {
   });
 
   it('keeps a plain-text message in the transcript when no text widget is registered', () => {
-    const messages: NereyMessage[] = [{ id: 'a', role: 'assistant', text: 'just words' }];
+    const messages: NereyMessage[] = [{ id: 'a', role: 'assistant', createdAt: 0, text: 'just words' }];
 
     renderHost(<MessageSlotHost messages={messages} />, []);
 
@@ -119,7 +120,7 @@ describe('MessageSlotHost', () => {
 
   it('places a plain-text message through the registered text entry', () => {
     const text = stubEntry('text', { slot: 'message' });
-    const messages: NereyMessage[] = [{ id: 'a', role: 'assistant', text: 'just words' }];
+    const messages: NereyMessage[] = [{ id: 'a', role: 'assistant', createdAt: 0, text: 'just words' }];
 
     // The synthesised envelope carries `{ content }`, not `{ label }`, so the stub renders an empty
     // label — what is under test is that the message was PLACED by the text entry at all.
@@ -130,7 +131,7 @@ describe('MessageSlotHost', () => {
 
   it('drops a plain-text message whose text entry is placed outside the transcript', () => {
     const text = stubEntry('text', { slot: 'overlay', scope: 'page' });
-    const messages: NereyMessage[] = [{ id: 'a', role: 'assistant', text: 'just words' }];
+    const messages: NereyMessage[] = [{ id: 'a', role: 'assistant', createdAt: 0, text: 'just words' }];
 
     renderHost(<MessageSlotHost messages={messages} />, [text]);
 
