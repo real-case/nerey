@@ -175,9 +175,8 @@ describe('textWidget entry', () => {
     expect(textWidget.lifecycle.persist).toBe('forever');
   });
 
-  it('declares no state schema, reducer or migration', () => {
+  it('declares no state schema or migration', () => {
     expect(textWidget.stateSchema).toBeUndefined();
-    expect(textWidget.reducer).toBeUndefined();
     expect(textWidget.migrate).toBeUndefined();
     // Absent `acceptsVersion` keeps resolution exact (ADR 0009).
     expect(textWidget.acceptsVersion).toBeUndefined();

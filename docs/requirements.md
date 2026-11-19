@@ -63,11 +63,13 @@ flagged as unstandardised design space, it is called out as such rather than cop
 - FR-7: `composeRegistries(...registries)` merges Nerey's built-ins with consumer catalogs, so adding a
   widget is one line in the consumer's own catalog file and never a fork. Later registries win on key
   collision only when passed `{ override: true }`; otherwise a collision throws.
-- FR-8: `defineWidget(entry)` is the authoring entry point and must preserve the `<P, S, E>` generics
-  end-to-end, so a widget component's `payload`, `state` and reducer `event` are inferred, not asserted.
-- FR-9: `WidgetRegistryEntry<P, S, E>` carries: `type`, `version`, `component`, `payloadSchema`,
-  `stateSchema`, `placement`, `lifecycle`, and optional `reducer`, `updateStrategy`
-  (`'optimistic' | 'pessimistic'`), `cancellable`, `migrate`.
+- FR-8: `defineWidget(entry)` is the authoring entry point and must preserve the `<P, S>` generics
+  end-to-end, so a widget component's `payload` and `state` are inferred, not asserted.
+- FR-9: `WidgetRegistryEntry<P, S>` carries: `type`, `version`, `component`, `placement`,
+  `lifecycle`, and optional `description`, `payloadSchema`, `stateSchema`, `migrate` and
+  `acceptsVersion`. Every field is read by core (ADR 0049); `reducer`, `updateStrategy` and
+  `cancellable` were listed here until 2026-11-19 and removed before the first publish, because
+  nothing implemented them.
 - FR-10: Version resolution is **exact match on `type@version`**, with no implicit semver range. The
   poll widget shipped as `poll@1.0` precisely because the backend sends `"1.0"` and a registration as
   `"1.0.0"` would silently never match and fall back to text. Optional ranged resolution may be opted
