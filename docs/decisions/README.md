@@ -5,7 +5,7 @@ Architecture Decision Records for this project, in [MADR](https://adr.github.io/
 | ADR | Title | Status | Date |
 | --- | --- | --- | --- |
 | [0001](0001-record-decisions-as-madr-adrs.md) | 0001. Record architecture decisions as MADR ADRs | accepted | 2026-08-09 |
-| [0002](0002-npm-workspaces-monorepo.md) | 0002. npm workspaces monorepo with three published packages | accepted | 2026-08-09 |
+| [0002](0002-npm-workspaces-monorepo.md) | 0002. npm workspaces monorepo with three published packages | superseded by ADR 0051 | 2026-08-09 |
 | [0003](0003-typescript-strict-no-any.md) | 0003. TypeScript strict mode, noUncheckedIndexedAccess, no any | accepted | 2026-08-09 |
 | [0004](0004-node-24-npm-toolchain.md) | 0004. Node 24 runtime and npm as package manager | accepted | 2026-08-09 |
 | [0005](0005-eslint-flat-config-prettier.md) | 0005. ESLint flat config with Prettier | accepted | 2026-08-09 |
@@ -17,9 +17,9 @@ Architecture Decision Records for this project, in [MADR](https://adr.github.io/
 | [0011](0011-standard-schema-validation.md) | 0011. Standard Schema v1 for payload and state validation | accepted | 2026-08-09 |
 | [0012](0012-degradation-chain-injected-fallback.md) | 0012. Four-step degradation chain with an injected fallback renderer | accepted | 2026-08-09 |
 | [0013](0013-typed-error-taxonomy.md) | 0013. Typed error taxonomy and the onWidgetError diagnostics hook | accepted | 2026-08-09 |
-| [0014](0014-widget-interaction-contract.md) | 0014. onInteraction is a widget’s only outbound channel | accepted | 2026-08-09 |
+| [0014](0014-widget-interaction-contract.md) | 0014. onInteraction is a widget’s only outbound channel | superseded by ADR 0048 | 2026-08-09 |
 | [0015](0015-widgets-perform-no-io.md) | 0015. Widgets perform no I/O, enforced by a shipped ESLint config | accepted | 2026-08-09 |
-| [0016](0016-message-persistence-port.md) | 0016. MessagePersistence as an injected port | accepted | 2026-08-09 |
+| [0016](0016-message-persistence-port.md) | 0016. MessagePersistence as an injected port | superseded by ADR 0047 | 2026-08-09 |
 | [0017](0017-widget-placement-model.md) | 0017. Widget placement model: message, input and overlay slots | accepted | 2026-08-09 |
 | [0018](0018-widget-lifecycle-runtime.md) | 0018. A widget lifecycle runtime, not merely lifecycle types | accepted | 2026-08-09 |
 | [0019](0019-streaming-status-contract.md) | 0019. Streaming status prop mirroring the tool-part state machine | accepted | 2026-08-09 |
@@ -39,7 +39,7 @@ Architecture Decision Records for this project, in [MADR](https://adr.github.io/
 | [0033](0033-deterministic-self-testing-gates.md) | 0033. Deterministic gates that self-test by rejecting a planted violator | accepted | 2026-08-09 |
 | [0034](0034-claude-code-hooks-edit-time-enforcement.md) | 0034. Claude Code hooks for edit-time enforcement | accepted | 2026-08-09 |
 | [0035](0035-built-in-widget-scope.md) | 0035. Core ships only the text and confirmation widgets | accepted | 2026-08-09 |
-| [0036](0036-conventional-commits.md) | 0036. Conventional Commits as the commit contract | accepted | 2026-08-09 |
+| [0036](0036-conventional-commits.md) | 0036. Conventional Commits as the commit contract | superseded by ADR 0050 | 2026-08-09 |
 | [0037](0037-core-non-goals-transport-llm-markdown.md) | 0037. Core has no transport, LLM SDK binding, or markdown renderer | accepted | 2026-08-09 |
 | [0038](0038-semver-gated-by-surface-snapshots.md) | 0038. Semantic versioning for published packages, gated by generated surface snapshots | accepted | 2026-08-31 |
 | [0039](0039-tagged-releases-published-by-trusted-publishing.md) | 0039. Releases are cut from a per-package tag and published from CI by trusted publishing | accepted | 2026-08-31 |
@@ -49,11 +49,11 @@ Architecture Decision Records for this project, in [MADR](https://adr.github.io/
 | [0043](0043-pinned-ci-supply-chain.md) | 0043. The CI supply chain is pinned by digest and updated by Dependabot | accepted | 2026-08-31 |
 | [0044](0044-publish-the-workbench-to-github-pages.md) | 0044. Publish the workbench to GitHub Pages, and build it on every pull request | accepted | 2026-08-31 |
 | [0045](0045-eslint-config-rule-surface-snapshot.md) | 0045. The eslint-config rule surface is snapshotted, and both directions of change fail | accepted | 2026-08-31 |
-| [0046](0046-message-time-anchor-and-expiry-rehydration.md) | 0046. Messages carry a required time anchor, and expiry is rehydrated before first paint | proposed | 2026-11-19 |
-| [0047](0047-persistence-port-lifecycle-records-and-host-write-queue.md) | 0047. The persistence port stores lifecycle records, and the host owns the write queue | proposed | 2026-11-19 |
-| [0048](0048-structured-reply-channel.md) | 0048. The interaction channel carries an optional validated result, and the host may answer a call directly | proposed | 2026-11-19 |
-| [0049](0049-registry-entry-carries-only-read-fields.md) | 0049. A registry entry declares only fields the runtime reads | proposed | 2026-11-19 |
-| [0050](0050-conventional-commits-as-implemented.md) | 0050. Conventional Commits as the commit contract, restated as implemented | proposed | 2026-11-19 |
-| [0051](0051-adapter-packages-and-repository-topology.md) | 0051. Adapter packages join the monorepo as peers of core, and examples stay unpublished | proposed | 2026-11-19 |
-| [0052](0052-server-entry-for-react-server-components.md) | 0052. Core publishes a React-free server entry, `@nerey/core/server` | proposed | 2026-11-19 |
-| [0053](0053-security-policy-and-threat-model.md) | 0053. A security policy and a written threat model ship before the first release | proposed | 2026-11-19 |
+| [0046](0046-message-time-anchor-and-expiry-rehydration.md) | 0046. Messages carry a required time anchor, and expiry is rehydrated before first paint | accepted | 2026-11-19 |
+| [0047](0047-persistence-port-lifecycle-records-and-host-write-queue.md) | 0047. The persistence port stores lifecycle records, and the host owns the write queue | accepted | 2026-11-19 |
+| [0048](0048-structured-reply-channel.md) | 0048. The interaction channel carries an optional validated result, and the host may answer a call directly | accepted | 2026-11-19 |
+| [0049](0049-registry-entry-carries-only-read-fields.md) | 0049. A registry entry declares only fields the runtime reads | accepted | 2026-11-19 |
+| [0050](0050-conventional-commits-as-implemented.md) | 0050. Conventional Commits as the commit contract, restated as implemented | accepted | 2026-11-19 |
+| [0051](0051-adapter-packages-and-repository-topology.md) | 0051. Adapter packages join the monorepo as peers of core, and examples stay unpublished | accepted | 2026-11-19 |
+| [0052](0052-server-entry-for-react-server-components.md) | 0052. Core publishes a React-free server entry, `@nerey/core/server` | accepted | 2026-11-19 |
+| [0053](0053-security-policy-and-threat-model.md) | 0053. A security policy and a written threat model ship before the first release | accepted | 2026-11-19 |
