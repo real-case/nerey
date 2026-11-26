@@ -73,6 +73,7 @@ const BARRELS = [
   { key: '@nerey/core', file: 'packages/core/src/index.ts' },
   { key: '@nerey/core/mock', file: 'packages/core/src/mock/index.ts' },
   { key: '@nerey/core/testing', file: 'packages/core/src/testing/index.ts' },
+  { key: '@nerey/core/server', file: 'packages/core/src/server/index.ts' },
   { key: '@nerey/theme', file: 'packages/theme/src/index.ts' },
 ];
 

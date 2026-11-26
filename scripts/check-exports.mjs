@@ -11,7 +11,8 @@
 //             entries, `files` coverage, and `private`.
 //   Artifact  Only when the package's build output is present, so the gate is still useful on a
 //             fresh clone. Every export target resolves to a real file, every JS entry chunk
-//             carries its `'use client'` banner, and no `.d.ts` carries one.
+//             carries its `'use client'` banner — except a `./server` subpath, which must not
+//             (ADR 0052) — and no `.d.ts` carries one.
 //   External  `publint` and `attw` against a real `npm pack` tarball — the only view of the
 //             package that matches what a consumer downloads.
 //
@@ -48,6 +49,7 @@ const PACKAGES_DIR = resolve(repoRoot, 'packages');
 const BUILD_DEPENDENT = [
   'export-target-exists',
   'use-client-banner',
+  'server-entry-no-banner',
   'no-directive-in-dts',
   'publint',
   'attw',
@@ -357,12 +359,32 @@ function checkBuild(pkgDir, rel, manifest) {
   // use-client-banner. Only React packages are asked for the directive — @nerey/eslint-config
   // ships a Node flat config, where `'use client'` would be nonsense. The `react` peer dependency
   // is the honest signal for "this package's entries run in a React client graph".
+  //
+  // server-entry-no-banner. ADR 0052 inverts the rule for a `./server` subpath: it exists so a
+  // React Server Component can call into it, and a banner would hand that component client
+  // references instead of functions. Keyed on the subpath, not the file name, because the subpath
+  // is what a consumer imports.
+  const serverTargets = new Set(targets.filter((t) => /^\.\/server( |$)/.test(t.path)).map((t) => t.target));
   if (manifest.peerDependencies?.react) {
     for (const target of uniqueTargets) {
       if (!target.endsWith('.js')) continue;
       const abs = join(pkgDir, target);
       if (!existsSync(abs)) continue; // already reported by export-target-exists
       const head = readFileSync(abs, 'utf8').replace(/^\uFEFF/, '');
+      if (serverTargets.has(target)) {
+        if (BANNER_RE.test(head)) {
+          problems.push({
+            rel: displayPath(abs),
+            line: 1,
+            rule: 'server-entry-no-banner',
+            message:
+              `the \`./server\` entry starts with \`'use client'\`. A server component importing it ` +
+              `gets client references, not functions, so \`describeRegistry\` cannot be called where ` +
+              `the prompt is built. Build it separately from the client entries (ADR 0052).`,
+          });
+        }
+        continue;
+      }
       if (!BANNER_RE.test(head)) {
         problems.push({
           rel: displayPath(abs),
@@ -585,13 +607,14 @@ function run(dirs, options) {
  * a whole package — manifest plus build output — and materialising one inside the workspace would
  * make it a workspace member for the duration of the run.
  */
-function writeFixture(dir, { manifest, indexJs, indexDts, css }) {
+function writeFixture(dir, { manifest, indexJs, indexDts, css, serverJs }) {
   rmSync(dir, { recursive: true, force: true });
   mkdirSync(join(dir, 'dist'), { recursive: true });
   writeFileSync(join(dir, 'package.json'), `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
   if (indexJs !== null) writeFileSync(join(dir, 'dist/index.js'), indexJs, 'utf8');
   if (indexDts !== null) writeFileSync(join(dir, 'dist/index.d.ts'), indexDts, 'utf8');
   if (css !== null) writeFileSync(join(dir, 'dist/theme.css'), css, 'utf8');
+  if (serverJs !== undefined) writeFileSync(join(dir, 'dist/server.js'), serverJs, 'utf8');
   return dir;
 }
 
@@ -684,6 +707,13 @@ function selfTest({ external }) {
       }),
     ],
     [
+      'server-entry-no-banner',
+      mutate((f) => {
+        f.manifest.exports['./server'] = { types: './dist/index.d.ts', default: './dist/server.js' };
+        f.serverJs = "'use client';\nexport const s = 1;\n";
+      }),
+    ],
+    [
       'no-directive-in-dts',
       mutate((f) => {
         f.indexDts = "'use client';\nexport declare const a: number;\n";
@@ -716,6 +746,14 @@ function selfTest({ external }) {
         css: null,
       },
       (target) => writeFileSync(join(target, 'index.js'), 'export default [];\n', 'utf8'),
+    ],
+    [
+      'a ./server entry without the banner',
+      mutate((f) => {
+        f.manifest.exports['./server'] = { types: './dist/index.d.ts', default: './dist/server.js' };
+        f.serverJs = 'export const s = 1;\n';
+      }),
+      () => {},
     ],
     [
       'a package whose dist is not built yet',

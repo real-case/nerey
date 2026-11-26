@@ -112,7 +112,8 @@ When a change needs a decision no ADR covers: record the ADR first, then impleme
   test that guards each to fail: the two D-8 defects (`timeout` from mount, no expiry marker)
   against `lifecycle-reload.test.tsx` (0046), and ADR 0016's drop-on-unmount write against
   `use-widget-state.test.tsx` (0047), and an unvalidated `result` against
-  `interaction-contract.test.tsx` (0048). Sources are rewritten in place and restored; never run
+  `interaction-contract.test.tsx` (0048), and a React import on `@nerey/core/server` against
+  `server-entry.test.ts` (0052). Sources are rewritten in place and restored; never run
   two copies at once.
 - `npm run check:spelling` — `cspell` over every `*.md`, in `check:all` since 2026-08-26 (0001).
   Both English variants are accepted; `project-words.txt` holds the proper nouns and coined terms,

@@ -1,7 +1,7 @@
 {
   "name": "@nerey/core",
   "version": "0.1.0",
-  "description": "Headless generative UI for React — widget registry, lifecycle runtime, and a data-attribute styling contract. Ships zero CSS.",
+  "description": "Headless generative UI for React \u2014 widget registry, lifecycle runtime, and a data-attribute styling contract. Ships zero CSS.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -33,12 +33,16 @@
       "types": "./dist/testing/index.d.ts",
       "default": "./dist/testing/index.js"
     },
+    "./server": {
+      "types": "./dist/server/index.d.ts",
+      "default": "./dist/server/index.js"
+    },
     "./package.json": "./package.json"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "vite build && tsc -p tsconfig.build.json && node ../../scripts/fix-dts-specifiers.mjs .",
+    "build": "vite build && vite build --config vite.server.config.ts && tsc -p tsconfig.build.json && node ../../scripts/fix-dts-specifiers.mjs .",
     "dev": "vite build --watch"
   },
   "dependencies": {

@@ -13,6 +13,7 @@
 //   lifecycle    use-widget-lifecycle.tsx  ×  lifecycle-reload.test.tsx   the two D-8 defects (0046)
 //   write queue  use-widget-state.tsx      ×  use-widget-state.test.tsx   ADR 0016's drop-on-unmount (0047)
 //   reply        widget-renderer.tsx       ×  interaction-contract.test   an unvalidated `result` (0048)
+//   server entry server/index.ts           ×  server-entry.test.ts        a React import on the server (0052)
 //
 // Rules:
 //
@@ -105,6 +106,25 @@ export const SUITES = [
           [
             "      const result = status === 'streaming' ? NO_RESULT : checkResult(resultSchema, data, coords);\n",
             '      const result: ResultCheck = { ok: true, value: data.result };\n',
+          ],
+        ],
+      },
+    ],
+  },
+  {
+    // ADR 0052 names `check:gates` as the harness for this plant. The planted violator is a source
+    // edit judged by a test, which is what this gate does; check:gates plants inputs for scripts.
+    name: 'server entry',
+    adr: 'ADR 0052',
+    source: 'packages/core/src/server/index.ts',
+    test: 'packages/core/src/server/server-entry.test.ts',
+    mutants: [
+      {
+        name: 'a React-importing export on the server entry',
+        edits: [
+          [
+            "export type { FlatIssue, ValidationOutcome } from '../validate';\n",
+            "export type { FlatIssue, ValidationOutcome } from '../validate';\nexport { WidgetRenderer } from '../render/widget-renderer';\n",
           ],
         ],
       },

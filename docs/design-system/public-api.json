@@ -161,6 +161,39 @@
       "WidgetMessageInput"
     ]
   },
+  "@nerey/core/server": {
+    "values": [
+      "EXPIRE_ON_INTERACT",
+      "NEVER_EXPIRES",
+      "composeRegistries",
+      "createWidgetRegistry",
+      "defineWidget",
+      "describeRegistry",
+      "emptyRegistry",
+      "firstFiredRule",
+      "flattenIssues",
+      "formatIssuePath",
+      "isExpired",
+      "msUntilNextTimeout",
+      "validateSync"
+    ],
+    "types": [
+      "AnyWidgetRegistryEntry",
+      "CreateRegistryOptions",
+      "DescribeRegistryOptions",
+      "ExpiryRule",
+      "FlatIssue",
+      "Lifecycle",
+      "LifecycleSignals",
+      "NereyMessage",
+      "NereyWidgetEnvelope",
+      "Placement",
+      "ValidationOutcome",
+      "WidgetDescriptor",
+      "WidgetRegistry",
+      "WidgetRegistryEntry"
+    ]
+  },
   "@nerey/core/testing": {
     "values": [
       "ADAPTER_PROBE_TYPE",
