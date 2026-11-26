@@ -248,7 +248,7 @@ is missing.
 
 - [x] AC-1: `npm pack @nerey/core` contains zero `.css` files, and its dependency tree includes
       neither `@nerey/theme`, nor Zod, nor a markdown renderer, nor an HTTP client.
-      **Proved by:** `npm run check:core-purity` (no `.css` in `packages/core/dist`, no validator, markdown renderer, HTTP client or `@nerey/theme` in source or manifest) and `npm run check:exports` (the packed tarball).
+      **Proved by:** `npm run check:package-purity` (no `.css` in `packages/core/dist`, no validator, markdown renderer, HTTP client or `@nerey/theme` in source or manifest) and `npm run check:exports` (the packed tarball).
 - [ ] AC-2: A fresh Next.js 16 app importing `@nerey/core` from a Server Component file compiles with
       no `'use client'` directive added by the consumer.
       Open until phase 5 (the Next.js 16 example).

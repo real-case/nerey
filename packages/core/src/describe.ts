@@ -42,7 +42,7 @@ export type DescribeRegistryOptions = {
   /**
    * Converts one Standard Schema into JSON Schema. Injected rather than imported: core depends on
    * the Standard Schema *spec*, which has no conversion in it, and taking a converter as a
-   * dependency would reintroduce exactly the validator ADR 0011 removed — `check:core-purity`
+   * dependency would reintroduce exactly the validator ADR 0011 removed — `check:package-purity`
    * fails the build on it by name.
    *
    * It is a one-line lambda in every vendor a consumer might be on:

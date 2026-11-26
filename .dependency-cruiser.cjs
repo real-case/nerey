@@ -21,6 +21,9 @@ const IO_MODULES =
 
 const ioPaths = [`(?:^|/)node_modules/(?:${IO_MODULES})(?:/|$)`, `^(?:${IO_MODULES})(?:/|$)`];
 
+/** The adapter packages (ADR 0051), as directory names under packages/. */
+const ADAPTERS = 'ag-ui|ai-sdk';
+
 /** Test and story modules are development artifacts; several rules must not judge them. */
 const NON_SHIPPING = [
   '\\.(?:test|spec)\\.(?:ts|tsx|js|jsx|mts|cts)$',
@@ -73,6 +76,45 @@ module.exports = {
       from: { path: '^packages/core/' },
       to: {
         path: ['^packages/theme/', '(?:^|/)node_modules/@nerey/theme(?:/|$)', '^@nerey/theme(?:/|$)'],
+      },
+    },
+    {
+      name: 'core-not-depend-on-adapters',
+      severity: 'error',
+      comment:
+        'ADR 0051 — the arrow points adapter → core and never back. An adapter carries an SDK as its ' +
+        'peer; core importing one would put that SDK into every consumer’s install.',
+      from: { path: '^packages/core/' },
+      to: {
+        path: [
+          `^packages/(?:${ADAPTERS})/`,
+          `(?:^|/)node_modules/@nerey/(?:${ADAPTERS})(?:/|$)`,
+          `^@nerey/(?:${ADAPTERS})(?:/|$)`,
+        ],
+      },
+    },
+    {
+      name: 'adapters-not-depend-on-theme',
+      severity: 'error',
+      comment:
+        'ADR 0051 — an adapter is a binding between an SDK and core, and ships no CSS. Reaching the ' +
+        'theme from one would make every adapter consumer install Base UI and a stylesheet.',
+      from: { path: `^packages/(?:${ADAPTERS})/`, pathNot: NON_SHIPPING },
+      to: {
+        path: ['^packages/theme/', '(?:^|/)node_modules/@nerey/theme(?:/|$)', '^@nerey/theme(?:/|$)'],
+      },
+    },
+    {
+      name: 'adapters-use-core-public-entries',
+      severity: 'error',
+      comment:
+        'ADR 0028 / 0051 — an adapter imports core only through its exports map (`@nerey/core`, ' +
+        '`@nerey/core/mock`, `@nerey/core/testing`). Any other module of core is free to change in a ' +
+        'patch release, and an adapter that reached it would break on one.',
+      from: { path: `^packages/(?:${ADAPTERS})/` },
+      to: {
+        path: '^packages/core/src/',
+        pathNot: ['^packages/core/src/index\\.ts$', '^packages/core/src/(?:mock|testing)/index\\.tsx?$'],
       },
     },
     {

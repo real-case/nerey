@@ -32,9 +32,9 @@ const bin = (name) => join(repoRoot, 'node_modules', '.bin', name);
  */
 const DISPATCH = [
   { match: 'packages/**/*.module.css', gate: 'scripts/check-tokens.mjs' },
-  { match: 'packages/core/src/**/*.ts', gate: 'scripts/check-core-purity.mjs' },
-  { match: 'packages/core/src/**/*.tsx', gate: 'scripts/check-core-purity.mjs' },
-  { match: 'packages/core/package.json', gate: 'scripts/check-core-purity.mjs' },
+  { match: 'packages/*/src/**/*.ts', gate: 'scripts/check-package-purity.mjs' },
+  { match: 'packages/*/src/**/*.tsx', gate: 'scripts/check-package-purity.mjs' },
+  { match: 'packages/*/package.json', gate: 'scripts/check-package-purity.mjs' },
 
   { match: 'packages/**/*.tsx', gate: 'scripts/check-data-contract.mjs' },
   { match: 'packages/core/src/data-attrs.ts', gate: 'scripts/check-data-contract.mjs' },

@@ -43,8 +43,8 @@
 // check-all-coverage, check-all-order.
 //
 // Gates are verified SEQUENTIALLY even though ADR 0033 imagined concurrent fixtures. These gates
-// plant their violators inside the live workspace rather than in a sandbox — check-core-purity
-// rewrites `packages/core/package.json` for the duration of one assertion, gen-tokens corrupts a
+// plant their violators inside the live workspace rather than in a sandbox — check-package-purity
+// writes planted manifests and sources under `packages/core/src` for one assertion each, gen-tokens corrupts a
 // generated artifact and restores it — so two gates running at once would read each other's
 // planted violators and fail for reasons that depend on scheduling. Determinism outranks the
 // three seconds concurrency would save.
@@ -87,7 +87,7 @@ const PACKAGE_REL = 'package.json';
  */
 const GATES = [
   { script: 'scripts/check-tokens.mjs', hook: 'dispatch' },
-  { script: 'scripts/check-core-purity.mjs', hook: 'dispatch' },
+  { script: 'scripts/check-package-purity.mjs', hook: 'dispatch' },
   { script: 'scripts/check-data-contract.mjs', hook: 'dispatch' },
   { script: 'scripts/check-public-api.mjs', hook: 'dispatch' },
   { script: 'scripts/check-stories.mjs', hook: 'dispatch' },

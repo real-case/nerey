@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
 // ADR 0002 / 0028 — @nerey/core builds to ESM with three entry points matching its exports
-// map. There is no CSS here and there must never be: `npm run check:core-purity` fails the
+// map. There is no CSS here and there must never be: `npm run check:package-purity` fails the
 // build if a stylesheet ever appears in this package.
 
 export default defineConfig({
