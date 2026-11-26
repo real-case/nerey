@@ -1,7 +1,7 @@
 import { defineWidget } from '@nerey/core';
 
 import { FormWidget } from './component';
-import { FORM_PLACEMENT, FORM_TYPE, FORM_VERSION, formPayloadSchema, formStateSchema } from './schema';
+import { formContract } from './contract';
 import type { FormPayload, FormState } from './schema';
 
 /**
@@ -23,21 +23,11 @@ import type { FormPayload, FormState } from './schema';
  * questions were ever asked.
  */
 export const formWidget = defineWidget<FormPayload, FormState>({
-  type: FORM_TYPE,
-  version: FORM_VERSION,
+  ...formContract,
   component: FormWidget,
-  description:
-    'Collect several related fields in one submit. Use it when the answer needs more than a ' +
-    'single choice; fields are flat and primitive.',
-  placement: FORM_PLACEMENT,
-  lifecycle: {
-    persist: 'forever',
-    expiry: [{ on: 'interact', action: 'submit' }],
-    afterExpiry: 'snapshot',
-  },
-  payloadSchema: formPayloadSchema,
-  stateSchema: formStateSchema,
 });
+
+export { formContract } from './contract';
 
 export { FormWidget, SUBMITTED_BADGE_LABEL } from './component';
 export type { FormWidgetProps } from './component';

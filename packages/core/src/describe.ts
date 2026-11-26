@@ -1,6 +1,6 @@
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 
-import type { AnyWidgetRegistryEntry, Placement, WidgetRegistry } from './types';
+import type { AnyWidgetContract, Placement, WidgetRegistry } from './types';
 
 /**
  * ADR 0040 — the registry describing itself to the producer that will fill it.
@@ -56,7 +56,7 @@ export type DescribeRegistryOptions = {
   toJsonSchema?: (schema: StandardSchemaV1<unknown, unknown>) => unknown;
 };
 
-function describeEntry(entry: AnyWidgetRegistryEntry, options: DescribeRegistryOptions): WidgetDescriptor {
+function describeEntry(entry: AnyWidgetContract, options: DescribeRegistryOptions): WidgetDescriptor {
   const descriptor: WidgetDescriptor = {
     type: entry.type,
     version: entry.version,
@@ -88,8 +88,17 @@ function describeEntry(entry: AnyWidgetRegistryEntry, options: DescribeRegistryO
  *                  something it cannot influence.
  */
 export function describeRegistry(
-  registry: WidgetRegistry,
+  registry: WidgetRegistry | readonly AnyWidgetContract[],
   options: DescribeRegistryOptions = {},
 ): readonly WidgetDescriptor[] {
-  return registry.entries().map((entry) => describeEntry(entry, options));
+  // ADR 0056 — a list of contracts is what a server holds: the entries themselves come from
+  // `'use client'` modules and are client references there.
+  const contracts: readonly AnyWidgetContract[] = isContractList(registry) ? registry : registry.entries();
+  return contracts.map((contract) => describeEntry(contract, options));
+}
+
+function isContractList(
+  source: WidgetRegistry | readonly AnyWidgetContract[],
+): source is readonly AnyWidgetContract[] {
+  return Array.isArray(source);
 }

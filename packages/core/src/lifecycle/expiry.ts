@@ -103,12 +103,28 @@ export function msUntilNextTimeout(lifecycle: Lifecycle, signals: LifecycleSigna
 const NO_RULES: readonly ExpiryRule[] = Object.freeze([]);
 const INTERACT_ONCE: readonly ExpiryRule[] = Object.freeze([{ on: 'interact' }]);
 
+/**
+ * Marks the one `NEVER_EXPIRES` object so it can be recognised across bundles. Core ships the
+ * constant twice — once in the client bundle and once in `@nerey/core/server` (ADR 0052) — so a
+ * widget whose contract imports it from the server entry holds a different object than the
+ * conformance kit does. `Symbol.for` is process-wide, so the mark survives that split where object
+ * identity does not. Non-enumerable, so a spread copy loses it exactly as it would lose identity.
+ */
+const NEVER_EXPIRES_MARK = Symbol.for('@nerey/core/never-expires');
+
 /** For a widget that stays interactive for the lifetime of the transcript. */
-export const NEVER_EXPIRES: Lifecycle = Object.freeze({
-  persist: 'forever',
-  expiry: NO_RULES,
-  afterExpiry: 'snapshot',
-});
+export const NEVER_EXPIRES: Lifecycle = Object.freeze(
+  Object.defineProperty(
+    { persist: 'forever', expiry: NO_RULES, afterExpiry: 'snapshot' } satisfies Lifecycle,
+    NEVER_EXPIRES_MARK,
+    { value: true, enumerable: false },
+  ),
+);
+
+/** True for the `NEVER_EXPIRES` constant from either core bundle, and for nothing else. */
+export function isNeverExpires(lifecycle: object): boolean {
+  return (lifecycle as { [NEVER_EXPIRES_MARK]?: unknown })[NEVER_EXPIRES_MARK] === true;
+}
 
 /**
  * The right default for anything that sends a message: `snapshot` rather than `hide` because

@@ -14,6 +14,7 @@
 //   write queue  use-widget-state.tsx      ×  use-widget-state.test.tsx   ADR 0016's drop-on-unmount (0047)
 //   reply        widget-renderer.tsx       ×  interaction-contract.test   an unvalidated `result` (0048)
 //   server entry server/index.ts           ×  server-entry.test.ts        a React import on the server (0052)
+//   theme server poll/contract.ts          ×  theme server-entry.test.ts  a client-entry import (0056)
 //
 // Rules:
 //
@@ -125,6 +126,24 @@ export const SUITES = [
           [
             "export type { FlatIssue, ValidationOutcome } from '../validate';\n",
             "export type { FlatIssue, ValidationOutcome } from '../validate';\nexport { WidgetRenderer } from '../render/widget-renderer';\n",
+          ],
+        ],
+      },
+    ],
+  },
+  {
+    name: 'theme server entry',
+    adr: 'ADR 0056',
+    source: 'packages/theme/src/widgets/poll/contract.ts',
+    test: 'packages/theme/src/server/server-entry.test.ts',
+    mutants: [
+      {
+        // The easiest mistake to make: the bare package name is the CLIENT entry.
+        name: 'a contract importing from the @nerey/core client entry',
+        edits: [
+          [
+            "import { defineWidgetContract } from '@nerey/core/server';",
+            "import { defineWidgetContract } from '@nerey/core';",
           ],
         ],
       },

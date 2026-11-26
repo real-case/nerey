@@ -250,6 +250,20 @@ export type WidgetRegistryEntry<Payload = unknown, State = unknown> = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- see above; contained to this alias.
 export type AnyWidgetRegistryEntry = WidgetRegistryEntry<any, any>;
 
+/**
+ * Everything about a widget except its component (ADR 0056). It is React-free, so a server reads it
+ * where a registry entry, exported from a `'use client'` module, is only a client reference. A
+ * widget declares its contract once and builds its entry as `{ ...contract, component }`.
+ */
+export type WidgetContract<Payload = unknown, State = unknown> = Omit<
+  WidgetRegistryEntry<Payload, State>,
+  'component'
+>;
+
+/** `WidgetContract` with its generics erased, for the same reason as `AnyWidgetRegistryEntry`. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- see AnyWidgetRegistryEntry.
+export type AnyWidgetContract = WidgetContract<any, any>;
+
 /* ────────────────────────────────────────────────────────────────────────────────────
  * Persistence (ADR 0016)
  * ──────────────────────────────────────────────────────────────────────────────────── */

@@ -1,13 +1,7 @@
-import {
-  CONFIRMATION_PLACEMENT,
-  CONFIRMATION_TYPE,
-  CONFIRMATION_VERSION,
-  EXPIRE_ON_INTERACT,
-  defineWidget,
-} from '@nerey/core';
+import { defineWidget } from '@nerey/core';
 
 import { ConfirmationWidget } from './component';
-import { confirmationPayloadSchema, confirmationStateSchema } from './schema';
+import { confirmationContract } from './contract';
 import type { ConfirmationPayload, ConfirmationState } from './schema';
 
 /**
@@ -32,17 +26,11 @@ import type { ConfirmationPayload, ConfirmationState } from './schema';
  * question was asked at all.
  */
 export const confirmationWidget = defineWidget<ConfirmationPayload, ConfirmationState>({
-  type: CONFIRMATION_TYPE,
-  version: CONFIRMATION_VERSION,
+  ...confirmationContract,
   component: ConfirmationWidget,
-  description:
-    'Ask the user to confirm or cancel one action before it is taken. Use it when the action has ' +
-    'a consequence worth pausing for; the reply names which choice was made.',
-  placement: CONFIRMATION_PLACEMENT,
-  lifecycle: EXPIRE_ON_INTERACT,
-  payloadSchema: confirmationPayloadSchema,
-  stateSchema: confirmationStateSchema,
 });
+
+export { confirmationContract } from './contract';
 
 export { ConfirmationWidget } from './component';
 export type { ConfirmationWidgetProps } from './component';

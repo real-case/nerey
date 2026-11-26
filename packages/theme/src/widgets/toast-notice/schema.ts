@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { Lifecycle, Placement } from '@nerey/core';
+import type { Lifecycle, Placement } from '@nerey/core/server';
 
 export const TOAST_NOTICE_TYPE = 'toast-notice';
 export const TOAST_NOTICE_VERSION = '1.0.0';

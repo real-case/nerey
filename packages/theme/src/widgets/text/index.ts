@@ -1,7 +1,7 @@
-import { NEVER_EXPIRES, TEXT_WIDGET_TYPE, TEXT_WIDGET_VERSION, defineWidget } from '@nerey/core';
+import { defineWidget } from '@nerey/core';
 
 import { TextWidget } from './component';
-import { textPayloadSchema } from './schema';
+import { textContract } from './contract';
 import type { TextPayload, TextState } from './schema';
 
 /**
@@ -21,16 +21,11 @@ import type { TextPayload, TextState } from './schema';
  * lifecycle would eventually stop rendering a message the transcript still needs to show.
  */
 export const textWidget = defineWidget<TextPayload, TextState>({
-  type: TEXT_WIDGET_TYPE,
-  version: TEXT_WIDGET_VERSION,
+  ...textContract,
   component: TextWidget,
-  description:
-    'Plain assistant prose, optionally with preformatted blocks. Every message that carries no ' +
-    'widget renders through this, so a producer does not normally select it explicitly.',
-  placement: { slot: 'message' },
-  lifecycle: NEVER_EXPIRES,
-  payloadSchema: textPayloadSchema,
 });
+
+export { textContract } from './contract';
 
 export { TextWidget } from './component';
 export type { TextWidgetProps } from './component';

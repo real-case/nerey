@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { Lifecycle, Placement } from '@nerey/core';
+import type { Lifecycle, Placement } from '@nerey/core/server';
 
 /**
  * ADR 0011 — the payload is validated at the boundary, so the component below never asks whether a

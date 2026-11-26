@@ -1,14 +1,7 @@
 import { defineWidget } from '@nerey/core';
 
 import { CitationsWidget } from './component';
-import {
-  CITATIONS_LIFECYCLE,
-  CITATIONS_PLACEMENT,
-  CITATIONS_TYPE,
-  CITATIONS_VERSION,
-  citationsPayloadSchema,
-  citationsStateSchema,
-} from './schema';
+import { citationsContract } from './contract';
 import type { CitationsPayload, CitationsState } from './schema';
 
 /**
@@ -21,17 +14,11 @@ import type { CitationsPayload, CitationsState } from './schema';
  * (ADR 0030). Both are load-bearing omissions rather than things nobody got round to.
  */
 export const citationsWidget = defineWidget<CitationsPayload, CitationsState>({
-  type: CITATIONS_TYPE,
-  version: CITATIONS_VERSION,
+  ...citationsContract,
   component: CitationsWidget,
-  description:
-    'Show the sources behind a claim so the user can open one or quote it back into the ' +
-    'conversation. Use it when an answer rests on retrieved material.',
-  placement: CITATIONS_PLACEMENT,
-  lifecycle: CITATIONS_LIFECYCLE,
-  payloadSchema: citationsPayloadSchema,
-  stateSchema: citationsStateSchema,
 });
+
+export { citationsContract } from './contract';
 
 export { CitationsWidget } from './component';
 export type { CitationsWidgetProps } from './component';

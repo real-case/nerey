@@ -15,19 +15,27 @@
 /* ── Types ─────────────────────────────────────────────────────────────────────────── */
 
 export type {
+  AnyWidgetContract,
   AnyWidgetRegistryEntry,
   ExpiryRule,
   Lifecycle,
   NereyMessage,
   NereyWidgetEnvelope,
   Placement,
+  WidgetContract,
   WidgetRegistry,
   WidgetRegistryEntry,
 } from '../types';
 
 /* ── Authoring and composing a registry (ADR 0009 / 0010) ──────────────────────────── */
 
-export { composeRegistries, createWidgetRegistry, defineWidget, emptyRegistry } from '../registry';
+export {
+  composeRegistries,
+  createWidgetRegistry,
+  defineWidget,
+  defineWidgetContract,
+  emptyRegistry,
+} from '../registry';
 export type { CreateRegistryOptions } from '../registry';
 
 /* ── Describing the registry to a producer (ADR 0040) ──────────────────────────────── */
@@ -50,3 +58,14 @@ export type { LifecycleSignals } from '../lifecycle/expiry';
 
 export { flattenIssues, formatIssuePath, validateSync } from '../validate';
 export type { FlatIssue, ValidationOutcome } from '../validate';
+
+/* ── The built-in widgets' contracts (ADR 0056) ────────────────────────────────────── */
+
+/**
+ * `textWidget` and `confirmationWidget` are client references on the server; their contracts are
+ * not. `describeRegistry(builtInWidgetContracts, …)` describes core's catalog where the prompt is
+ * built. The constants and schemas the contracts are made of are reachable through them.
+ */
+export { textContract } from '../widgets/text/contract';
+export { confirmationContract } from '../widgets/confirmation/contract';
+export { builtInWidgetContracts } from '../widgets/contracts';

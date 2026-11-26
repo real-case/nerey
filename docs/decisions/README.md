@@ -58,3 +58,4 @@ Architecture Decision Records for this project, in [MADR](https://adr.github.io/
 | [0052](0052-server-entry-for-react-server-components.md) | 0052. Core publishes a React-free server entry, `@nerey/core/server` | accepted | 2026-11-19 |
 | [0053](0053-security-policy-and-threat-model.md) | 0053. A security policy and a written threat model ship before the first release | accepted | 2026-11-19 |
 | [0055](0055-ai-sdk-tool-parts-to-widget-frames.md) | 0055. The AI SDK adapter maps one widget tool part to one message, and an answered part is expired | accepted | 2026-11-26 |
+| [0056](0056-server-readable-widget-contracts.md) | 0056. Widget contracts are React-free and published on the server entries | proposed | 2026-11-26 |

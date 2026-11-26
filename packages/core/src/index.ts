@@ -13,6 +13,7 @@
 
 export type {
   AfterExpiry,
+  AnyWidgetContract,
   AnyWidgetRegistryEntry,
   ExpiryRule,
   FallbackRenderer,
@@ -27,6 +28,7 @@ export type {
   SlotName,
   WidgetComponent,
   WidgetComponentProps,
+  WidgetContract,
   WidgetHostValue,
   WidgetInteractionHandler,
   WidgetInteractionPayload,
@@ -45,6 +47,7 @@ export {
   composeRegistries,
   createWidgetRegistry,
   defineWidget,
+  defineWidgetContract,
   emptyRegistry,
 } from './registry';
 export type { CreateRegistryOptions } from './registry';
@@ -172,13 +175,14 @@ export {
 
 /* ── Built-in widgets (ADR 0035) ───────────────────────────────────────────────────── */
 
-export { TextWidget, textPayloadSchema, textWidget } from './widgets/text';
+export { TextWidget, textContract, textPayloadSchema, textWidget } from './widgets/text';
 export type { TextPayload, TextWidgetProps } from './widgets/text';
 export {
   CONFIRMATION_PLACEMENT,
   CONFIRMATION_TYPE,
   CONFIRMATION_VERSION,
   ConfirmationWidget,
+  confirmationContract,
   DEFAULT_CANCEL_LABEL,
   DEFAULT_CONFIRM_LABEL,
   confirmationPayloadSchema,
@@ -201,3 +205,5 @@ export type {
  * @nerey/theme or in the consumer's own catalog.
  */
 export { builtInWidgets } from './widgets/catalog';
+/** The same catalog's React-free contracts, in the same order (ADR 0056). */
+export { builtInWidgetContracts } from './widgets/contracts';

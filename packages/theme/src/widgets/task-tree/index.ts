@@ -1,13 +1,7 @@
-import { NEVER_EXPIRES, defineWidget } from '@nerey/core';
+import { defineWidget } from '@nerey/core';
 
 import { TaskTreeWidget } from './component';
-import {
-  TASK_TREE_PLACEMENT,
-  TASK_TREE_TYPE,
-  TASK_TREE_VERSION,
-  taskTreePayloadSchema,
-  taskTreeStateSchema,
-} from './schema';
+import { taskTreeContract } from './contract';
 import type { TaskTreePayload, TaskTreeState } from './schema';
 
 /**
@@ -26,17 +20,11 @@ import type { TaskTreePayload, TaskTreeState } from './schema';
  * replace the structure with one line of prose and `hide` would delete the only account of the run.
  */
 export const taskTreeWidget = defineWidget<TaskTreePayload, TaskTreeState>({
-  type: TASK_TREE_TYPE,
-  version: TASK_TREE_VERSION,
+  ...taskTreeContract,
   component: TaskTreeWidget,
-  description: 'Show a hierarchy of tasks with their statuses. Display only — it reports nothing back.',
-  placement: TASK_TREE_PLACEMENT,
-  // `NEVER_EXPIRES` is exactly the lifecycle argued for above, and naming the constant is what tells
-  // the conformance kit the empty `expiry` is deliberate rather than a copy-paste artefact.
-  lifecycle: NEVER_EXPIRES,
-  payloadSchema: taskTreePayloadSchema,
-  stateSchema: taskTreeStateSchema,
 });
+
+export { taskTreeContract } from './contract';
 
 export { TaskTreeWidget } from './component';
 export type { TaskTreeWidgetProps } from './component';

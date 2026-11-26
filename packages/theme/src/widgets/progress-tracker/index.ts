@@ -1,13 +1,7 @@
 import { defineWidget } from '@nerey/core';
 
 import { ProgressTrackerWidget } from './component';
-import {
-  PROGRESS_TRACKER_PLACEMENT,
-  PROGRESS_TRACKER_TYPE,
-  PROGRESS_TRACKER_VERSION,
-  progressTrackerPayloadSchema,
-  progressTrackerStateSchema,
-} from './schema';
+import { progressTrackerContract } from './contract';
 import type { ProgressTrackerPayload, ProgressTrackerState } from './schema';
 
 /**
@@ -29,21 +23,11 @@ import type { ProgressTrackerPayload, ProgressTrackerState } from './schema';
  * replace it with one line of prose and `hide` would delete the only account of how far it got.
  */
 export const progressTrackerWidget = defineWidget<ProgressTrackerPayload, ProgressTrackerState>({
-  type: PROGRESS_TRACKER_TYPE,
-  version: PROGRESS_TRACKER_VERSION,
+  ...progressTrackerContract,
   component: ProgressTrackerWidget,
-  description:
-    'Show how far a multi-step operation already under way has got. Display only — it reports ' +
-    'nothing back and does not advance on its own.',
-  placement: PROGRESS_TRACKER_PLACEMENT,
-  lifecycle: {
-    persist: 'forever',
-    expiry: [{ on: 'message' }],
-    afterExpiry: 'snapshot',
-  },
-  payloadSchema: progressTrackerPayloadSchema,
-  stateSchema: progressTrackerStateSchema,
 });
+
+export { progressTrackerContract } from './contract';
 
 export { ProgressTrackerWidget } from './component';
 export type { ProgressTrackerWidgetProps } from './component';

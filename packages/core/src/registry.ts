@@ -1,4 +1,4 @@
-import type { AnyWidgetRegistryEntry, WidgetRegistry, WidgetRegistryEntry } from './types';
+import type { AnyWidgetRegistryEntry, WidgetContract, WidgetRegistry, WidgetRegistryEntry } from './types';
 
 /**
  * ADR 0010 — a registry is built by explicit composition. There is no module-level mutable
@@ -127,6 +127,17 @@ export function defineWidget<Payload = unknown, State = unknown>(
   entry: WidgetRegistryEntry<Payload, State>,
 ): WidgetRegistryEntry<Payload, State> {
   return entry;
+}
+
+/**
+ * Declares a widget's React-free half (ADR 0056). Like `defineWidget`, it exists to keep the
+ * `<Payload, State>` generics, so the entry built from it as `{ ...contract, component }` still
+ * infers its component's props.
+ */
+export function defineWidgetContract<Payload = unknown, State = unknown>(
+  contract: WidgetContract<Payload, State>,
+): WidgetContract<Payload, State> {
+  return contract;
 }
 
 /**

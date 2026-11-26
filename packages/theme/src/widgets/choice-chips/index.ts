@@ -1,14 +1,7 @@
 import { defineWidget } from '@nerey/core';
 
 import { ChoiceChipsWidget } from './component';
-import {
-  CHOICE_CHIPS_LIFECYCLE,
-  CHOICE_CHIPS_PLACEMENT,
-  CHOICE_CHIPS_TYPE,
-  CHOICE_CHIPS_VERSION,
-  choiceChipsPayloadSchema,
-  choiceChipsStateSchema,
-} from './schema';
+import { choiceChipsContract } from './contract';
 import type { ChoiceChipsPayload, ChoiceChipsState } from './schema';
 
 /**
@@ -17,17 +10,11 @@ import type { ChoiceChipsPayload, ChoiceChipsState } from './schema';
  * reasoning here would give it two homes and one of them would go stale.
  */
 export const choiceChipsWidget = defineWidget<ChoiceChipsPayload, ChoiceChipsState>({
-  type: CHOICE_CHIPS_TYPE,
-  version: CHOICE_CHIPS_VERSION,
+  ...choiceChipsContract,
   component: ChoiceChipsWidget,
-  description:
-    'Offer a short row of quick replies. Use it when each option is a complete answer on its own ' +
-    'and no separate submit step is wanted.',
-  placement: CHOICE_CHIPS_PLACEMENT,
-  lifecycle: CHOICE_CHIPS_LIFECYCLE,
-  payloadSchema: choiceChipsPayloadSchema,
-  stateSchema: choiceChipsStateSchema,
 });
+
+export { choiceChipsContract } from './contract';
 
 export { ChoiceChipsWidget } from './component';
 export type { ChoiceChipsWidgetProps } from './component';
