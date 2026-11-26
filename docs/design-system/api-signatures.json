@@ -1,4 +1,26 @@
 {
+  "@nerey/ag-ui": {
+    "AgUiAgent": "export type AgUiAgent = { addMessage: (message: Message) => void; runAgent: (parameters?: { resume?: ResumeEntry[]; }) => Promise<unknown>; };",
+    "AgUiEventSource": "export type AgUiEventSource = { subscribe: (subscriber: { onEvent?: (params: { event: BaseEvent; }) => void; }) => { unsubscribe: () => void; }; };",
+    "AgUiFrame": "export type AgUiFrame = { message: NereyMessage; status: WidgetStatus; };",
+    "AgUiHostValue": "export type AgUiHostValue = Pick<WidgetHostValue, 'sendUserMessage'> & Required<Pick<WidgetHostValue, 'respond'>>;",
+    "AgUiToolBindings": "export type AgUiToolBindings = { renderWidget?: string | false; table?: Readonly<Record<string, WidgetCoordinates>>; };",
+    "AgUiTranscript": "export type AgUiTranscript = { apply: (event: BaseEvent) => void; applyAll: (events: readonly BaseEvent[]) => void; addLocalMessage: (message: Message) => void; getFrames: () => readonly AgUiFrame[]; subscribe: (listener: () => void) => () => void; refresh: () => void; msUntilNextDeadline: () => number | undefined; getCall: (toolCallId: string) => AgUiWidgetCall | undefined; awaitingAnswer: () => readonly AgUiWidgetCall[]; openInterrupts: () => readonly { interruptId: string; toolCallId: string; }[]; widgetCallIds: () => readonly string[]; setWidgetState: (toolCallId: string, state: unknown) => void; };",
+    "AgUiTranscriptOptions": "export type AgUiTranscriptOptions = { tools?: AgUiToolBindings; now?: () => number; fallbackText?: FallbackText; };",
+    "AgUiWidgetCall": "export type AgUiWidgetCall = { toolCallId: string; ended: boolean; answered: boolean; expired: boolean; interruptId?: string; };",
+    "CreateAgUiHostOptions": "export type CreateAgUiHostOptions = { agent: AgUiAgent; transcript: AgUiTranscript; generateId?: () => string; now?: () => number; onRunError?: (error: unknown) => void; };",
+    "DEFAULT_RENDER_WIDGET_TOOL": "'render_widget'",
+    "FallbackText": "export type FallbackText = (widget: { type: string; version: string; payload: unknown; }) => string;",
+    "ToolsFromRegistryOptions": "export type ToolsFromRegistryOptions = DescribeRegistryOptions & { tools?: AgUiToolBindings; };",
+    "WidgetCoordinates": "export type WidgetCoordinates = { type: string; version: string; };",
+    "createAgUiHost": "(options: CreateAgUiHostOptions) => AgUiHostValue",
+    "createAgUiTranscript": "(options?: AgUiTranscriptOptions) => AgUiTranscript",
+    "defaultFallbackText": "FallbackText",
+    "hydrateWidgetStates": "(transcript: AgUiTranscript, persistence: Pick<MessagePersistence, 'getWidgetState'>, conversationId: string, onError?: (error: unknown, toolCallId: string) => void) => Promise<void>",
+    "subscribeTranscript": "(source: AgUiEventSource, transcript: AgUiTranscript) => () => void",
+    "toolsFromRegistry": "(registry: WidgetRegistry, options?: ToolsFromRegistryOptions) => Tool[]",
+    "useAgUiFrames": "(transcript: AgUiTranscript) => readonly AgUiFrame[]"
+  },
   "@nerey/ai-sdk": {
     "AiSdkBinding": "export type AiSdkBinding = { mode: 'render-widget'; toolName?: string; } | { mode: 'tools'; tools: Readonly<Record<string, WidgetRef>>; };",
     "AiSdkChatLike": "export type AiSdkChatLike = { readonly messages: readonly AiSdkMessageLike[]; sendMessage: (message: { text: string; }) => unknown; addToolOutput: (args: { tool: string; toolCallId: string; output: unknown; }) => unknown; addToolApprovalResponse?: (args: { id: string; approved: boolean; }) => unknown; };",

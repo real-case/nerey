@@ -1,0 +1,21 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "emitDeclarationOnly": true,
+    "declaration": true,
+    "declarationMap": true,
+    "composite": false,
+    "sourceMap": false,
+    "types": []
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/**/*.stories.tsx",
+    "src/**/__tests__/**",
+    "src/**/__fixtures__/**"
+  ]
+}
