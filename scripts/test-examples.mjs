@@ -122,6 +122,15 @@ try {
   cpSync(exampleDir, app, { recursive: true, filter: (src) => !SKIP.has(src.split(/[\\/]/).pop()) });
   const manifest = { ...exampleManifest, dependencies: { ...exampleManifest.dependencies, ...specs } };
   writeFileSync(join(app, 'package.json'), `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+  // The workspace copy maps `@nerey/*` to source in `paths`, so lint and the editor work before a
+  // build. A consumer has no such mapping, and leaving it in would type-check against the source
+  // instead of the shipped declarations — the exact thing this script exists to avoid.
+  const tsconfigPath = join(app, 'tsconfig.json');
+  if (existsSync(tsconfigPath)) {
+    const tsconfig = JSON.parse(readFileSync(tsconfigPath, 'utf8'));
+    delete tsconfig.compilerOptions?.paths;
+    writeFileSync(tsconfigPath, `${JSON.stringify(tsconfig, null, 2)}\n`, 'utf8');
+  }
   run('npm', ['install', '--no-audit', '--no-fund', '--no-package-lock'], app);
 
   // 4. What landed must be the tarball, not a link back into the repository.

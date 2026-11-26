@@ -22,6 +22,12 @@ npm run app:dev -w @nerey-examples/next-rsc   # or work on it inside the workspa
 | `app/api/widget-state/route.ts` | server  | the persistence port's backend (ADR 0047)                                                                                                                      |
 | `app/layout.tsx`                | server  | imports `tokens.css` and `theme.css`; there is no CSS Modules configuration (AC-15)                                                                            |
 
+## Source in the workspace, tarballs in CI
+
+Inside the workspace, `tsconfig.json` maps every `@nerey/*` import to the package's source, so lint,
+the editor and `app:dev` work before a build. `npm run test:examples` deletes that mapping from its
+copy, which is how the published declarations, `exports` maps and `'use client'` banners get tested.
+
 ## Determinism
 
 Every timestamp comes from `lib/clock.ts`, which the scripted stream writes into message metadata and
