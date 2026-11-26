@@ -1,4 +1,46 @@
 {
+  "@nerey/ai-sdk": {
+    "values": [
+      "RENDER_WIDGET_TOOL",
+      "createAiSdkHost",
+      "createWidgetFrameMapper",
+      "defaultApprovalOf",
+      "toWidgetFrames",
+      "useAiSdkHost",
+      "useAiSdkWidgetFrames"
+    ],
+    "types": [
+      "AiSdkBinding",
+      "AiSdkChatLike",
+      "AiSdkHost",
+      "AiSdkHostOptions",
+      "AiSdkMessageLike",
+      "AiSdkToolOutput",
+      "AiSdkWidgetFrame",
+      "ToWidgetFramesOptions",
+      "WidgetFrameMapper",
+      "WidgetFrameMapperOptions",
+      "WidgetRef",
+      "WidgetTextOf"
+    ]
+  },
+  "@nerey/ai-sdk/server": {
+    "values": [
+      "RENDER_WIDGET_TOOL",
+      "toWidgetFrames",
+      "toolsFromRegistry"
+    ],
+    "types": [
+      "AiSdkBinding",
+      "AiSdkMessageLike",
+      "AiSdkWidgetFrame",
+      "ToWidgetFramesOptions",
+      "ToolsFromRegistryOptions",
+      "ToolsSource",
+      "WidgetRef",
+      "WidgetTextOf"
+    ]
+  },
   "@nerey/core": {
     "values": [
       "CONFIRMATION_PLACEMENT",

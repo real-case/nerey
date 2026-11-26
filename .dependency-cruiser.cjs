@@ -109,12 +109,15 @@ module.exports = {
       severity: 'error',
       comment:
         'ADR 0028 / 0051 — an adapter imports core only through its exports map (`@nerey/core`, ' +
-        '`@nerey/core/mock`, `@nerey/core/testing`). Any other module of core is free to change in a ' +
+        '`@nerey/core/mock`, `@nerey/core/testing`, `@nerey/core/server`). Any other module of core is free to change in a ' +
         'patch release, and an adapter that reached it would break on one.',
       from: { path: `^packages/(?:${ADAPTERS})/` },
       to: {
         path: '^packages/core/src/',
-        pathNot: ['^packages/core/src/index\\.ts$', '^packages/core/src/(?:mock|testing)/index\\.tsx?$'],
+        pathNot: [
+          '^packages/core/src/index\\.ts$',
+          '^packages/core/src/(?:mock|testing|server)/index\\.tsx?$',
+        ],
       },
     },
     {

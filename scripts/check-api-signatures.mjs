@@ -75,6 +75,8 @@ const BARRELS = [
   { key: '@nerey/core/testing', file: 'packages/core/src/testing/index.ts' },
   { key: '@nerey/core/server', file: 'packages/core/src/server/index.ts' },
   { key: '@nerey/theme', file: 'packages/theme/src/index.ts' },
+  { key: '@nerey/ai-sdk', file: 'packages/ai-sdk/src/index.ts' },
+  { key: '@nerey/ai-sdk/server', file: 'packages/ai-sdk/src/server/index.ts' },
 ];
 
 /** Only a changed signature blocks. See the rule table above for why the other two do not. */

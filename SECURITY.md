@@ -34,6 +34,7 @@ fixes, and a fix ships as a new patch release on that line.
 | `@nerey/core`          | latest 0.x minor |
 | `@nerey/theme`         | latest 0.x minor |
 | `@nerey/eslint-config` | latest 0.x minor |
+| `@nerey/ai-sdk`        | latest 0.x minor |
 
 Examples under `examples/*` are private and never published. They are not supported, though a
 vulnerability in one that shows a pattern consumers would copy is worth reporting.
