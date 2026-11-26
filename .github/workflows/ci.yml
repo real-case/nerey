@@ -124,3 +124,33 @@ jobs:
 
       - name: visual regression
         run: npm run test:visual
+
+  # Production-ready plan, phase 5 — the example applications, built against the packages AS
+  # PUBLISHED. `test:examples` packs each `@nerey/*` package from its dist, installs the tarballs into
+  # a copy of the example outside the workspace, runs `next build` and the Playwright smoke
+  # (registry described in a server component, SSR expiry, hydration, reply through
+  # `addToolOutput`, reload). It needs a build, so it sits beside check:exports rather than in
+  # check:all, and runs in parallel with the other jobs.
+  #
+  # In the pinned Playwright image for the same reason as `visual`: the example's
+  # `@playwright/test` is the image's version, so its browsers are already there.
+  examples:
+    name: examples
+    runs-on: ubuntu-latest
+    container: mcr.microsoft.com/playwright:v1.63.0-noble
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: cache npm
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-playwright-image-${{ hashFiles('package-lock.json') }}
+
+      - run: npm ci
+
+      - name: build
+        run: npm run build
+
+      - name: examples from tarballs
+        run: npm run test:examples

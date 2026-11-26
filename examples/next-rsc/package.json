@@ -1,0 +1,30 @@
+{
+  "name": "@nerey-examples/next-rsc",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Next.js 16 App Router example: the registry described on the server, widgets rendered on the client, a scripted AI SDK stream in between.",
+  "scripts": {
+    "app:dev": "next dev --port 3100",
+    "app:build": "next build",
+    "app:start": "next start --port 3100",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@ai-sdk/react": "4.0.188",
+    "@nerey/core": "^0.1.0",
+    "@nerey/theme": "^0.1.0",
+    "ai": "7.0.183",
+    "next": "16.4.6",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@types/node": "^26.6.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "typescript": "^6.0.3"
+  }
+}

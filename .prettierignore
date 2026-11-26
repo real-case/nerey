@@ -14,3 +14,9 @@ docs/design-system/data-contract.json
 # that is only supposed to change through a superseding entry, and a whitespace-only diff on a
 # decision record is worse than no diff: it looks like the content moved.
 docs/decisions/
+
+# examples/* build output (ADR 0051)
+examples/*/.next/
+examples/*/next-env.d.ts
+examples/*/test-results/
+examples/*/playwright-report/

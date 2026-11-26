@@ -31,3 +31,9 @@ packages/*/src/**/*.d.ts.map
 # Vitest writes the actual/expected/diff images here when a visual comparison fails
 # (ADR 0042). They are evidence for one run, never part of the reference set.
 .vitest-attachments/
+
+# examples/* (ADR 0051): framework build output and the smoke test's artefacts.
+examples/*/.next/
+examples/*/next-env.d.ts
+examples/*/test-results/
+examples/*/playwright-report/

@@ -1,0 +1,44 @@
+/* Layout for the example page only. Nerey ships no reset and assumes none (ADR 0027). */
+body {
+  margin: 0;
+  font-family: var(--nerey-font-family-sans, system-ui, sans-serif);
+  background: var(--nerey-color-surface, #fff);
+  color: var(--nerey-color-text, #111);
+}
+
+main {
+  box-sizing: border-box;
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.transcript {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0 0 1.5rem;
+  padding: 0;
+  list-style: none;
+}
+
+.turn-user {
+  align-self: flex-end;
+}
+
+.composer {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.composer input {
+  flex: 1;
+  padding: 0.5rem;
+}
+
+.prompt pre {
+  overflow: auto;
+  max-height: 20rem;
+  font-size: 0.8rem;
+}

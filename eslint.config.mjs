@@ -14,6 +14,11 @@ export default tseslint.config(
     ignores: [
       '**/dist/**',
       '**/node_modules/**',
+      // examples/* (ADR 0051): framework output and the file Next generates.
+      'examples/*/.next/**',
+      'examples/*/next-env.d.ts',
+      'examples/*/test-results/**',
+      'examples/*/playwright-report/**',
       'storybook-static/**',
       'coverage/**',
       '**/*.module.css.d.ts',
