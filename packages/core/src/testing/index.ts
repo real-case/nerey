@@ -7,3 +7,23 @@
  */
 export { checkWidgetConformance, expectWidgetConformance } from './conformance';
 export type { ConformanceOptions, ConformanceReport, ConformanceViolation } from './conformance';
+
+/**
+ * The adapter conformance kit (ADR 0051): the conventions an SDK adapter must keep between its
+ * stream and `WidgetRenderer` — no validation while streaming, one on `ready`, the tool-call id
+ * round trip, `text` and `createdAt` always set, `type@version` passed through untouched.
+ */
+export {
+  ADAPTER_PROBE_TYPE,
+  ADAPTER_PROBE_VERSION,
+  checkAdapterConformance,
+  expectAdapterConformance,
+} from './adapter-conformance';
+export type {
+  AdapterConformanceReport,
+  AdapterDelivery,
+  AdapterFrame,
+  AdapterHostHarness,
+  AdapterScenario,
+  AdapterUnderTest,
+} from './adapter-conformance';
