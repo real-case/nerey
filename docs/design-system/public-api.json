@@ -163,10 +163,20 @@
   },
   "@nerey/core/testing": {
     "values": [
+      "ADAPTER_PROBE_TYPE",
+      "ADAPTER_PROBE_VERSION",
+      "checkAdapterConformance",
       "checkWidgetConformance",
+      "expectAdapterConformance",
       "expectWidgetConformance"
     ],
     "types": [
+      "AdapterConformanceReport",
+      "AdapterDelivery",
+      "AdapterFrame",
+      "AdapterHostHarness",
+      "AdapterScenario",
+      "AdapterUnderTest",
       "ConformanceOptions",
       "ConformanceReport",
       "ConformanceViolation"

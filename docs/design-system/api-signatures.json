@@ -154,10 +154,20 @@
     "widgetMessage": "(input: WidgetMessageInput) => NereyMessage"
   },
   "@nerey/core/testing": {
+    "ADAPTER_PROBE_TYPE": "'nerey-adapter-probe'",
+    "ADAPTER_PROBE_VERSION": "'1.0.0'",
+    "AdapterConformanceReport": "export type AdapterConformanceReport = { adapter: string; passed: boolean; violations: ConformanceViolation[]; };",
+    "AdapterDelivery": "export type AdapterDelivery = { correlationId: string; text: string; result?: unknown; };",
+    "AdapterFrame": "export type AdapterFrame = { message: NereyMessage; status: WidgetStatus; };",
+    "AdapterHostHarness": "export type AdapterHostHarness = { host: Pick<WidgetHostValue, 'sendUserMessage'> & Partial<Pick<WidgetHostValue, 'respond'>>; delivered: () => readonly AdapterDelivery[]; };",
+    "AdapterScenario": "export type AdapterScenario = { correlationId: string; type: string; version: string; partialPayloads: readonly unknown[]; payload: unknown; createdAt: number; };",
+    "AdapterUnderTest": "export type AdapterUnderTest<TEvent> = { name: string; script: (scenario: AdapterScenario) => readonly TEvent[]; frames: (events: readonly TEvent[], context: { registry: WidgetRegistry; }) => readonly AdapterFrame[]; createHost: () => AdapterHostHarness; };",
     "ConformanceOptions": "export type ConformanceOptions = { validPayload: unknown; invalidPayloads?: readonly unknown[]; state?: unknown; source?: string; validResult?: unknown; invalidResults?: readonly unknown[]; persistence?: MessagePersistence; };",
     "ConformanceReport": "export type ConformanceReport = { entry: string; passed: boolean; violations: ConformanceViolation[]; };",
     "ConformanceViolation": "export type ConformanceViolation = { rule: string; detail: string; };",
+    "checkAdapterConformance": "<TEvent>(adapter: AdapterUnderTest<TEvent>) => Promise<AdapterConformanceReport>",
     "checkWidgetConformance": "(entry: AnyWidgetRegistryEntry, options: ConformanceOptions) => Promise<ConformanceReport>",
+    "expectAdapterConformance": "<TEvent>(adapter: AdapterUnderTest<TEvent>) => Promise<void>",
     "expectWidgetConformance": "(entry: AnyWidgetRegistryEntry, options: ConformanceOptions) => Promise<void>"
   },
   "@nerey/theme": {
