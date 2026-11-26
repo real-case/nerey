@@ -267,3 +267,44 @@ describe('createWidgetFrameMapper', () => {
     expect(frames.map((frame) => frame.message.id)).toEqual(['call-1', 'call-2']);
   });
 });
+
+describe('known state and expiry', () => {
+  const marker = { expiredAt: CREATED_AT + 5, reason: { on: 'interact' as const, action: 'submit' } };
+
+  it('hands a known state and marker over on the envelope', () => {
+    const [frame] = toWidgetFrames(assistant('turn', [renderPart('input-available')]), {
+      binding: RENDER,
+      known: { state: { 'call-1': { selected: 'a' } }, expiry: { 'call-1': marker } },
+    });
+    expect(frame?.message.widget).toMatchObject({ state: { selected: 'a' }, expiry: marker });
+  });
+
+  it('prefers a known marker over the one an answered part implies', () => {
+    const [frame] = toWidgetFrames(assistant('turn', [renderPart('output-available')]), {
+      binding: RENDER,
+      known: { expiry: { 'call-1': marker } },
+    });
+    expect(frame?.message.widget?.expiry).toBe(marker);
+  });
+
+  it('ignores entries for other calls and inherited keys', () => {
+    const [frame] = toWidgetFrames(
+      assistant('turn', [{ ...renderPart('input-available'), toolCallId: 'toString' }]),
+      {
+        binding: RENDER,
+        known: { state: { 'call-2': { selected: 'b' } } },
+      },
+    );
+    expect(frame?.message.widget?.state).toBeUndefined();
+    expect(frame?.message.widget?.expiry).toBeUndefined();
+  });
+
+  it('lets a mapper call override the known data, and replaces the frame when it changes', () => {
+    const mapper = createWidgetFrameMapper({ binding: RENDER });
+    const messages = [assistant('turn', [renderPart('input-available')])];
+    const before = mapper.frames(messages);
+    const after = mapper.frames(messages, { state: { 'call-1': { selected: 'a' } } });
+    expect(after[0]).not.toBe(before[0]);
+    expect(after[0]?.message.widget?.state).toEqual({ selected: 'a' });
+  });
+});

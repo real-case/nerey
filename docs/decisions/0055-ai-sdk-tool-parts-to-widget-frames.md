@@ -77,6 +77,11 @@ so a reloaded transcript renders read-only on the first frame, including on the 
 through the port. `expiredAt` is `createdAt` because the SDK does not record the answer's time and the
 marker must be the same on the server and the hydrating client.
 
+**Known data.** A host that already holds a call's persisted state or expiry marker (loaded with the
+transcript on the server) passes them keyed by `toolCallId`, and they go on the envelope as `state`
+and `expiry` (ADR 0046). A known marker wins over the implied one, because it carries the real time
+and reason.
+
 **Reply.** `createAiSdkHost({ chat })` implements `respond(correlationId, { action, text, result })`.
 For a part in `approval-requested` it calls `chat.addToolApprovalResponse({ id, approved })`, where
 `approved` is `result.approved` when that is a boolean and otherwise `action === 'confirm'`. For any

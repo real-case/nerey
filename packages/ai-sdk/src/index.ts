@@ -20,6 +20,7 @@ export { createWidgetFrameMapper, toWidgetFrames } from './messages';
 export type {
   AiSdkMessageLike,
   AiSdkWidgetFrame,
+  KnownWidgetData,
   ToWidgetFramesOptions,
   WidgetFrameMapper,
   WidgetFrameMapperOptions,

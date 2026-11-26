@@ -13,4 +13,10 @@ export { RENDER_WIDGET_TOOL } from '../binding';
 export type { AiSdkBinding, WidgetRef } from '../binding';
 
 export { toWidgetFrames } from '../messages';
-export type { AiSdkMessageLike, AiSdkWidgetFrame, ToWidgetFramesOptions, WidgetTextOf } from '../messages';
+export type {
+  AiSdkMessageLike,
+  AiSdkWidgetFrame,
+  KnownWidgetData,
+  ToWidgetFramesOptions,
+  WidgetTextOf,
+} from '../messages';

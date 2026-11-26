@@ -35,6 +35,18 @@ export type ToWidgetFramesOptions = {
   createdAt?: number;
   /** The plain text a widget message falls back to. Defaults to the turn's text parts. */
   textOf?: WidgetTextOf;
+  /**
+   * What the host already knows per tool call, keyed by `toolCallId`: the widget's persisted state
+   * and its expiry marker, typically loaded with the transcript on the server. Handed over on the
+   * envelope, a reload renders the terminal state on the first frame, including during SSR, with no
+   * read through the port (ADR 0046 / 0047). A known marker wins over the one an answered part implies.
+   */
+  known?: KnownWidgetData;
+};
+
+export type KnownWidgetData = {
+  state?: Readonly<Record<string, unknown>>;
+  expiry?: Readonly<Record<string, LifecycleRecord>>;
 };
 
 /** A tool part as the AI SDK shapes it: `tool-<name>` or `dynamic-tool` with a `toolName`. */
@@ -110,6 +122,10 @@ export function createdAtFromMetadata(metadata: unknown): number | undefined {
   return undefined;
 }
 
+function ownValue<T>(record: Readonly<Record<string, T>> | undefined, key: string): T | undefined {
+  return record !== undefined && Object.hasOwn(record, key) ? record[key] : undefined;
+}
+
 function turnTextOf(message: AiSdkMessageLike): string {
   const texts: string[] = [];
   for (const part of message.parts) {
@@ -127,7 +143,13 @@ const defaultTextOf: WidgetTextOf = ({ type, turnText }) =>
  */
 function frameOf(
   part: ToolPart,
-  context: { binding: AiSdkBinding; createdAt: number; turnText: string; textOf: WidgetTextOf },
+  context: {
+    binding: AiSdkBinding;
+    createdAt: number;
+    turnText: string;
+    textOf: WidgetTextOf;
+    known: KnownWidgetData | undefined;
+  },
 ): AiSdkWidgetFrame | undefined {
   const bound = bindCall(context.binding, part.toolName, part.input);
   if (!bound) return undefined;
@@ -146,7 +168,12 @@ function frameOf(
     payload: bound.payload,
     correlationId: part.toolCallId,
   };
-  if (isAnswered(part.state)) {
+  const knownState = ownValue(context.known?.state, part.toolCallId);
+  if (knownState !== undefined) envelope.state = knownState;
+  const knownExpiry = ownValue(context.known?.expiry, part.toolCallId);
+  if (knownExpiry !== undefined) {
+    envelope.expiry = knownExpiry;
+  } else if (isAnswered(part.state)) {
     const expiry: LifecycleRecord = { expiredAt: context.createdAt, reason: { on: 'interact' } };
     envelope.expiry = expiry;
   }
@@ -173,6 +200,7 @@ function framesFor(
     createdAt,
     turnText: turnTextOf(message),
     textOf: options.textOf ?? defaultTextOf,
+    known: options.known,
   };
   const frames: AiSdkWidgetFrame[] = [];
   for (const raw of message.parts) {
@@ -209,8 +237,11 @@ export type WidgetFrameMapperOptions = Omit<ToWidgetFramesOptions, 'createdAt'> 
 };
 
 export type WidgetFrameMapper = {
-  /** The widget frames of every message, in transcript order. */
-  frames: (messages: readonly AiSdkMessageLike[]) => AiSdkWidgetFrame[];
+  /**
+   * The widget frames of every message, in transcript order. `known` replaces the option given at
+   * creation for this call, for a host whose stored state arrives after the mapper was made.
+   */
+  frames: (messages: readonly AiSdkMessageLike[], known?: KnownWidgetData) => AiSdkWidgetFrame[];
 };
 
 type CachedFrame = { key: string; frame: AiSdkWidgetFrame };
@@ -223,7 +254,8 @@ function frameKey(frame: AiSdkWidgetFrame): string {
     envelope?.type,
     envelope?.version,
     envelope?.payload,
-    envelope?.expiry !== undefined,
+    envelope?.state,
+    envelope?.expiry,
   ]);
 }
 
@@ -241,7 +273,8 @@ export function createWidgetFrameMapper(options: WidgetFrameMapperOptions): Widg
   let previous = new Map<string, CachedFrame>();
 
   return {
-    frames: (messages) => {
+    frames: (messages, known) => {
+      const effective = known === undefined ? options : { ...options, known };
       const next = new Map<string, CachedFrame>();
       const out: AiSdkWidgetFrame[] = [];
       for (const message of messages) {
@@ -250,7 +283,7 @@ export function createWidgetFrameMapper(options: WidgetFrameMapperOptions): Widg
           createdAt = now();
           firstSeen.set(message.id, createdAt);
         }
-        for (const frame of framesFor(message, options, createdAt)) {
+        for (const frame of framesFor(message, effective, createdAt)) {
           const id = String(frame.message.id);
           const key = frameKey(frame);
           const cached = previous.get(id);

@@ -8,13 +8,15 @@ import type { AiSdkMessageLike, AiSdkWidgetFrame, WidgetFrameMapperOptions } fro
 /**
  * The widget frames of a live chat, for `WidgetRenderer`. The mapper is created once per component,
  * so declare `binding` at module level: a binding that changes between renders is not picked up.
+ * `known` is read on every render; keep its identity stable (memoise it) so frames are reused.
  */
 export function useAiSdkWidgetFrames(
   messages: readonly AiSdkMessageLike[],
   options: WidgetFrameMapperOptions,
 ): AiSdkWidgetFrame[] {
   const [mapper] = useState(() => createWidgetFrameMapper(options));
-  return useMemo(() => mapper.frames(messages), [mapper, messages]);
+  const { known } = options;
+  return useMemo(() => mapper.frames(messages, known), [mapper, messages, known]);
 }
 
 type HostOptions = Omit<AiSdkHostOptions, 'chat'>;

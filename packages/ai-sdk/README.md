@@ -101,6 +101,22 @@ Outside React, `createWidgetFrameMapper({ binding })` and `createAiSdkHost({ cha
 an AI SDK `Chat` instance, and `toWidgetFrames(message, { binding, createdAt })` is the pure mapping
 for one stored `UIMessage`.
 
+## State known before the first frame
+
+A host that loads its transcript on the server usually has each widget's stored state and expiry
+marker too. Pass them as `known: { state, expiry }`, keyed by `toolCallId`, to
+`useAiSdkWidgetFrames` or `toWidgetFrames`; they go out on the envelope, so a reloaded widget renders
+its terminal state on the first frame, during SSR included, without waiting for the port. Memoise the
+object so unchanged frames are reused.
+
+## Sending automatically after an answer
+
+`sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls` resends whenever the last
+assistant turn has every tool call answered. If the model's reply text lands in the same step as the
+answered widget call, that turn still qualifies after the reply and the chat sends again, forever.
+End the step after a widget call on the server (the widget tools have no `execute`, so the default
+stop condition does), or guard the predicate with your own check that the turn has not been resent.
+
 ## Approvals
 
 A call in `approval-requested` is answered with `addToolApprovalResponse`. `approved` is

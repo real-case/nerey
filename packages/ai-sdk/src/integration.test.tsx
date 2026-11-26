@@ -221,3 +221,39 @@ describe('@nerey/ai-sdk end to end — confirmation', () => {
     expect(screen.getByRole('button', { name: 'Confirm' })).toBeDisabled();
   });
 });
+
+describe('@nerey/ai-sdk end to end — known state on the first frame', () => {
+  it('renders an answered poll read-only, with its answer, before any port read settles', () => {
+    const errors: NereyErrorLike[] = [];
+    function Known(): ReactElement {
+      const messages = [pollTurn('output-available', POLL)];
+      const frames = useAiSdkWidgetFrames(messages, {
+        binding: BINDING,
+        known: { state: { 'call-poll': { selected: 'porto' } } },
+      });
+      const host = useAiSdkHost(createRecordingChat(messages));
+      return (
+        <WidgetHostProvider
+          value={{
+            ...DEFAULT_HOST_VALUE,
+            registry,
+            conversationId: 'conversation-known',
+            persistence: createMemoryPersistence(),
+            onWidgetError: (error) => {
+              errors.push(error);
+            },
+            ...host,
+          }}
+        >
+          {frames.map((frame) => (
+            <WidgetRenderer key={frame.message.id} message={frame.message} status={frame.status} />
+          ))}
+        </WidgetHostProvider>
+      );
+    }
+    const view = render(<Known />);
+    expect(view.container.querySelector('[data-nerey-widget="poll"]')).toHaveAttribute('data-readonly');
+    expect(screen.getByRole('radio', { name: 'Porto' })).toBeChecked();
+    expect(errors).toEqual([]);
+  });
+});
