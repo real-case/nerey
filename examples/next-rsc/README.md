@@ -22,9 +22,6 @@ npm run app:dev -w @nerey-examples/next-rsc   # or work on it inside the workspa
 | `app/api/widget-state/route.ts` | server  | the persistence port's backend (ADR 0047)                                                                                                                      |
 | `app/layout.tsx`                | server  | imports `tokens.css` and `theme.css`; there is no CSS Modules configuration (AC-15)                                                                            |
 
-`lib/frames.ts` maps UI messages to the frames `WidgetRenderer` renders. It stands in for
-`@nerey/ai-sdk` until that adapter lands, and is then replaced by it.
-
 ## Determinism
 
 Every timestamp comes from `lib/clock.ts`, which the scripted stream writes into message metadata and

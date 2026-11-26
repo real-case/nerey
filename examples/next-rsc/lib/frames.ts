@@ -1,42 +1,36 @@
-import type { LifecycleRecord, NereyMessage, WidgetStateRecord, WidgetStatus } from '@nerey/core';
-import { getToolName, isToolUIPart } from 'ai';
+import type { WidgetStateRecord } from '@nerey/core';
+import { toWidgetFrames } from '@nerey/ai-sdk';
+import type { AiSdkWidgetFrame } from '@nerey/ai-sdk';
 
-import { TOOL_WIDGETS } from './contracts';
-import type { ToolName } from './contracts';
+import { binding } from './contracts';
 import type { ExampleMessage } from './store';
 
 /**
- * UI messages → the frames `WidgetRenderer` renders. A placeholder for `@nerey/ai-sdk`'s
- * `toWidgetFrames`, which does this mapping for real (ADR 0051); the example switches to it once
- * the adapter lands, and this file goes away.
+ * The transcript as `WidgetRenderer` frames, in part order. Widget tool parts go through
+ * `@nerey/ai-sdk`'s `toWidgetFrames` (ADR 0055): coordinates from the binding, `correlationId` from
+ * the call id, ADR 0019's status table, and an expiry marker on an answered call — so a reloaded,
+ * answered poll is read-only on the server's first frame. Text parts render as plain messages.
  *
- * The status table is ADR 0019's: a tool call whose input is still streaming renders `streaming`
- * and is never validated; once the input is complete it is `ready`, whether or not it has been
- * answered; a failed call is `error`.
+ * Widget STATE lives behind the persistence port, not in the transcript. The page reads it on the
+ * server and hands it over as `known`, so the snapshot shows the chosen option on the first frame
+ * too, instead of after the port's read.
  */
 
-export type WidgetFrame = { message: NereyMessage; status: WidgetStatus };
+export type WidgetFrame = AiSdkWidgetFrame;
 
-/** What the server already knows about each widget, keyed by tool call id. */
-export type KnownWidgetState = {
-  state: Record<string, WidgetStateRecord>;
-  expiry: Record<string, LifecycleRecord>;
-};
-
-function statusOf(state: string): WidgetStatus {
-  if (state === 'input-streaming') return 'streaming';
-  if (state === 'output-error') return 'error';
-  return 'ready';
-}
-
-function isToolName(name: string): name is ToolName {
-  return Object.hasOwn(TOOL_WIDGETS, name);
-}
+/** Stored widget state by tool call id, as the page read it. */
+export type KnownWidgetState = Record<string, WidgetStateRecord>;
 
 export function toFrames(messages: readonly ExampleMessage[], known: KnownWidgetState): WidgetFrame[] {
   const frames: WidgetFrame[] = [];
   for (const message of messages) {
     const createdAt = message.metadata?.createdAt ?? 0;
+    const widgets = new Map(
+      toWidgetFrames(message, { binding, createdAt, known: { state: known } }).map((frame) => [
+        frame.message.id,
+        frame,
+      ]),
+    );
     message.parts.forEach((part, index) => {
       if (part.type === 'text') {
         frames.push({
@@ -45,30 +39,8 @@ export function toFrames(messages: readonly ExampleMessage[], known: KnownWidget
         });
         return;
       }
-      if (!isToolUIPart(part)) return;
-      const toolName = getToolName(part);
-      if (!isToolName(toolName)) return;
-      const coordinates = TOOL_WIDGETS[toolName];
-      const id = part.toolCallId;
-      const state = known.state[id];
-      const expiry = known.expiry[id];
-      frames.push({
-        status: statusOf(part.state),
-        message: {
-          id,
-          role: 'assistant',
-          // The last line of the degradation chain (ADR 0012): readable even if nothing renders.
-          text: `[${coordinates.type}] ${JSON.stringify(part.input ?? {})}`,
-          createdAt,
-          widget: {
-            ...coordinates,
-            payload: part.input ?? {},
-            correlationId: id,
-            ...(state ? { state } : {}),
-            ...(expiry ? { expiry } : {}),
-          },
-        },
-      });
+      const frame = 'toolCallId' in part ? widgets.get(part.toolCallId) : undefined;
+      if (frame) frames.push(frame);
     });
   }
   return frames;

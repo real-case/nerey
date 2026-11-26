@@ -5,7 +5,8 @@ import type { APIRequestContext, ConsoleMessage, Page } from '@playwright/test';
  * The checks the production-ready plan names for job `examples` (step 5.4), against the built app
  * installed from tarballs:
  *
- *   1. the server describes the registry (`@nerey/core/server` works in an RSC);
+ *   1. the server describes the registry and derives the AI SDK tools from it (`@nerey/core/server`
+ *      and `@nerey/ai-sdk/server` work in an RSC);
  *   2. a widget renders, and the page hydrates with no mismatch and no error;
  *   3. a `timeout` widget whose deadline passed arrives from the server render already expired;
  *   4. a widget's answer goes back as the tool call's output (`respond` → `addToolOutput`);
@@ -52,6 +53,8 @@ test('server describe, SSR expiry, hydration, reply through addToolOutput, reloa
   const first = await serverHtml(request);
   expect(first).toContain('poll@1.0.0');
   expect(first).toContain('offer@1.0.0');
+  // `toolsFromRegistry` from `@nerey/ai-sdk/server`, in the same server component.
+  expect(first).toContain('ask_poll, make_offer');
   const offerTag = rootTag(first, 'offer');
   expect(offerTag, 'the seeded offer renders on the server').toBeDefined();
   expect(offerTag).toContain('data-readonly');

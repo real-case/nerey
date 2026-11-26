@@ -4,16 +4,12 @@ import { useChat } from '@ai-sdk/react';
 import { DEFAULT_HOST_VALUE, WidgetHostProvider, WidgetRenderer } from '@nerey/core';
 import type { WidgetHostValue } from '@nerey/core';
 import { Button } from '@nerey/theme';
-import {
-  DefaultChatTransport,
-  getToolName,
-  isToolUIPart,
-  lastAssistantMessageIsCompleteWithToolCalls,
-} from 'ai';
+import { useAiSdkHost } from '@nerey/ai-sdk';
+import { DefaultChatTransport, lastAssistantMessageIsCompleteWithToolCalls } from 'ai';
 import { useMemo, useState } from 'react';
 import type { FormEvent, ReactElement } from 'react';
 
-import { now, SCRIPTED_NOW } from '../lib/clock';
+import { now } from '../lib/clock';
 import { toFrames } from '../lib/frames';
 import type { KnownWidgetState } from '../lib/frames';
 import { fetchPersistence } from '../lib/persistence';
@@ -26,20 +22,10 @@ export type ChatProps = {
   known: KnownWidgetState;
 };
 
-/** The tool a call id belongs to, which `addToolOutput` needs alongside the id. */
-function toolNameOf(messages: readonly ExampleMessage[], toolCallId: string): string | undefined {
-  for (const message of messages) {
-    for (const part of message.parts) {
-      if (isToolUIPart(part) && part.toolCallId === toolCallId) return getToolName(part);
-    }
-  }
-  return undefined;
-}
-
 /**
  * The client half. `useChat` owns the transcript and the stream; Nerey owns what a tool call looks
- * like and how it answers. A widget's reply goes back through `respond` → `addToolOutput` (ADR
- * 0048), and `sendAutomaticallyWhen` sends the answered call to the scripted model.
+ * like and how it answers. `useAiSdkHost` turns a widget's reply into `addToolOutput` on its call
+ * (ADR 0048, 0055), and `sendAutomaticallyWhen` sends the answered call to the scripted model.
  */
 export function Chat({ conversationId, initialMessages, known }: ChatProps): ReactElement {
   const [transport] = useState(() => new DefaultChatTransport<ExampleMessage>({ api: '/api/chat' }));
@@ -49,7 +35,8 @@ export function Chat({ conversationId, initialMessages, known }: ChatProps): Rea
     transport,
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
   });
-  const { messages, sendMessage, addToolOutput, status } = chat;
+  const { messages, status } = chat;
+  const aiSdkHost = useAiSdkHost(chat);
   const [draft, setDraft] = useState('Ship the release.');
 
   const frames = useMemo(() => toFrames(messages, known), [messages, known]);
@@ -62,16 +49,9 @@ export function Chat({ conversationId, initialMessages, known }: ChatProps): Rea
       persistence: fetchPersistence,
       now,
       messageCount: messages.length,
-      sendUserMessage: (text) => {
-        void sendMessage({ text, metadata: { createdAt: SCRIPTED_NOW + messages.length * 1_000 } });
-      },
-      respond: (toolCallId, response) => {
-        const tool = toolNameOf(messages, toolCallId);
-        if (!tool) return;
-        void addToolOutput({ tool, toolCallId, output: response });
-      },
+      ...aiSdkHost,
     }),
-    [conversationId, messages, sendMessage, addToolOutput],
+    [conversationId, messages.length, aiSdkHost],
   );
 
   function submit(event: FormEvent<HTMLFormElement>): void {
