@@ -1,4 +1,30 @@
 {
+  "@nerey/ag-ui": {
+    "values": [
+      "DEFAULT_RENDER_WIDGET_TOOL",
+      "createAgUiHost",
+      "createAgUiTranscript",
+      "defaultFallbackText",
+      "hydrateWidgetStates",
+      "subscribeTranscript",
+      "toolsFromRegistry",
+      "useAgUiFrames"
+    ],
+    "types": [
+      "AgUiAgent",
+      "AgUiEventSource",
+      "AgUiFrame",
+      "AgUiHostValue",
+      "AgUiToolBindings",
+      "AgUiTranscript",
+      "AgUiTranscriptOptions",
+      "AgUiWidgetCall",
+      "CreateAgUiHostOptions",
+      "FallbackText",
+      "ToolsFromRegistryOptions",
+      "WidgetCoordinates"
+    ]
+  },
   "@nerey/ai-sdk": {
     "values": [
       "RENDER_WIDGET_TOOL",

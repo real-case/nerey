@@ -48,6 +48,7 @@ const BARRELS = [
   { key: '@nerey/theme/server', file: 'packages/theme/src/server/index.ts' },
   { key: '@nerey/ai-sdk', file: 'packages/ai-sdk/src/index.ts' },
   { key: '@nerey/ai-sdk/server', file: 'packages/ai-sdk/src/server/index.ts' },
+  { key: '@nerey/ag-ui', file: 'packages/ag-ui/src/index.ts' },
 ];
 
 /** Rules that block. `added-export` and `missing-barrel` are reported and do not fail. */

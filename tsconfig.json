@@ -16,7 +16,8 @@
       "@nerey/core/server": ["./packages/core/src/server/index.ts"],
       "@nerey/theme": ["./packages/theme/src/index.ts"],
       "@nerey/ai-sdk": ["./packages/ai-sdk/src/index.ts"],
-      "@nerey/ai-sdk/server": ["./packages/ai-sdk/src/server/index.ts"]
+      "@nerey/ai-sdk/server": ["./packages/ai-sdk/src/server/index.ts"],
+      "@nerey/ag-ui": ["./packages/ag-ui/src/index.ts"]
     }
   },
   "include": [

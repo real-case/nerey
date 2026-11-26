@@ -76,6 +76,7 @@ const CHANGELOG_SECTIONS = [
 const OWNED_BARRELS = {
   '@nerey/core': (key) => key === '@nerey/core' || key.startsWith('@nerey/core/'),
   '@nerey/theme': (key) => key === '@nerey/theme',
+  '@nerey/ag-ui': (key) => key === '@nerey/ag-ui',
   '@nerey/eslint-config': () => false,
 };
 
