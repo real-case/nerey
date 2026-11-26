@@ -57,5 +57,6 @@ Architecture Decision Records for this project, in [MADR](https://adr.github.io/
 | [0051](0051-adapter-packages-and-repository-topology.md) | 0051. Adapter packages join the monorepo as peers of core, and examples stay unpublished | accepted | 2026-11-19 |
 | [0052](0052-server-entry-for-react-server-components.md) | 0052. Core publishes a React-free server entry, `@nerey/core/server` | accepted | 2026-11-19 |
 | [0053](0053-security-policy-and-threat-model.md) | 0053. A security policy and a written threat model ship before the first release | accepted | 2026-11-19 |
+| [0054](0054-ag-ui-event-mapping.md) | 0054. The AG-UI adapter folds the event stream into one message per widget tool call | proposed | 2026-11-26 |
 | [0055](0055-ai-sdk-tool-parts-to-widget-frames.md) | 0055. The AI SDK adapter maps one widget tool part to one message, and an answered part is expired | accepted | 2026-11-26 |
 | [0056](0056-server-readable-widget-contracts.md) | 0056. Widget contracts are React-free and published on the server entries | accepted | 2026-11-27 |
