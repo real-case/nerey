@@ -19,7 +19,15 @@
       {
         "name": "next"
       }
-    ]
+    ],
+    "paths": {
+      "@nerey/core": ["../../packages/core/src/index.ts"],
+      "@nerey/core/server": ["../../packages/core/src/server/index.ts"],
+      "@nerey/theme": ["../../packages/theme/src/index.ts"],
+      "@nerey/theme/server": ["../../packages/theme/src/server/index.ts"],
+      "@nerey/ai-sdk": ["../../packages/ai-sdk/src/index.ts"],
+      "@nerey/ai-sdk/server": ["../../packages/ai-sdk/src/server/index.ts"]
+    }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", ".next/dev/types/**/*.ts"],
   "exclude": ["node_modules"]
