@@ -143,7 +143,7 @@ function countingSchema<T>(
 function ProbeWidget(props: WidgetComponentProps<ProbePayload>): ReactElement {
   const { payload, readonly, onInteraction } = props;
   return (
-    <div data-nerey-adapter-probe="">
+    <div data-adapter-probe="">
       <span>{typeof payload.label === 'string' ? payload.label : ''}</span>
       <button
         type="button"
@@ -262,7 +262,7 @@ function createStage(
         );
       }),
     click: async () => {
-      const button = container.querySelector<HTMLButtonElement>('[data-nerey-adapter-probe] button');
+      const button = container.querySelector<HTMLButtonElement>('[data-adapter-probe] button');
       if (!button) return false;
       await flush(() => {
         button.click();
@@ -470,7 +470,7 @@ async function checkNearMiss<TEvent>(adapter: AdapterUnderTest<TEvent>, report: 
   const stage = createStage(registry, harness.host, report);
   try {
     await stage.render(last);
-    const rendered = stage.container.querySelector('[data-nerey-adapter-probe]');
+    const rendered = stage.container.querySelector('[data-adapter-probe]');
     const fallback = stage.container.querySelector(`[${NEREY_ATTR.fallback}="unknown-widget"]`);
     if (rendered || !fallback) {
       report(
