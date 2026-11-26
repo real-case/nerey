@@ -77,6 +77,10 @@ When a change needs a decision no ADR covers: record the ADR first, then impleme
   from `packages/theme/src/tokens.css`. **Run after every token change**; CI drift-checks it.
 - `npm run gen:css-types` — regenerate the committed `*.module.css.d.ts` declarations. **Run
   after adding or renaming a class.**
+- `npm run test:examples` — packs every `@nerey/*` package an example depends on, installs the
+  tarballs into a copy of `examples/next-rsc` outside the workspace, runs `next build` and its
+  Playwright smoke (0051, 0052, 0056). Needs `npm run build` first and the network for the example's
+  own dependencies; CI runs it as job `examples`, not in `check:all`.
 - `npm run test:visual` — the visual regression gate (0042). Compares 90 reference images against
   `packages/theme/src/visual/__screenshots__/`. **It only passes in the Linux container**: the
   theme's font tokens are system stacks, so a macOS run legitimately fails. Regenerate with
