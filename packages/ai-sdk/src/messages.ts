@@ -155,7 +155,16 @@ function frameOf(
   if (!bound) return undefined;
 
   const status = statusOf(part.state);
-  if (status === 'streaming' && (bound.type === undefined || bound.version === undefined)) return undefined;
+  // Held back until there is something to render: a call still streaming its coordinates, or one
+  // whose input has not started (the AI SDK opens a part with `input: undefined` before the first
+  // delta). A streaming payload is never validated (ADR 0019), so an `undefined` one would reach
+  // the component as-is and crash it into the render fallback.
+  if (
+    status === 'streaming' &&
+    (bound.type === undefined || bound.version === undefined || bound.payload === undefined)
+  ) {
+    return undefined;
+  }
 
   // A complete call with no coordinates is still a widget call; letting it through as `''`
   // produces `unknown-widget` (ADR 0013), which says what went wrong, rather than nothing.

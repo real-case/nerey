@@ -165,6 +165,19 @@ describe('toWidgetFrames', () => {
     expect(frames).toEqual([]);
   });
 
+  it('holds a streaming call back until its input has started, in tools mode', () => {
+    const part = { type: 'tool-ask', toolCallId: 'c', state: 'input-streaming', input: undefined };
+    expect(toWidgetFrames(assistant('turn', [part]), { binding: TABLE })).toEqual([]);
+  });
+
+  it('holds a render-widget call back until its payload has started', () => {
+    const frames = toWidgetFrames(
+      assistant('turn', [renderPart('input-streaming', { type: 'poll', version: '1.0.0' })]),
+      { binding: RENDER },
+    );
+    expect(frames).toEqual([]);
+  });
+
   it('lets a complete call with no coordinates through, so it falls back as unknown-widget', () => {
     const [frame] = toWidgetFrames(assistant('turn', [renderPart('input-available', { payload: {} })]), {
       binding: RENDER,
