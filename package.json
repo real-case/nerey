@@ -12,7 +12,7 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build -w @nerey/core && npm run build --workspaces --if-present",
     "clean": "rm -rf packages/*/dist storybook-static coverage .vitest-reports",
     "typecheck": "tsc -p tsconfig.json",
     "lint": "eslint",
@@ -52,7 +52,7 @@
     "check:spelling": "cspell --no-progress \"**/*.md\"",
     "check:all": "npm run check:tokens && npm run check:package-purity && npm run check:data-contract && npm run check:public-api && npm run check:api-signatures && npm run check:entry-fields && npm run check:mutants && npm run check:stories && npm run check:a11y && npm run check:citations && npm run check:commits && npm run check:boundaries && npm run check:ci-pins && npm run check:workflow-gates && npm run check:widget-labels && npm run check:eslint-rules && npm run check:security-policy && npm run check:spelling && npm run check:gates",
     "adr": "python3 .claude/skills/adr/scripts/adr.py",
-    "typecheck:build": "tsc -p packages/core/tsconfig.build.json && tsc -p packages/theme/tsconfig.build.json",
+    "typecheck:build": "tsc -p packages/core/tsconfig.build.json && tsc -p packages/theme/tsconfig.build.json && tsc -p packages/ai-sdk/tsconfig.build.json",
     "check:a11y": "node scripts/check-a11y-waivers.mjs"
   },
   "devDependencies": {

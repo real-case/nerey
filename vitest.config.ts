@@ -29,7 +29,15 @@ export default defineConfig({
         find: /^@nerey\/core\/testing$/,
         replacement: path.join(dirname, 'packages/core/src/testing/index.ts'),
       },
+      {
+        find: /^@nerey\/core\/server$/,
+        replacement: path.join(dirname, 'packages/core/src/server/index.ts'),
+      },
       { find: /^@nerey\/core$/, replacement: path.join(dirname, 'packages/core/src/index.ts') },
+      // An adapter's integration tests render the theme's reference widgets (ADR 0051 allows it in
+      // tests only; `check:boundaries` keeps it out of shipped modules), so the theme resolves to
+      // source here for the same reason core does.
+      { find: /^@nerey\/theme$/, replacement: path.join(dirname, 'packages/theme/src/index.ts') },
     ],
   },
   test: {

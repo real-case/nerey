@@ -14,7 +14,9 @@
       "@nerey/core/mock": ["./packages/core/src/mock/index.ts"],
       "@nerey/core/testing": ["./packages/core/src/testing/index.ts"],
       "@nerey/core/server": ["./packages/core/src/server/index.ts"],
-      "@nerey/theme": ["./packages/theme/src/index.ts"]
+      "@nerey/theme": ["./packages/theme/src/index.ts"],
+      "@nerey/ai-sdk": ["./packages/ai-sdk/src/index.ts"],
+      "@nerey/ai-sdk/server": ["./packages/ai-sdk/src/server/index.ts"]
     }
   },
   "include": [

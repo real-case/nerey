@@ -1,4 +1,38 @@
 {
+  "@nerey/ai-sdk": {
+    "AiSdkBinding": "export type AiSdkBinding = { mode: 'render-widget'; toolName?: string; } | { mode: 'tools'; tools: Readonly<Record<string, WidgetRef>>; };",
+    "AiSdkChatLike": "export type AiSdkChatLike = { readonly messages: readonly AiSdkMessageLike[]; sendMessage: (message: { text: string; }) => unknown; addToolOutput: (args: { tool: string; toolCallId: string; output: unknown; }) => unknown; addToolApprovalResponse?: (args: { id: string; approved: boolean; }) => unknown; };",
+    "AiSdkHost": "export type AiSdkHost = Pick<WidgetHostValue, 'sendUserMessage'> & Required<Pick<WidgetHostValue, 'respond'>>;",
+    "AiSdkHostOptions": "export type AiSdkHostOptions = { chat: AiSdkChatLike; approvalOf?: (response: WidgetResponse) => boolean; };",
+    "AiSdkMessageLike": "export type AiSdkMessageLike = { id: string; role: 'system' | 'user' | 'assistant'; metadata?: unknown; parts: readonly unknown[]; };",
+    "AiSdkToolOutput": "export type AiSdkToolOutput = { action: string; text: string; result?: unknown; };",
+    "AiSdkWidgetFrame": "export type AiSdkWidgetFrame = { message: NereyMessage; status: WidgetStatus; };",
+    "RENDER_WIDGET_TOOL": "'render_widget'",
+    "ToWidgetFramesOptions": "export type ToWidgetFramesOptions = { binding: AiSdkBinding; createdAt?: number; textOf?: WidgetTextOf; };",
+    "WidgetFrameMapper": "export type WidgetFrameMapper = { frames: (messages: readonly AiSdkMessageLike[]) => AiSdkWidgetFrame[]; };",
+    "WidgetFrameMapperOptions": "export type WidgetFrameMapperOptions = Omit<ToWidgetFramesOptions, 'createdAt'> & { now?: () => number; };",
+    "WidgetRef": "export type WidgetRef = { type: string; version: string; };",
+    "WidgetTextOf": "export type WidgetTextOf = (context: { type: string; version: string; turnText: string; }) => string;",
+    "createAiSdkHost": "(options: AiSdkHostOptions) => AiSdkHost",
+    "createWidgetFrameMapper": "(options: WidgetFrameMapperOptions) => WidgetFrameMapper",
+    "defaultApprovalOf": "(response: WidgetResponse) => boolean",
+    "toWidgetFrames": "(message: AiSdkMessageLike, options: ToWidgetFramesOptions) => AiSdkWidgetFrame[]",
+    "useAiSdkHost": "(chat: AiSdkChatLike, options?: { approvalOf?: ((response: WidgetResponse) => boolean) | undefined; }) => AiSdkHost",
+    "useAiSdkWidgetFrames": "(messages: readonly AiSdkMessageLike[], options: WidgetFrameMapperOptions) => AiSdkWidgetFrame[]"
+  },
+  "@nerey/ai-sdk/server": {
+    "AiSdkBinding": "export type AiSdkBinding = { mode: 'render-widget'; toolName?: string; } | { mode: 'tools'; tools: Readonly<Record<string, WidgetRef>>; };",
+    "AiSdkMessageLike": "export type AiSdkMessageLike = { id: string; role: 'system' | 'user' | 'assistant'; metadata?: unknown; parts: readonly unknown[]; };",
+    "AiSdkWidgetFrame": "export type AiSdkWidgetFrame = { message: NereyMessage; status: WidgetStatus; };",
+    "RENDER_WIDGET_TOOL": "'render_widget'",
+    "ToWidgetFramesOptions": "export type ToWidgetFramesOptions = { binding: AiSdkBinding; createdAt?: number; textOf?: WidgetTextOf; };",
+    "ToolsFromRegistryOptions": "export type ToolsFromRegistryOptions = { binding: AiSdkBinding; toJsonSchema: NonNullable<DescribeRegistryOptions['toJsonSchema']>; description?: string; };",
+    "ToolsSource": "export type ToolsSource = Parameters<typeof describeRegistry>[0];",
+    "WidgetRef": "export type WidgetRef = { type: string; version: string; };",
+    "WidgetTextOf": "export type WidgetTextOf = (context: { type: string; version: string; turnText: string; }) => string;",
+    "toWidgetFrames": "(message: AiSdkMessageLike, options: ToWidgetFramesOptions) => AiSdkWidgetFrame[]",
+    "toolsFromRegistry": "(source: ToolsSource, options: ToolsFromRegistryOptions) => ToolSet"
+  },
   "@nerey/core": {
     "AfterExpiry": "export type AfterExpiry = 'snapshot' | 'fallback' | 'hide';",
     "AnyWidgetRegistryEntry": "export type AnyWidgetRegistryEntry = WidgetRegistryEntry<any, any>;",
