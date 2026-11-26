@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { Placement } from '@nerey/core';
+import type { Placement } from '@nerey/core/server';
 
 /**
  * ADR 0011 — the theme validates with Zod 4 because it is a reference implementation and already

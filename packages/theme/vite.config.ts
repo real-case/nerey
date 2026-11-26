@@ -32,9 +32,8 @@ function copyTokens(): Plugin {
 export default defineConfig({
   plugins: [react(), copyTokens()],
   resolve: {
-    alias: {
-      '@nerey/core': resolve(packageDir, '../core/src/index.ts'),
-    },
+    // Exact, so `@nerey/core/server` is not rewritten to a path under the client entry.
+    alias: [{ find: /^@nerey\/core$/, replacement: resolve(packageDir, '../core/src/index.ts') }],
   },
   css: {
     modules: {

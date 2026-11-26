@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { Placement } from '@nerey/core';
+import type { Placement } from '@nerey/core/server';
 
 /**
  * ADR 0011 — Zod 4 implements Standard Schema v1, so the theme's widgets validate through the

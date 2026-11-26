@@ -57,9 +57,12 @@ describe('@nerey/core/server', () => {
       [
         'EXPIRE_ON_INTERACT',
         'NEVER_EXPIRES',
+        'builtInWidgetContracts',
         'composeRegistries',
+        'confirmationContract',
         'createWidgetRegistry',
         'defineWidget',
+        'defineWidgetContract',
         'describeRegistry',
         'emptyRegistry',
         'firstFiredRule',
@@ -67,6 +70,7 @@ describe('@nerey/core/server', () => {
         'formatIssuePath',
         'isExpired',
         'msUntilNextTimeout',
+        'textContract',
         'validateSync',
       ].sort(),
     );

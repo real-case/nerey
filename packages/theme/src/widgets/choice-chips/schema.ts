@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { Lifecycle, Placement } from '@nerey/core';
+import type { Lifecycle, Placement } from '@nerey/core/server';
 
 /**
  * ADR 0011 — validation happens at the boundary, through Standard Schema. Zod is used here and

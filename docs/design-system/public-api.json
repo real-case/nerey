@@ -74,8 +74,10 @@
       "WidgetRoot",
       "asAnyWidget",
       "belongsInTranscript",
+      "builtInWidgetContracts",
       "builtInWidgets",
       "composeRegistries",
+      "confirmationContract",
       "confirmationPayloadSchema",
       "confirmationStateSchema",
       "confirmationWidget",
@@ -83,6 +85,7 @@
       "createWidgetRegistry",
       "dedupeById",
       "defineWidget",
+      "defineWidgetContract",
       "describeRegistry",
       "emptyRegistry",
       "fallbackAttributes",
@@ -106,6 +109,7 @@
       "resolveEnvelope",
       "resolvedPlacement",
       "ruleHasFired",
+      "textContract",
       "textPayloadSchema",
       "textWidget",
       "unknownWidgetError",
@@ -121,6 +125,7 @@
     ],
     "types": [
       "AfterExpiry",
+      "AnyWidgetContract",
       "AnyWidgetRegistryEntry",
       "ConfirmationDecision",
       "ConfirmationPayload",
@@ -162,6 +167,7 @@
       "ValidationOutcome",
       "WidgetComponent",
       "WidgetComponentProps",
+      "WidgetContract",
       "WidgetDescriptor",
       "WidgetErrorBoundaryProps",
       "WidgetHostValue",
@@ -209,9 +215,12 @@
     "values": [
       "EXPIRE_ON_INTERACT",
       "NEVER_EXPIRES",
+      "builtInWidgetContracts",
       "composeRegistries",
+      "confirmationContract",
       "createWidgetRegistry",
       "defineWidget",
+      "defineWidgetContract",
       "describeRegistry",
       "emptyRegistry",
       "firstFiredRule",
@@ -219,9 +228,11 @@
       "formatIssuePath",
       "isExpired",
       "msUntilNextTimeout",
+      "textContract",
       "validateSync"
     ],
     "types": [
+      "AnyWidgetContract",
       "AnyWidgetRegistryEntry",
       "CreateRegistryOptions",
       "DescribeRegistryOptions",
@@ -233,6 +244,7 @@
       "NereyWidgetEnvelope",
       "Placement",
       "ValidationOutcome",
+      "WidgetContract",
       "WidgetDescriptor",
       "WidgetRegistry",
       "WidgetRegistryEntry"
@@ -596,5 +608,22 @@
       "TooltipTriggerProps",
       "VisuallyHiddenProps"
     ]
+  },
+  "@nerey/theme/server": {
+    "values": [
+      "choiceChipsContract",
+      "citationsContract",
+      "confirmationContract",
+      "dataTableContract",
+      "filterPanelContract",
+      "formContract",
+      "pollContract",
+      "progressTrackerContract",
+      "taskTreeContract",
+      "textContract",
+      "themeWidgetContracts",
+      "toastNoticeContract"
+    ],
+    "types": []
   }
 }

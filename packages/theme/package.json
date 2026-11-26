@@ -1,7 +1,7 @@
 {
   "name": "@nerey/theme",
   "version": "0.1.0",
-  "description": "The reference theme for @nerey/core — CSS Modules compiled to a static stylesheet, driven entirely by --nerey-* custom properties.",
+  "description": "The reference theme for @nerey/core \u2014 CSS Modules compiled to a static stylesheet, driven entirely by --nerey-* custom properties.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -27,6 +27,10 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./server": {
+      "types": "./dist/server/index.d.ts",
+      "default": "./dist/server/index.js"
+    },
     "./theme.css": "./dist/theme.css",
     "./tokens.css": "./dist/tokens.css",
     "./package.json": "./package.json"
@@ -34,7 +38,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "vite build && tsc -p tsconfig.build.json && node ../../scripts/fix-dts-specifiers.mjs .",
+    "build": "vite build && vite build --config vite.server.config.ts && tsc -p tsconfig.build.json && node ../../scripts/fix-dts-specifiers.mjs .",
     "dev": "vite build --watch"
   },
   "dependencies": {

@@ -1,14 +1,7 @@
 import { defineWidget } from '@nerey/core';
 
 import { DataTableWidget } from './component';
-import {
-  DATA_TABLE_LIFECYCLE,
-  DATA_TABLE_PLACEMENT,
-  DATA_TABLE_TYPE,
-  DATA_TABLE_VERSION,
-  dataTablePayloadSchema,
-  dataTableStateSchema,
-} from './schema';
+import { dataTableContract } from './contract';
 import type { DataTablePayload, DataTableState } from './schema';
 
 /**
@@ -20,17 +13,11 @@ import type { DataTablePayload, DataTableState } from './schema';
  * the only shape there has ever been (ADR 0030).
  */
 export const dataTableWidget = defineWidget<DataTablePayload, DataTableState>({
-  type: DATA_TABLE_TYPE,
-  version: DATA_TABLE_VERSION,
+  ...dataTableContract,
   component: DataTableWidget,
-  description:
-    'Present rows and columns of data you have already retrieved. Display only — it reports ' +
-    'nothing back, so do not use it to ask for a selection.',
-  placement: DATA_TABLE_PLACEMENT,
-  lifecycle: DATA_TABLE_LIFECYCLE,
-  payloadSchema: dataTablePayloadSchema,
-  stateSchema: dataTableStateSchema,
 });
+
+export { dataTableContract } from './contract';
 
 export { DataTableWidget } from './component';
 export type { DataTableWidgetProps } from './component';

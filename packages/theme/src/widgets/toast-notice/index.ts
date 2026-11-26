@@ -1,14 +1,7 @@
 import { defineWidget } from '@nerey/core';
 
 import { ToastNoticeWidget } from './component';
-import {
-  TOAST_NOTICE_LIFECYCLE,
-  TOAST_NOTICE_PLACEMENT,
-  TOAST_NOTICE_TYPE,
-  TOAST_NOTICE_VERSION,
-  toastNoticePayloadSchema,
-  toastNoticeStateSchema,
-} from './schema';
+import { toastNoticeContract } from './contract';
 import type { ToastNoticePayload, ToastNoticeState } from './schema';
 
 /**
@@ -22,17 +15,11 @@ import type { ToastNoticePayload, ToastNoticeState } from './schema';
  * the lifecycle is `ephemeral`, so no notice ever outlives the schema that produced it.
  */
 export const toastNoticeWidget = defineWidget<ToastNoticePayload, ToastNoticeState>({
-  type: TOAST_NOTICE_TYPE,
-  version: TOAST_NOTICE_VERSION,
+  ...toastNoticeContract,
   component: ToastNoticeWidget,
-  description:
-    'Announce something about the session rather than the conversation — a finished background ' +
-    'job, an expiring token, a rate limit. It floats above the chat and leaves no turn behind.',
-  placement: TOAST_NOTICE_PLACEMENT,
-  lifecycle: TOAST_NOTICE_LIFECYCLE,
-  payloadSchema: toastNoticePayloadSchema,
-  stateSchema: toastNoticeStateSchema,
 });
+
+export { toastNoticeContract } from './contract';
 
 export { ToastNoticeWidget } from './component';
 export type { ToastNoticeWidgetProps } from './component';

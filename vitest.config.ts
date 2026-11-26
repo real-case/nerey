@@ -26,6 +26,10 @@ export default defineConfig({
     alias: [
       { find: /^@nerey\/core\/mock$/, replacement: path.join(dirname, 'packages/core/src/mock/index.ts') },
       {
+        find: /^@nerey\/core\/server$/,
+        replacement: path.join(dirname, 'packages/core/src/server/index.ts'),
+      },
+      {
         find: /^@nerey\/core\/testing$/,
         replacement: path.join(dirname, 'packages/core/src/testing/index.ts'),
       },

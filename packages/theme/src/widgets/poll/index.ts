@@ -1,7 +1,7 @@
 import { defineWidget } from '@nerey/core';
 
 import { PollWidget } from './component';
-import { POLL_PLACEMENT, POLL_TYPE, POLL_VERSION, pollPayloadSchema, pollStateSchema } from './schema';
+import { pollContract } from './contract';
 import type { PollPayload, PollState } from './schema';
 
 /**
@@ -24,21 +24,11 @@ import type { PollPayload, PollState } from './schema';
  * question was ever asked.
  */
 export const pollWidget = defineWidget<PollPayload, PollState>({
-  type: POLL_TYPE,
-  version: POLL_VERSION,
+  ...pollContract,
   component: PollWidget,
-  description:
-    'Ask the user to pick one of the options you list, or several when `multiple` is set. Use it ' +
-    'for a question with a closed set of answers; the reply names the chosen option.',
-  placement: POLL_PLACEMENT,
-  lifecycle: {
-    persist: 'forever',
-    expiry: [{ on: 'interact', action: 'submit' }],
-    afterExpiry: 'snapshot',
-  },
-  payloadSchema: pollPayloadSchema,
-  stateSchema: pollStateSchema,
 });
+
+export { pollContract } from './contract';
 
 export { PollWidget } from './component';
 export type { PollWidgetProps } from './component';

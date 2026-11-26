@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import { themeWidgets } from './catalog';
+import { themeWidgetContracts } from './contracts';
 
 /**
  * ADR 0040 — what a producer is told about this catalog has to match what the registry will
@@ -66,5 +67,36 @@ describe('themeWidgets, as described to a producer', () => {
     for (const descriptor of withSchema) {
       expect(descriptor.payloadSchema).toMatchObject({ type: 'object' });
     }
+  });
+});
+
+/**
+ * ADR 0056 — the server describes `themeWidgetContracts`, the client registers `themeWidgets`. The
+ * two lists say the same thing only if every entry is its contract plus a component, in order.
+ */
+describe('themeWidgetContracts', () => {
+  it('lists one contract per entry, in the same order', () => {
+    expect(themeWidgetContracts.map((c) => `${c.type}@${c.version}`)).toEqual(
+      themeWidgets.map((e) => `${e.type}@${e.version}`),
+    );
+  });
+
+  it('is each entry without its component, field by field', () => {
+    themeWidgets.forEach((entry, index) => {
+      const { component, ...rest } = entry;
+      expect(component).toBeDefined();
+      const contract = themeWidgetContracts[index];
+      expect(Object.keys(rest).sort()).toEqual(Object.keys(contract ?? {}).sort());
+      for (const [key, value] of Object.entries(rest)) {
+        expect(contract?.[key as keyof typeof contract], `${entry.type}.${key}`).toBe(value);
+      }
+    });
+  });
+
+  it('describes the composed catalog exactly as the registry does', () => {
+    const toJsonSchema = (schema: unknown): unknown => z.toJSONSchema(schema as z.ZodType);
+    expect(describeRegistry(themeWidgetContracts, { toJsonSchema })).toEqual(
+      describeRegistry(composed, { toJsonSchema }),
+    );
   });
 });

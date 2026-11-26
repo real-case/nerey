@@ -1,13 +1,7 @@
 import { defineWidget } from '@nerey/core';
 
 import { FilterPanelWidget } from './component';
-import {
-  FILTER_PANEL_PLACEMENT,
-  FILTER_PANEL_TYPE,
-  FILTER_PANEL_VERSION,
-  filterPanelPayloadSchema,
-  filterPanelStateSchema,
-} from './schema';
+import { filterPanelContract } from './contract';
 import type { FilterPanelPayload, FilterPanelState } from './schema';
 
 /**
@@ -33,21 +27,11 @@ import type { FilterPanelPayload, FilterPanelState } from './schema';
  * cost the user the space their next message is written in.
  */
 export const filterPanelWidget = defineWidget<FilterPanelPayload, FilterPanelState>({
-  type: FILTER_PANEL_TYPE,
-  version: FILTER_PANEL_VERSION,
+  ...filterPanelContract,
   component: FilterPanelWidget,
-  description:
-    'Let the user narrow a result set along the facets you list. It renders above the composer ' +
-    'and its reply is a sentence stating the chosen filters.',
-  placement: FILTER_PANEL_PLACEMENT,
-  lifecycle: {
-    persist: 'ephemeral',
-    expiry: [{ on: 'interact', action: 'search' }, { on: 'message' }],
-    afterExpiry: 'hide',
-  },
-  payloadSchema: filterPanelPayloadSchema,
-  stateSchema: filterPanelStateSchema,
 });
+
+export { filterPanelContract } from './contract';
 
 export { FilterPanelWidget } from './component';
 export type { FilterPanelWidgetProps } from './component';

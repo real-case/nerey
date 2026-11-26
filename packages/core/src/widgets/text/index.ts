@@ -1,8 +1,6 @@
-import { TEXT_WIDGET_TYPE, TEXT_WIDGET_VERSION } from '../../adapter';
-import { NEVER_EXPIRES } from '../../lifecycle/expiry';
 import { defineWidget } from '../../registry';
 import { TextWidget } from './component';
-import { textPayloadSchema } from './schema';
+import { textContract } from './contract';
 import type { TextPayload } from './schema';
 
 /**
@@ -21,16 +19,11 @@ import type { TextPayload } from './schema';
  * stop rendering a message the transcript still needs to show.
  */
 export const textWidget = defineWidget<TextPayload, Record<string, never>>({
-  type: TEXT_WIDGET_TYPE,
-  version: TEXT_WIDGET_VERSION,
+  ...textContract,
   component: TextWidget,
-  description:
-    'Plain assistant prose, optionally with preformatted blocks. Every message that carries no ' +
-    'widget renders through this, so a producer does not normally select it explicitly.',
-  placement: { slot: 'message' },
-  lifecycle: NEVER_EXPIRES,
-  payloadSchema: textPayloadSchema,
 });
+
+export { textContract } from './contract';
 
 export { TextWidget } from './component';
 export type { TextWidgetProps } from './component';

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { Placement } from '@nerey/core';
+import type { Placement } from '@nerey/core/server';
 
 /**
  * ADR 0011 — core depends on the Standard Schema *spec* and may never reach for a validator, so

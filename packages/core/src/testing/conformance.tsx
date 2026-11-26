@@ -5,7 +5,7 @@ import type { StandardSchemaV1 } from '@standard-schema/spec';
 
 import { NEREY_ATTR, NEREY_STATES } from '../data-attrs';
 import { DEFAULT_HOST_VALUE, WidgetHostProvider } from '../host/host-context';
-import { NEVER_EXPIRES } from '../lifecycle/expiry';
+import { isNeverExpires } from '../lifecycle/expiry';
 import { createWidgetRegistry } from '../registry';
 import { WidgetRenderer } from '../render/widget-renderer';
 import { createMemoryPersistence } from '../state/memory-persistence';
@@ -678,7 +678,7 @@ function checkLifecycle(entry: AnyWidgetRegistryEntry, report: Report): void {
     checkExpiryRule(rule, index, report);
   });
 
-  // `NEVER_EXPIRES` is exempt by IDENTITY, not by shape. A widget with nothing to terminate still
+  // `NEVER_EXPIRES` is exempt by IDENTITY (its cross-bundle mark), not by shape. A widget with nothing to terminate still
   // has to name an `afterExpiry`, and the shared constant answers `'snapshot'` because it is the
   // harmless one — reaching for that named constant is itself the statement that the widget never
   // expires. An inline `{ expiry: [], afterExpiry: 'snapshot' }` is what this rule is looking for:
@@ -690,7 +690,7 @@ function checkLifecycle(entry: AnyWidgetRegistryEntry, report: Report): void {
   // whose sort is a viewing preference — has no constant to reach for. And the copy-paste this
   // rule hunts comes from `EXPIRE_ON_INTERACT`, which is `forever`, so it never produces this shape.
   if (
-    lifecycle !== NEVER_EXPIRES &&
+    !isNeverExpires(lifecycle) &&
     persist !== 'ephemeral' &&
     afterExpiry === 'snapshot' &&
     expiry.length === 0

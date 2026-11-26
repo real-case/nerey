@@ -6,6 +6,7 @@ import { describeRegistry } from './describe';
 import { asAnyWidget, createWidgetRegistry, defineWidget } from './registry';
 import type { AnyWidgetRegistryEntry } from './types';
 import { builtInWidgets } from './widgets/catalog';
+import { builtInWidgetContracts } from './widgets/contracts';
 
 const Noop = () => null;
 
@@ -185,6 +186,13 @@ describe('describeRegistry', () => {
 
     expect(descriptor).toBeDefined();
     expect(Object.keys(descriptor ?? {}).sort()).toEqual(['key', 'placement', 'type', 'version']);
+  });
+
+  it('describes a list of contracts exactly as the registry built from them (ADR 0056)', () => {
+    const toJsonSchema = (): unknown => ({ type: 'object' });
+    expect(describeRegistry(builtInWidgetContracts, { toJsonSchema })).toEqual(
+      describeRegistry(createWidgetRegistry(builtInWidgets), { toJsonSchema }),
+    );
   });
 
   it('describes an empty registry as an empty list', () => {
